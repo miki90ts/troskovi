@@ -4,6 +4,7 @@ import {
     ArrowDownCircle,
     ArrowUpCircle,
     BarChart3,
+    CircleDollarSign,
     Landmark,
     LayoutGrid,
     RefreshCcw,
@@ -13,6 +14,7 @@ import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
+import { t } from '@/lib/i18n';
 import {
     Sidebar,
     SidebarContent,
@@ -26,37 +28,37 @@ import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
     {
-        title: 'Dashboard',
+        title: t('app.nav.dashboard'),
         href: '/dashboard',
         icon: LayoutGrid,
     },
     {
-        title: 'Bank Accounts',
+        title: t('app.nav.bankAccounts'),
         href: '/bank-accounts',
         icon: Landmark,
     },
     {
-        title: 'Expenses',
+        title: t('app.nav.expenses'),
         href: '/expenses',
         icon: ArrowDownCircle,
     },
     {
-        title: 'Income',
+        title: t('app.nav.income'),
         href: '/incomes',
         icon: ArrowUpCircle,
     },
     {
-        title: 'Recurring',
+        title: t('app.nav.recurring'),
         href: '/recurring-transactions',
         icon: RefreshCcw,
     },
     {
-        title: 'Reports',
+        title: t('app.nav.reports'),
         href: '/reports',
         icon: BarChart3,
     },
     {
-        title: 'Categories',
+        title: t('app.nav.categories'),
         href: '/categories',
         icon: Tags,
     },
@@ -67,7 +69,9 @@ const footerNavItems: NavItem[] = [];
 
 <template>
     <Sidebar collapsible="icon" variant="inset">
-        <SidebarHeader>
+        <SidebarHeader
+            class="gap-4 border-b border-sidebar-border/70 px-3 py-4"
+        >
             <SidebarMenu>
                 <SidebarMenuItem>
                     <SidebarMenuButton size="lg" as-child>

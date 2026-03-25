@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
+import { t } from '@/lib/i18n';
 import { edit } from '@/routes/profile';
 import { send } from '@/routes/verification';
 import type { BreadcrumbItem } from '@/types';
@@ -23,7 +24,7 @@ defineProps<Props>();
 
 const breadcrumbItems: BreadcrumbItem[] = [
     {
-        title: 'Profile settings',
+        title: t('settings.profile.head'),
         href: edit(),
     },
 ];
@@ -34,16 +35,18 @@ const user = computed(() => page.props.auth.user);
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbItems">
-        <Head title="Profile settings" />
+        <Head :title="t('settings.profile.head')" />
 
-        <h1 class="sr-only">Profile settings</h1>
+        <h1 class="sr-only">{{ t('settings.profile.head') }}</h1>
 
         <SettingsLayout>
-            <div class="flex flex-col space-y-6">
+            <div
+                class="flex flex-col space-y-6 rounded-[1.75rem] border border-border/70 bg-card/95 p-6 shadow-[0_18px_50px_rgba(15,23,42,0.06)] sm:p-8"
+            >
                 <Heading
                     variant="small"
-                    title="Profile information"
-                    description="Update your name and email address"
+                    :title="t('settings.profile.title')"
+                    :description="t('settings.profile.description')"
                 />
 
                 <Form
@@ -51,61 +54,69 @@ const user = computed(() => page.props.auth.user);
                     class="space-y-6"
                     v-slot="{ errors, processing, recentlySuccessful }"
                 >
-                    <div class="grid gap-2">
-                        <Label for="name">Name</Label>
+                    <div class="grid gap-2.5">
+                        <Label for="name">{{
+                            t('settings.profile.name')
+                        }}</Label>
                         <Input
                             id="name"
-                            class="mt-1 block w-full"
+                            class="h-12 rounded-2xl border-border/80 bg-background/70 px-4 shadow-none"
                             name="name"
                             :default-value="user.name"
                             required
                             autocomplete="name"
-                            placeholder="Full name"
+                            :placeholder="t('settings.profile.fullName')"
                         />
-                        <InputError class="mt-2" :message="errors.name" />
+                        <InputError :message="errors.name" />
                     </div>
 
-                    <div class="grid gap-2">
-                        <Label for="email">Email address</Label>
+                    <div class="grid gap-2.5">
+                        <Label for="email">{{
+                            t('settings.profile.email')
+                        }}</Label>
                         <Input
                             id="email"
                             type="email"
-                            class="mt-1 block w-full"
+                            class="h-12 rounded-2xl border-border/80 bg-background/70 px-4 shadow-none"
                             name="email"
                             :default-value="user.email"
                             required
                             autocomplete="username"
-                            placeholder="Email address"
+                            :placeholder="
+                                t('settings.profile.emailPlaceholder')
+                            "
                         />
-                        <InputError class="mt-2" :message="errors.email" />
+                        <InputError :message="errors.email" />
                     </div>
 
                     <div v-if="mustVerifyEmail && !user.email_verified_at">
-                        <p class="-mt-4 text-sm text-muted-foreground">
-                            Your email address is unverified.
+                        <p
+                            class="rounded-2xl border border-border/70 bg-muted/35 px-4 py-4 text-sm leading-7 text-muted-foreground"
+                        >
+                            {{ t('settings.profile.emailUnverified') }}
                             <Link
                                 :href="send()"
                                 as="button"
                                 class="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
                             >
-                                Click here to resend the verification email.
+                                {{ t('settings.profile.resend') }}
                             </Link>
                         </p>
 
                         <div
                             v-if="status === 'verification-link-sent'"
-                            class="mt-2 text-sm font-medium text-green-600"
+                            class="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300"
                         >
-                            A new verification link has been sent to your email
-                            address.
+                            {{ t('settings.profile.linkSent') }}
                         </div>
                     </div>
 
                     <div class="flex items-center gap-4">
                         <Button
+                            class="h-11 rounded-2xl px-5 text-sm font-semibold shadow-[0_18px_40px_rgba(13,148,136,0.18)]"
                             :disabled="processing"
                             data-test="update-profile-button"
-                            >Save</Button
+                            >{{ t('settings.common.save') }}</Button
                         >
 
                         <Transition
@@ -116,9 +127,9 @@ const user = computed(() => page.props.auth.user);
                         >
                             <p
                                 v-show="recentlySuccessful"
-                                class="text-sm text-neutral-600"
+                                class="text-sm text-muted-foreground"
                             >
-                                Saved.
+                                {{ t('settings.common.saved') }}
                             </p>
                         </Transition>
                     </div>

@@ -46,6 +46,7 @@ import {
 import UserMenuContent from '@/components/UserMenuContent.vue';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { getInitials } from '@/composables/useInitials';
+import { t } from '@/lib/i18n';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem, NavItem } from '@/types';
@@ -67,37 +68,37 @@ const activeItemStyles =
 
 const mainNavItems: NavItem[] = [
     {
-        title: 'Dashboard',
+        title: t('app.nav.dashboard'),
         href: '/dashboard',
         icon: LayoutGrid,
     },
     {
-        title: 'Bank Accounts',
+        title: t('app.nav.bankAccounts'),
         href: '/bank-accounts',
         icon: Landmark,
     },
     {
-        title: 'Expenses',
+        title: t('app.nav.expenses'),
         href: '/expenses',
         icon: ArrowDownCircle,
     },
     {
-        title: 'Income',
+        title: t('app.nav.income'),
         href: '/incomes',
         icon: ArrowUpCircle,
     },
     {
-        title: 'Recurring',
+        title: t('app.nav.recurring'),
         href: '/recurring-transactions',
         icon: RefreshCcw,
     },
     {
-        title: 'Reports',
+        title: t('app.nav.reports'),
         href: '/reports',
         icon: BarChart3,
     },
     {
-        title: 'Categories',
+        title: t('app.nav.categories'),
         href: '/categories',
         icon: Tags,
     },
@@ -105,12 +106,12 @@ const mainNavItems: NavItem[] = [
 
 const rightNavItems: NavItem[] = [
     {
-        title: 'Repository',
+        title: t('app.nav.repository'),
         href: 'https://github.com/laravel/vue-starter-kit',
         icon: Folder,
     },
     {
-        title: 'Documentation',
+        title: t('app.nav.documentation'),
         href: 'https://laravel.com/docs/starter-kits#vue',
         icon: BookOpen,
     },
@@ -134,9 +135,9 @@ const rightNavItems: NavItem[] = [
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="left" class="w-75 p-6">
-                            <SheetTitle class="sr-only"
-                                >Navigation menu</SheetTitle
-                            >
+                            <SheetTitle class="sr-only">{{
+                                t('app.nav.navigationMenu')
+                            }}</SheetTitle>
                             <SheetHeader class="flex justify-start text-left">
                                 <AppLogoIcon
                                     class="size-6 fill-current text-black dark:text-white"

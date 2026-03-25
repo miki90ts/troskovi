@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { useTwoFactorAuth } from '@/composables/useTwoFactorAuth';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
+import { t } from '@/lib/i18n';
 import { edit } from '@/routes/security';
 import { disable, enable } from '@/routes/two-factor';
 import type { BreadcrumbItem } from '@/types';
@@ -31,7 +32,7 @@ withDefaults(defineProps<Props>(), {
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Security settings',
+        title: t('settings.security.head'),
         href: edit(),
     },
 ];
@@ -44,16 +45,18 @@ onUnmounted(() => clearTwoFactorAuthData());
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
-        <Head title="Security settings" />
+        <Head :title="t('settings.security.head')" />
 
-        <h1 class="sr-only">Security settings</h1>
+        <h1 class="sr-only">{{ t('settings.security.head') }}</h1>
 
         <SettingsLayout>
-            <div class="space-y-6">
+            <div
+                class="space-y-6 rounded-[1.75rem] border border-border/70 bg-card/95 p-6 shadow-[0_18px_50px_rgba(15,23,42,0.06)] sm:p-8"
+            >
                 <Heading
                     variant="small"
-                    title="Update password"
-                    description="Ensure your account is using a long, random password to stay secure"
+                    :title="t('settings.security.title')"
+                    :description="t('settings.security.description')"
                 />
 
                 <Form
@@ -70,50 +73,59 @@ onUnmounted(() => clearTwoFactorAuthData());
                     class="space-y-6"
                     v-slot="{ errors, processing, recentlySuccessful }"
                 >
-                    <div class="grid gap-2">
-                        <Label for="current_password">Current password</Label>
+                    <div class="grid gap-2.5">
+                        <Label for="current_password">{{
+                            t('settings.security.currentPassword')
+                        }}</Label>
                         <PasswordInput
                             id="current_password"
                             name="current_password"
-                            class="mt-1 block w-full"
+                            class="h-12 rounded-2xl border-border/80 bg-background/70 px-4 shadow-none"
                             autocomplete="current-password"
-                            placeholder="Current password"
+                            :placeholder="
+                                t('settings.security.currentPassword')
+                            "
                         />
                         <InputError :message="errors.current_password" />
                     </div>
 
-                    <div class="grid gap-2">
-                        <Label for="password">New password</Label>
+                    <div class="grid gap-2.5">
+                        <Label for="password">{{
+                            t('settings.security.newPassword')
+                        }}</Label>
                         <PasswordInput
                             id="password"
                             name="password"
-                            class="mt-1 block w-full"
+                            class="h-12 rounded-2xl border-border/80 bg-background/70 px-4 shadow-none"
                             autocomplete="new-password"
-                            placeholder="New password"
+                            :placeholder="t('settings.security.newPassword')"
                         />
                         <InputError :message="errors.password" />
                     </div>
 
-                    <div class="grid gap-2">
-                        <Label for="password_confirmation"
-                            >Confirm password</Label
-                        >
+                    <div class="grid gap-2.5">
+                        <Label for="password_confirmation">{{
+                            t('settings.security.confirmPassword')
+                        }}</Label>
                         <PasswordInput
                             id="password_confirmation"
                             name="password_confirmation"
-                            class="mt-1 block w-full"
+                            class="h-12 rounded-2xl border-border/80 bg-background/70 px-4 shadow-none"
                             autocomplete="new-password"
-                            placeholder="Confirm password"
+                            :placeholder="
+                                t('settings.security.confirmPassword')
+                            "
                         />
                         <InputError :message="errors.password_confirmation" />
                     </div>
 
                     <div class="flex items-center gap-4">
                         <Button
+                            class="h-11 rounded-2xl px-5 text-sm font-semibold shadow-[0_18px_40px_rgba(13,148,136,0.18)]"
                             :disabled="processing"
                             data-test="update-password-button"
                         >
-                            Save password
+                            {{ t('settings.security.savePassword') }}
                         </Button>
 
                         <Transition
@@ -124,39 +136,44 @@ onUnmounted(() => clearTwoFactorAuthData());
                         >
                             <p
                                 v-show="recentlySuccessful"
-                                class="text-sm text-neutral-600"
+                                class="text-sm text-muted-foreground"
                             >
-                                Saved.
+                                {{ t('settings.common.saved') }}
                             </p>
                         </Transition>
                     </div>
                 </Form>
             </div>
 
-            <div v-if="canManageTwoFactor" class="space-y-6">
+            <div
+                v-if="canManageTwoFactor"
+                class="space-y-6 rounded-[1.75rem] border border-border/70 bg-card/95 p-6 shadow-[0_18px_50px_rgba(15,23,42,0.06)] sm:p-8"
+            >
                 <Heading
                     variant="small"
-                    title="Two-factor authentication"
-                    description="Manage your two-factor authentication settings"
+                    :title="t('settings.security.twoFactorTitle')"
+                    :description="t('settings.security.twoFactorDescription')"
                 />
 
                 <div
                     v-if="!twoFactorEnabled"
                     class="flex flex-col items-start justify-start space-y-4"
                 >
-                    <p class="text-sm text-muted-foreground">
-                        When you enable two-factor authentication, you will be
-                        prompted for a secure pin during login. This pin can be
-                        retrieved from a TOTP-supported application on your
-                        phone.
+                    <p
+                        class="rounded-2xl border border-border/70 bg-muted/35 px-4 py-4 text-sm leading-7 text-muted-foreground"
+                    >
+                        {{ t('settings.security.twoFactorIntro') }}
                     </p>
 
                     <div>
                         <Button
                             v-if="hasSetupData"
+                            class="h-11 rounded-2xl px-5 text-sm font-semibold shadow-[0_18px_40px_rgba(13,148,136,0.18)]"
                             @click="showSetupModal = true"
                         >
-                            <ShieldCheck />Continue setup
+                            <ShieldCheck />{{
+                                t('settings.security.continueSetup')
+                            }}
                         </Button>
                         <Form
                             v-else
@@ -164,8 +181,12 @@ onUnmounted(() => clearTwoFactorAuthData());
                             @success="showSetupModal = true"
                             #default="{ processing }"
                         >
-                            <Button type="submit" :disabled="processing">
-                                Enable 2FA
+                            <Button
+                                type="submit"
+                                :disabled="processing"
+                                class="h-11 rounded-2xl px-5 text-sm font-semibold shadow-[0_18px_40px_rgba(13,148,136,0.18)]"
+                            >
+                                {{ t('settings.security.enable2fa') }}
                             </Button>
                         </Form>
                     </div>
@@ -175,10 +196,10 @@ onUnmounted(() => clearTwoFactorAuthData());
                     v-else
                     class="flex flex-col items-start justify-start space-y-4"
                 >
-                    <p class="text-sm text-muted-foreground">
-                        You will be prompted for a secure, random pin during
-                        login, which you can retrieve from the TOTP-supported
-                        application on your phone.
+                    <p
+                        class="rounded-2xl border border-border/70 bg-muted/35 px-4 py-4 text-sm leading-7 text-muted-foreground"
+                    >
+                        {{ t('settings.security.twoFactorEnabled') }}
                     </p>
 
                     <div class="relative inline">
@@ -187,8 +208,9 @@ onUnmounted(() => clearTwoFactorAuthData());
                                 variant="destructive"
                                 type="submit"
                                 :disabled="processing"
+                                class="h-11 rounded-2xl px-5 text-sm font-semibold"
                             >
-                                Disable 2FA
+                                {{ t('settings.security.disable2fa') }}
                             </Button>
                         </Form>
                     </div>

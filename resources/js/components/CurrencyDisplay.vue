@@ -5,9 +5,9 @@ const props = defineProps<{
     colored?: boolean;
 }>();
 
-const formatted = new Intl.NumberFormat('en-US', {
+const formatted = new Intl.NumberFormat('sr-RS', {
     style: 'currency',
-    currency: props.currency ?? 'USD',
+    currency: props.currency ?? 'RSD',
     minimumFractionDigits: 2,
 }).format(props.amount);
 </script>

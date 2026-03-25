@@ -191,7 +191,7 @@ class ReportService
             ->pluck('total', 'payment_method');
 
         return [
-            'labels' => ['Cash', 'Bank Account'],
+            'labels' => ['Keš', 'Bankovni račun'],
             'values' => [
                 round($split->get('cash', 0), 2),
                 round($split->get('bank_account', 0), 2),

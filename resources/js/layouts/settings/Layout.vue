@@ -4,6 +4,7 @@ import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
+import { t } from '@/lib/i18n';
 import { toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit as editProfile } from '@/routes/profile';
@@ -12,15 +13,15 @@ import type { NavItem } from '@/types';
 
 const sidebarNavItems: NavItem[] = [
     {
-        title: 'Profile',
+        title: t('settings.nav.profile'),
         href: editProfile(),
     },
     {
-        title: 'Security',
+        title: t('settings.nav.security'),
         href: editSecurity(),
     },
     {
-        title: 'Appearance',
+        title: t('settings.nav.appearance'),
         href: editAppearance(),
     },
 ];
@@ -30,24 +31,34 @@ const { isCurrentOrParentUrl } = useCurrentUrl();
 
 <template>
     <div class="px-4 py-6">
-        <Heading
-            title="Settings"
-            description="Manage your profile and account settings"
-        />
+        <div
+            class="mb-8 overflow-hidden rounded-4xl border border-border/70 bg-[linear-gradient(135deg,rgba(13,148,136,0.12),rgba(255,255,255,0.96))] p-6 shadow-[0_20px_60px_rgba(15,23,42,0.07)] dark:bg-[linear-gradient(135deg,rgba(13,148,136,0.18),rgba(15,23,42,0.86))]"
+        >
+            <Heading
+                :title="t('settings.common.settings')"
+                :description="t('settings.nav.description')"
+            />
+        </div>
 
         <div class="flex flex-col lg:flex-row lg:space-x-12">
             <aside class="w-full max-w-xl lg:w-48">
                 <nav
-                    class="flex flex-col space-y-1 space-x-0"
-                    aria-label="Settings"
+                    class="flex flex-col space-y-2 space-x-0"
+                    :aria-label="t('settings.common.settings')"
                 >
                     <Button
                         v-for="item in sidebarNavItems"
                         :key="toUrl(item.href)"
                         variant="ghost"
                         :class="[
-                            'w-full justify-start',
-                            { 'bg-muted': isCurrentOrParentUrl(item.href) },
+                            'h-11 w-full justify-start rounded-2xl border border-transparent px-4',
+                            {
+                                'border-primary/20 bg-primary/10 text-primary hover:bg-primary/12':
+                                    isCurrentOrParentUrl(item.href),
+                                'hover:bg-muted/60': !isCurrentOrParentUrl(
+                                    item.href,
+                                ),
+                            },
                         ]"
                         as-child
                     >
@@ -62,7 +73,7 @@ const { isCurrentOrParentUrl } = useCurrentUrl();
             <Separator class="my-6 lg:hidden" />
 
             <div class="flex-1 md:max-w-2xl">
-                <section class="max-w-xl space-y-12">
+                <section class="max-w-2xl space-y-8">
                     <slot />
                 </section>
             </div>
