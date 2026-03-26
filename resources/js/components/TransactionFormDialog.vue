@@ -41,6 +41,8 @@ const emit = defineEmits<{
 const { createTransaction, updateTransaction } = useTransactions();
 const { success, error: showError } = useToast();
 
+const NO_BANK_ACCOUNT_VALUE = '__none__';
+
 const form = ref({
     type: 'expense' as 'income' | 'expense',
     amount: '',
@@ -63,6 +65,14 @@ const resolvedTypeTitle = computed(() => {
     return resolvedType.value === 'expense'
         ? t('components.transactionForm.expenseTitle')
         : t('components.transactionForm.incomeTitle');
+});
+
+const bankAccountSelectValue = computed({
+    get: () => form.value.bank_account_id || NO_BANK_ACCOUNT_VALUE,
+    set: (value: string) => {
+        form.value.bank_account_id =
+            value === NO_BANK_ACCOUNT_VALUE ? '' : value;
+    },
 });
 
 watch(
@@ -357,7 +367,7 @@ async function onSubmit() {
                         class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
                         >{{ t('common.labels.bankAccount') }}</Label
                     >
-                    <Select v-model="form.bank_account_id">
+                    <Select v-model="bankAccountSelectValue">
                         <SelectTrigger
                             class="h-11 rounded-2xl border-border/60 bg-background"
                         >
@@ -370,7 +380,7 @@ async function onSubmit() {
                             />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="">{{
+                            <SelectItem :value="NO_BANK_ACCOUNT_VALUE">{{
                                 t('common.states.none')
                             }}</SelectItem>
                             <SelectItem

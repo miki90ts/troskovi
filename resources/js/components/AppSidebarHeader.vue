@@ -4,6 +4,7 @@ import { Wallet2 } from 'lucide-vue-next';
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import type { BreadcrumbItem } from '@/types';
+import { t } from '@/lib/i18n';
 
 const page = usePage();
 
@@ -30,15 +31,10 @@ withDefaults(
 
         <div class="hidden items-center gap-3 lg:flex">
             <div
-                class="rounded-full border border-primary/15 bg-primary/10 px-3 py-1 text-[11px] font-semibold tracking-[0.22em] text-primary uppercase"
-            >
-                {{ page.props.name ?? 'Troskovi' }} workspace
-            </div>
-            <div
-                class="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/80 px-3 py-1.5 text-xs text-muted-foreground"
+                class="inline-flex items-center gap-2 rounded-full border border-border/70 bg-primary/10 px-3 py-1.5 text-xs text-muted-foreground"
             >
                 <Wallet2 class="h-3.5 w-3.5 text-primary" />
-                Clear view of your money flow
+                {{ t('app.nav.overview') }}
             </div>
         </div>
     </header>

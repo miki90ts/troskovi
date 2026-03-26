@@ -6,7 +6,7 @@ import {
     Landmark,
     Wallet,
 } from 'lucide-vue-next';
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRecurringTransactions } from '@/composables/useRecurringTransactions';
 import { useToast } from '@/composables/useToast';
 import { Button } from '@/components/ui/button';
@@ -47,6 +47,9 @@ const emit = defineEmits<{
 const { createRecurring, updateRecurring } = useRecurringTransactions();
 const { success, error: showError } = useToast();
 
+const NO_CATEGORY_VALUE = '__none_category__';
+const NO_BANK_ACCOUNT_VALUE = '__none_bank_account__';
+
 const form = ref({
     type: 'expense' as 'income' | 'expense',
     amount: '',
@@ -59,6 +62,21 @@ const form = ref({
 });
 
 const submitting = ref(false);
+
+const categorySelectValue = computed({
+    get: () => form.value.category_id || NO_CATEGORY_VALUE,
+    set: (value: string) => {
+        form.value.category_id = value === NO_CATEGORY_VALUE ? '' : value;
+    },
+});
+
+const bankAccountSelectValue = computed({
+    get: () => form.value.bank_account_id || NO_BANK_ACCOUNT_VALUE,
+    set: (value: string) => {
+        form.value.bank_account_id =
+            value === NO_BANK_ACCOUNT_VALUE ? '' : value;
+    },
+});
 
 function previewFrequencyLabel() {
     return (
@@ -157,7 +175,7 @@ async function onSubmit() {
         "
     >
         <DialogContent
-            class="rounded-3xl border border-border/60 bg-background/95 p-0 shadow-2xl sm:max-w-2xl"
+            class="max-h-[90vh] overflow-y-auto rounded-3xl border border-border/60 bg-background/95 p-0 shadow-2xl sm:max-w-2xl"
         >
             <DialogHeader>
                 <div
@@ -341,7 +359,7 @@ async function onSubmit() {
                             class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
                             >{{ t('common.labels.category') }}</Label
                         >
-                        <Select v-model="form.category_id">
+                        <Select v-model="categorySelectValue">
                             <SelectTrigger
                                 class="h-11 rounded-2xl border-border/60 bg-background"
                             >
@@ -354,7 +372,7 @@ async function onSubmit() {
                                 />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">{{
+                                <SelectItem :value="NO_CATEGORY_VALUE">{{
                                     t('common.states.noneFeminine')
                                 }}</SelectItem>
                                 <SelectItem
@@ -372,7 +390,7 @@ async function onSubmit() {
                             class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
                             >{{ t('common.labels.bankAccount') }}</Label
                         >
-                        <Select v-model="form.bank_account_id">
+                        <Select v-model="bankAccountSelectValue">
                             <SelectTrigger
                                 class="h-11 rounded-2xl border-border/60 bg-background"
                             >
@@ -385,7 +403,7 @@ async function onSubmit() {
                                 />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">{{
+                                <SelectItem :value="NO_BANK_ACCOUNT_VALUE">{{
                                     t('common.states.none')
                                 }}</SelectItem>
                                 <SelectItem

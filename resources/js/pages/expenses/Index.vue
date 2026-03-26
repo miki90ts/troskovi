@@ -65,6 +65,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 const { success, error: showError } = useToast();
 const { deleteTransaction } = useTransactions();
 
+const ALL_CATEGORIES_VALUE = '__all_categories__';
+const ALL_PAYMENT_METHODS_VALUE = '__all_payment_methods__';
+
 // Filters
 const search = ref(props.filters.search ?? '');
 const categoryFilter = ref(props.filters.category_id ?? '');
@@ -81,10 +84,6 @@ const averageExpense = computed(() =>
     props.transactions.data.length
         ? visibleAmountTotal.value / props.transactions.data.length
         : 0,
-);
-
-const categorizedCount = computed(
-    () => props.transactions.data.filter((tx) => tx.category).length,
 );
 
 const bankPaidCount = computed(
@@ -104,6 +103,21 @@ const activeFiltersCount = computed(
             dateTo.value,
         ].filter(Boolean).length,
 );
+
+const categoryFilterSelectValue = computed({
+    get: () => categoryFilter.value || ALL_CATEGORIES_VALUE,
+    set: (value: string) => {
+        categoryFilter.value = value === ALL_CATEGORIES_VALUE ? '' : value;
+    },
+});
+
+const paymentMethodFilterSelectValue = computed({
+    get: () => paymentMethodFilter.value || ALL_PAYMENT_METHODS_VALUE,
+    set: (value: string) => {
+        paymentMethodFilter.value =
+            value === ALL_PAYMENT_METHODS_VALUE ? '' : value;
+    },
+});
 
 function applyFilters() {
     const query: Record<string, string> = {};
@@ -192,18 +206,12 @@ function formatDate(dateStr: string): string {
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-col gap-6 p-4 md:p-6">
             <section
-                class="relative overflow-hidden rounded-3xl border border-border/60 bg-card p-6 shadow-sm"
+                class="relative overflow-hidden rounded-3xl border border-border/60 bg-card p-2 shadow-sm"
             >
-                <div
-                    class="absolute -top-16 -left-12 h-48 w-48 rounded-full bg-primary/15 blur-3xl"
-                />
-                <div
-                    class="absolute right-0 bottom-0 hidden h-56 w-56 rounded-full bg-teal-400/10 blur-3xl lg:block"
-                />
                 <div
                     class="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between"
                 >
-                    <div class="max-w-2xl space-y-4">
+                    <div class="max-w-6xl space-y-4">
                         <div
                             class="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold tracking-[0.24em] text-primary uppercase"
                         >
@@ -211,19 +219,19 @@ function formatDate(dateStr: string): string {
                         </div>
                         <div class="space-y-2">
                             <h1
-                                class="text-3xl font-semibold tracking-tight text-foreground"
+                                class="text-2xl font-semibold tracking-tight text-foreground"
                             >
                                 {{ t('finance.expenses.heroTitle') }}
                             </h1>
                             <p
-                                class="max-w-xl text-sm leading-6 text-muted-foreground"
+                                class="max-w-xl text-sm leading-4 text-muted-foreground"
                             >
                                 {{ t('finance.expenses.heroDescription') }}
                             </p>
                         </div>
                         <div class="grid gap-3 sm:grid-cols-3">
                             <div
-                                class="rounded-2xl border border-border/60 bg-background/80 p-4 backdrop-blur"
+                                class="rounded-2xl border border-border/60 bg-background/80 p-2 backdrop-blur"
                             >
                                 <p
                                     class="text-xs font-medium tracking-[0.2em] text-muted-foreground uppercase"
@@ -231,13 +239,13 @@ function formatDate(dateStr: string): string {
                                     {{ t('common.labels.totalShown') }}
                                 </p>
                                 <p
-                                    class="mt-2 text-2xl font-semibold text-foreground"
+                                    class="mt-2 text-xl font-semibold text-foreground"
                                 >
                                     {{ formatCurrency(visibleAmountTotal) }}
                                 </p>
                             </div>
                             <div
-                                class="rounded-2xl border border-border/60 bg-background/80 p-4 backdrop-blur"
+                                class="rounded-2xl border border-border/60 bg-background/80 p-2 backdrop-blur"
                             >
                                 <p
                                     class="text-xs font-medium tracking-[0.2em] text-muted-foreground uppercase"
@@ -245,76 +253,25 @@ function formatDate(dateStr: string): string {
                                     {{ t('finance.expenses.averageExpense') }}
                                 </p>
                                 <p
-                                    class="mt-2 text-2xl font-semibold text-foreground"
+                                    class="mt-2 text-xl font-semibold text-foreground"
                                 >
                                     {{ formatCurrency(averageExpense) }}
                                 </p>
                             </div>
                             <div
-                                class="rounded-2xl border border-border/60 bg-background/80 p-4 backdrop-blur"
+                                class="rounded-2xl border border-border/60 bg-background/80 p-2 backdrop-blur"
                             >
                                 <p
                                     class="text-xs font-medium tracking-[0.2em] text-muted-foreground uppercase"
                                 >
-                                    {{ t('common.labels.filteredRows') }}
+                                    {{ t('finance.expenses.paidFromAccount') }}
                                 </p>
                                 <p
-                                    class="mt-2 text-2xl font-semibold text-foreground"
+                                    class="mt-2 text-xl font-semibold text-foreground"
                                 >
-                                    {{ transactions.meta.total }}
+                                    {{ bankPaidCount }}
                                 </p>
                             </div>
-                        </div>
-                    </div>
-                    <div class="grid w-full gap-3 sm:grid-cols-3 lg:max-w-md">
-                        <div
-                            class="rounded-2xl border border-border/60 bg-background/85 p-4 shadow-sm"
-                        >
-                            <div class="flex items-center justify-between">
-                                <span
-                                    class="text-xs tracking-[0.2em] text-muted-foreground uppercase"
-                                    >{{ t('common.labels.categorized') }}</span
-                                >
-                                <ReceiptText class="h-4 w-4 text-primary" />
-                            </div>
-                            <p class="mt-3 text-xl font-semibold">
-                                {{ categorizedCount }}
-                            </p>
-                        </div>
-                        <div
-                            class="rounded-2xl border border-border/60 bg-background/85 p-4 shadow-sm"
-                        >
-                            <div class="flex items-center justify-between">
-                                <span
-                                    class="text-xs tracking-[0.2em] text-muted-foreground uppercase"
-                                    >{{
-                                        t('finance.expenses.paidFromAccount')
-                                    }}</span
-                                >
-                                <CircleDollarSign
-                                    class="h-4 w-4 text-primary"
-                                />
-                            </div>
-                            <p class="mt-3 text-xl font-semibold">
-                                {{ bankPaidCount }}
-                            </p>
-                        </div>
-                        <div
-                            class="rounded-2xl border border-border/60 bg-background/85 p-4 shadow-sm"
-                        >
-                            <div class="flex items-center justify-between">
-                                <span
-                                    class="text-xs tracking-[0.2em] text-muted-foreground uppercase"
-                                    >{{ t('common.labels.dateRange') }}</span
-                                >
-                                <CalendarRange class="h-4 w-4 text-primary" />
-                            </div>
-                            <p class="mt-3 text-sm leading-5 font-semibold">
-                                {{ dateFrom || t('common.states.anyStart')
-                                }}<br />{{
-                                    dateTo || t('common.states.anyEnd')
-                                }}
-                            </p>
                         </div>
                     </div>
                 </div>
@@ -386,7 +343,7 @@ function formatDate(dateStr: string): string {
                             {{ t('common.labels.category') }}
                         </label>
                         <Select
-                            v-model="categoryFilter"
+                            v-model="categoryFilterSelectValue"
                             @update:model-value="applyFilters"
                         >
                             <SelectTrigger
@@ -399,7 +356,7 @@ function formatDate(dateStr: string): string {
                                 />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">{{
+                                <SelectItem :value="ALL_CATEGORIES_VALUE">{{
                                     t('common.actions.view').replace(
                                         'Prikazi',
                                         'Sve',
@@ -422,7 +379,7 @@ function formatDate(dateStr: string): string {
                             {{ t('common.labels.paymentMethod') }}
                         </label>
                         <Select
-                            v-model="paymentMethodFilter"
+                            v-model="paymentMethodFilterSelectValue"
                             @update:model-value="applyFilters"
                         >
                             <SelectTrigger
@@ -435,12 +392,15 @@ function formatDate(dateStr: string): string {
                                 />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">{{
-                                    t('common.actions.view').replace(
-                                        'Prikazi',
-                                        'Sve',
-                                    )
-                                }}</SelectItem>
+                                <SelectItem
+                                    :value="ALL_PAYMENT_METHODS_VALUE"
+                                    >{{
+                                        t('common.actions.view').replace(
+                                            'Prikazi',
+                                            'Sve',
+                                        )
+                                    }}</SelectItem
+                                >
                                 <SelectItem value="cash">{{
                                     t('common.paymentMethods.cash')
                                 }}</SelectItem>
@@ -658,7 +618,7 @@ function formatDate(dateStr: string): string {
                             t('common.labels.shownRange', {
                                 from: transactions.meta.from ?? 0,
                                 to: transactions.meta.to ?? 0,
-                                total: transactions.meta.total,
+                                inTotal: transactions.meta.total,
                             })
                         }}
                     </p>

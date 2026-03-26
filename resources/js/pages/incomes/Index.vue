@@ -65,6 +65,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 const { success, error: showError } = useToast();
 const { deleteTransaction } = useTransactions();
 
+const ALL_CATEGORIES_VALUE = '__all_categories__';
+
 const search = ref(props.filters.search ?? '');
 const categoryFilter = ref(props.filters.category_id ?? '');
 const dateFrom = ref(props.filters.date_from ?? '');
@@ -98,6 +100,13 @@ const activeFiltersCount = computed(
             dateTo.value,
         ].filter(Boolean).length,
 );
+
+const categoryFilterSelectValue = computed({
+    get: () => categoryFilter.value || ALL_CATEGORIES_VALUE,
+    set: (value: string) => {
+        categoryFilter.value = value === ALL_CATEGORIES_VALUE ? '' : value;
+    },
+});
 
 function applyFilters() {
     const query: Record<string, string> = {};
@@ -181,18 +190,12 @@ function formatDate(dateStr: string): string {
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-col gap-6 p-4 md:p-6">
             <section
-                class="relative overflow-hidden rounded-3xl border border-border/60 bg-card p-6 shadow-sm"
+                class="relative overflow-hidden rounded-3xl border border-border/60 bg-card p-2 shadow-sm"
             >
                 <div
-                    class="absolute -top-16 -left-12 h-48 w-48 rounded-full bg-emerald-400/15 blur-3xl"
-                />
-                <div
-                    class="absolute right-0 bottom-0 hidden h-56 w-56 rounded-full bg-emerald-300/10 blur-3xl lg:block"
-                />
-                <div
-                    class="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between"
+                    class="relative flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between"
                 >
-                    <div class="max-w-2xl space-y-4">
+                    <div class="max-w-6xl space-y-4">
                         <div
                             class="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold tracking-[0.24em] text-primary uppercase"
                         >
@@ -200,7 +203,7 @@ function formatDate(dateStr: string): string {
                         </div>
                         <div class="space-y-2">
                             <h1
-                                class="text-3xl font-semibold tracking-tight text-foreground"
+                                class="text-xl font-semibold tracking-tight text-foreground"
                             >
                                 {{ t('finance.incomes.heroTitle') }}
                             </h1>
@@ -212,7 +215,7 @@ function formatDate(dateStr: string): string {
                         </div>
                         <div class="grid gap-3 sm:grid-cols-3">
                             <div
-                                class="rounded-2xl border border-border/60 bg-background/80 p-4 backdrop-blur"
+                                class="rounded-2xl border border-border/60 bg-background/80 p-2 backdrop-blur"
                             >
                                 <p
                                     class="text-xs font-medium tracking-[0.2em] text-muted-foreground uppercase"
@@ -220,13 +223,13 @@ function formatDate(dateStr: string): string {
                                     {{ t('common.labels.totalShown') }}
                                 </p>
                                 <p
-                                    class="mt-2 text-2xl font-semibold text-foreground"
+                                    class="mt-2 text-xl font-semibold text-foreground"
                                 >
                                     {{ formatCurrency(visibleAmountTotal) }}
                                 </p>
                             </div>
                             <div
-                                class="rounded-2xl border border-border/60 bg-background/80 p-4 backdrop-blur"
+                                class="rounded-2xl border border-border/60 bg-background/80 p-2 backdrop-blur"
                             >
                                 <p
                                     class="text-xs font-medium tracking-[0.2em] text-muted-foreground uppercase"
@@ -234,74 +237,25 @@ function formatDate(dateStr: string): string {
                                     {{ t('finance.incomes.averageIncome') }}
                                 </p>
                                 <p
-                                    class="mt-2 text-2xl font-semibold text-foreground"
+                                    class="mt-2 text-xl font-semibold text-foreground"
                                 >
                                     {{ formatCurrency(averageIncome) }}
                                 </p>
                             </div>
                             <div
-                                class="rounded-2xl border border-border/60 bg-background/80 p-4 backdrop-blur"
+                                class="rounded-2xl border border-border/60 bg-background/80 p-2 backdrop-blur"
                             >
                                 <p
                                     class="text-xs font-medium tracking-[0.2em] text-muted-foreground uppercase"
                                 >
-                                    {{ t('common.labels.filteredRows') }}
+                                    {{ t('finance.incomes.linkedAccount') }}
                                 </p>
                                 <p
-                                    class="mt-2 text-2xl font-semibold text-foreground"
+                                    class="mt-2 text-xl font-semibold text-foreground"
                                 >
-                                    {{ transactions.meta.total }}
+                                    {{ accountLinkedCount }}
                                 </p>
                             </div>
-                        </div>
-                    </div>
-                    <div class="grid w-full gap-3 sm:grid-cols-3 lg:max-w-md">
-                        <div
-                            class="rounded-2xl border border-border/60 bg-background/85 p-4 shadow-sm"
-                        >
-                            <div class="flex items-center justify-between">
-                                <span
-                                    class="text-xs tracking-[0.2em] text-muted-foreground uppercase"
-                                    >{{ t('common.labels.categorized') }}</span
-                                >
-                                <ReceiptText class="h-4 w-4 text-primary" />
-                            </div>
-                            <p class="mt-3 text-xl font-semibold">
-                                {{ categorizedCount }}
-                            </p>
-                        </div>
-                        <div
-                            class="rounded-2xl border border-border/60 bg-background/85 p-4 shadow-sm"
-                        >
-                            <div class="flex items-center justify-between">
-                                <span
-                                    class="text-xs tracking-[0.2em] text-muted-foreground uppercase"
-                                    >{{
-                                        t('finance.incomes.linkedAccount')
-                                    }}</span
-                                >
-                                <Landmark class="h-4 w-4 text-primary" />
-                            </div>
-                            <p class="mt-3 text-xl font-semibold">
-                                {{ accountLinkedCount }}
-                            </p>
-                        </div>
-                        <div
-                            class="rounded-2xl border border-border/60 bg-background/85 p-4 shadow-sm"
-                        >
-                            <div class="flex items-center justify-between">
-                                <span
-                                    class="text-xs tracking-[0.2em] text-muted-foreground uppercase"
-                                    >{{ t('common.labels.dateRange') }}</span
-                                >
-                                <CalendarRange class="h-4 w-4 text-primary" />
-                            </div>
-                            <p class="mt-3 text-sm leading-5 font-semibold">
-                                {{ dateFrom || t('common.states.anyStart')
-                                }}<br />{{
-                                    dateTo || t('common.states.anyEnd')
-                                }}
-                            </p>
                         </div>
                     </div>
                 </div>
@@ -373,7 +327,7 @@ function formatDate(dateStr: string): string {
                             {{ t('common.labels.category') }}
                         </label>
                         <Select
-                            v-model="categoryFilter"
+                            v-model="categoryFilterSelectValue"
                             @update:model-value="applyFilters"
                         >
                             <SelectTrigger
@@ -386,7 +340,9 @@ function formatDate(dateStr: string): string {
                                 />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">Sve</SelectItem>
+                                <SelectItem :value="ALL_CATEGORIES_VALUE"
+                                    >Sve</SelectItem
+                                >
                                 <SelectItem
                                     v-for="cat in categories.data"
                                     :key="cat.id"
@@ -605,7 +561,7 @@ function formatDate(dateStr: string): string {
                             t('common.labels.shownRange', {
                                 from: transactions.meta.from ?? 0,
                                 to: transactions.meta.to ?? 0,
-                                total: transactions.meta.total,
+                                inTotal: transactions.meta.total,
                             })
                         }}
                     </p>

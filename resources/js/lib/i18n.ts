@@ -214,6 +214,7 @@ const messages = {
             repository: 'Repozitorijum',
             documentation: 'Dokumentacija',
             navigationMenu: 'Meni navigacije',
+            overview: 'Јасан преглед вашег новчаног тока',
         },
     },
     common: {
@@ -234,6 +235,10 @@ const messages = {
             filters: 'Filteri',
             regenerate: 'Generiši ponovo',
             transfer: 'Prenos',
+        },
+        pagination: {
+            previous: 'Prethodna',
+            next: 'Sledeća',
         },
         states: {
             loading: 'Učitavanje...',
@@ -272,7 +277,7 @@ const messages = {
             transactions: 'Transakcije',
             resultsTotal: ':count ukupno rezultata',
             connectedAccounts: ':count povezanih računa',
-            shownRange: 'Prikazano :from-:to od :total',
+            shownRange: 'Prikazano :from-:to od :inTotal',
         },
         paymentMethods: {
             cash: 'Keš',
