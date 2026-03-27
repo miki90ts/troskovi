@@ -8,20 +8,23 @@ import {
     PiggyBank,
     TrendingUp,
 } from 'lucide-vue-next';
-import AppLayout from '@/layouts/AppLayout.vue';
 import CurrencyDisplay from '@/components/CurrencyDisplay.vue';
 import KpiCard from '@/components/KpiCard.vue';
 import ToastContainer from '@/components/ToastContainer.vue';
+import { useDashboardPage } from '@/composables/useDashboardPage';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { formatCurrency, formatShortDate, t } from '@/lib/i18n';
 import type { BreadcrumbItem } from '@/types';
 import type {
     BankAccountSummary,
     DashboardTransaction,
     ReportSummary,
+    SpendingTargetProgressResponse,
 } from '@/types/models';
 
 const props = defineProps<{
     summary: ReportSummary;
+    budgetProgress: SpendingTargetProgressResponse;
     recentTransactions: DashboardTransaction[];
     accounts: BankAccountSummary[];
 }>();
@@ -29,6 +32,15 @@ const props = defineProps<{
 const breadcrumbs: BreadcrumbItem[] = [
     { title: t('dashboard.head'), href: '/dashboard' },
 ];
+
+const {
+    secondaryBudgetTarget,
+    budgetLabel,
+    budgetStatusLabel,
+    budgetStatusClass,
+    budgetBarClass,
+    budgetBarWidth,
+} = useDashboardPage(props);
 </script>
 
 <template>
@@ -38,7 +50,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-col gap-6 p-4 md:p-6">
             <section
-                class="relative overflow-hidden rounded-[2rem] border border-border/70 bg-[linear-gradient(135deg,rgba(13,148,136,0.14),rgba(255,255,255,0.95))] p-6 shadow-[0_22px_60px_rgba(15,23,42,0.08)] md:p-8 dark:bg-[linear-gradient(135deg,rgba(13,148,136,0.18),rgba(15,23,42,0.88))]"
+                class="relative overflow-hidden rounded-4xl border border-border/70 bg-[linear-gradient(135deg,rgba(13,148,136,0.14),rgba(255,255,255,0.95))] p-6 shadow-[0_22px_60px_rgba(15,23,42,0.08)] md:p-8 dark:bg-[linear-gradient(135deg,rgba(13,148,136,0.18),rgba(15,23,42,0.88))]"
             >
                 <div
                     class="absolute -top-10 right-8 h-32 w-32 rounded-full bg-teal-300/20 blur-3xl"
@@ -70,7 +82,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                         </div>
                     </div>
 
-                    <div class="grid gap-3 sm:grid-cols-2 lg:min-w-[360px]">
+                    <div class="grid gap-3 sm:grid-cols-2 lg:min-w-90">
                         <Link
                             href="/reports"
                             class="group rounded-3xl border border-border/70 bg-background/75 px-5 py-4 transition hover:border-primary/30 hover:bg-background"
@@ -143,6 +155,181 @@ const breadcrumbs: BreadcrumbItem[] = [
                     "
                 />
             </div>
+
+            <section
+                class="rounded-3xl border border-border/70 bg-card/95 p-6 shadow-[0_16px_40px_rgba(15,23,42,0.06)]"
+            >
+                <div
+                    class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"
+                >
+                    <div class="max-w-2xl">
+                        <p
+                            class="text-xs font-medium tracking-[0.24em] text-primary uppercase"
+                        >
+                            {{ t('dashboard.budgets.title') }}
+                        </p>
+                        <h2 class="mt-2 text-xl font-semibold tracking-tight">
+                            {{ t('dashboard.budgets.description') }}
+                        </h2>
+                    </div>
+                    <div class="flex gap-3">
+                        <Link
+                            href="/settings/budgets"
+                            class="inline-flex items-center justify-center rounded-2xl border border-border/70 bg-background/75 px-4 py-2.5 text-sm font-medium transition hover:border-primary/30 hover:text-primary"
+                        >
+                            {{ t('dashboard.budgets.manage') }}
+                        </Link>
+                        <Link
+                            href="/reports"
+                            class="inline-flex items-center justify-center rounded-2xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
+                        >
+                            {{ t('dashboard.budgets.review') }}
+                        </Link>
+                    </div>
+                </div>
+
+                <div
+                    v-if="budgetProgress.targets.length === 0"
+                    class="mt-5 rounded-2xl border border-dashed border-border/70 bg-background/70 p-6 text-center"
+                >
+                    <p class="text-base font-semibold">
+                        {{ t('dashboard.budgets.emptyTitle') }}
+                    </p>
+                    <p class="mt-2 text-sm text-muted-foreground">
+                        {{ t('dashboard.budgets.emptyDescription') }}
+                    </p>
+                </div>
+
+                <div v-else class="mt-5 grid gap-4 lg:grid-cols-2">
+                    <div
+                        v-if="budgetProgress.overall_target"
+                        class="rounded-3xl border border-border/60 bg-[linear-gradient(180deg,rgba(20,184,166,0.08),rgba(255,255,255,0.95))] p-5 dark:bg-[linear-gradient(180deg,rgba(20,184,166,0.12),rgba(15,23,42,0.88))]"
+                    >
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <p
+                                    class="text-xs font-medium tracking-[0.2em] text-muted-foreground uppercase"
+                                >
+                                    {{ t('dashboard.budgets.overall') }}
+                                </p>
+                                <p class="mt-2 text-2xl font-semibold">
+                                    {{
+                                        formatCurrency(
+                                            budgetProgress.overall_target
+                                                .spent_amount,
+                                        )
+                                    }}
+                                </p>
+                                <p class="mt-1 text-sm text-muted-foreground">
+                                    {{
+                                        t('dashboard.budgets.spentOfTarget', {
+                                            spent: formatCurrency(
+                                                budgetProgress.overall_target
+                                                    .spent_amount,
+                                            ),
+                                            target: formatCurrency(
+                                                budgetProgress.overall_target
+                                                    .target_amount,
+                                            ),
+                                        })
+                                    }}
+                                </p>
+                            </div>
+                            <span
+                                class="rounded-full px-3 py-1 text-xs font-semibold"
+                                :class="
+                                    budgetStatusClass(
+                                        budgetProgress.overall_target.status,
+                                    )
+                                "
+                            >
+                                {{
+                                    budgetStatusLabel(
+                                        budgetProgress.overall_target.status,
+                                    )
+                                }}
+                            </span>
+                        </div>
+                        <div
+                            class="mt-4 h-2.5 overflow-hidden rounded-full bg-muted"
+                        >
+                            <div
+                                class="h-full rounded-full transition-all"
+                                :class="
+                                    budgetBarClass(
+                                        budgetProgress.overall_target.status,
+                                    )
+                                "
+                                :style="{
+                                    width: budgetBarWidth(
+                                        budgetProgress.overall_target
+                                            .progress_percent,
+                                    ),
+                                }"
+                            />
+                        </div>
+                    </div>
+
+                    <div
+                        v-if="secondaryBudgetTarget"
+                        class="rounded-3xl border border-border/60 bg-card/95 p-5"
+                    >
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <p
+                                    class="text-xs font-medium tracking-[0.2em] text-muted-foreground uppercase"
+                                >
+                                    {{ t('dashboard.budgets.topRisk') }}
+                                </p>
+                                <p class="mt-2 text-2xl font-semibold">
+                                    {{ budgetLabel(secondaryBudgetTarget) }}
+                                </p>
+                                <p class="mt-1 text-sm text-muted-foreground">
+                                    {{
+                                        t('dashboard.budgets.spentOfTarget', {
+                                            spent: formatCurrency(
+                                                secondaryBudgetTarget.spent_amount,
+                                            ),
+                                            target: formatCurrency(
+                                                secondaryBudgetTarget.target_amount,
+                                            ),
+                                        })
+                                    }}
+                                </p>
+                            </div>
+                            <span
+                                class="rounded-full px-3 py-1 text-xs font-semibold"
+                                :class="
+                                    budgetStatusClass(
+                                        secondaryBudgetTarget.status,
+                                    )
+                                "
+                            >
+                                {{
+                                    budgetStatusLabel(
+                                        secondaryBudgetTarget.status,
+                                    )
+                                }}
+                            </span>
+                        </div>
+                        <div
+                            class="mt-4 h-2.5 overflow-hidden rounded-full bg-muted"
+                        >
+                            <div
+                                class="h-full rounded-full transition-all"
+                                :class="
+                                    budgetBarClass(secondaryBudgetTarget.status)
+                                "
+                                :style="{
+                                    width: budgetBarWidth(
+                                        secondaryBudgetTarget.progress_percent,
+                                    ),
+                                }"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </section>
 
             <div class="grid gap-6 lg:grid-cols-3">
                 <!-- Recent Transactions -->

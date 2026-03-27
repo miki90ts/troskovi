@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\BankAccountService;
 use App\Services\ReportService;
+use App\Services\SpendingTargetService;
 use App\Services\TransactionService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -15,6 +16,7 @@ class DashboardController extends Controller
         private ReportService $reportService,
         private TransactionService $transactionService,
         private BankAccountService $bankAccountService,
+        private SpendingTargetService $spendingTargetService,
     ) {}
 
     public function index(Request $request): Response
@@ -23,6 +25,7 @@ class DashboardController extends Controller
 
         return Inertia::render('Dashboard', [
             'summary' => $this->reportService->getSummary($user, 'monthly'),
+            'budgetProgress' => $this->spendingTargetService->getProgress($user, 'monthly'),
             'recentTransactions' => $this->transactionService->getRecent($user, 5)
                 ->map(fn($t) => [
                     'id' => $t->id,

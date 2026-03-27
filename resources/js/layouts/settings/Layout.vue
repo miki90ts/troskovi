@@ -21,6 +21,10 @@ const sidebarNavItems: NavItem[] = [
         href: editSecurity(),
     },
     {
+        title: t('settings.nav.budgets'),
+        href: '/settings/budgets',
+    },
+    {
         title: t('settings.nav.appearance'),
         href: editAppearance(),
     },
@@ -72,8 +76,8 @@ const { isCurrentOrParentUrl } = useCurrentUrl();
 
             <Separator class="my-6 lg:hidden" />
 
-            <div class="flex-1 md:max-w-2xl">
-                <section class="max-w-2xl space-y-8">
+            <div class="flex-1 md:max-w-4xl">
+                <section class="max-w-4xl space-y-8">
                     <slot />
                 </section>
             </div>

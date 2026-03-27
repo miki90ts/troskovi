@@ -91,6 +91,47 @@ export type ReportSummary = {
     period_end: string;
 };
 
+export type SpendingTargetPeriod = 'daily' | 'weekly' | 'monthly';
+
+export type SpendingTarget = {
+    id: number;
+    period: SpendingTargetPeriod;
+    target_amount: number;
+    is_active: boolean;
+    scope: 'overall' | 'category';
+    category: CategoryCompact | null;
+    created_at: string;
+    updated_at: string;
+};
+
+export type SpendingTargetProgress = {
+    id: number;
+    scope: 'overall' | 'category';
+    period: SpendingTargetPeriod;
+    target_amount: number;
+    spent_amount: number;
+    remaining_amount: number;
+    progress_percent: number;
+    status: 'ok' | 'warning' | 'exceeded';
+    is_active: boolean;
+    category: CategoryCompact | null;
+};
+
+export type SpendingTargetProgressResponse = {
+    period: SpendingTargetPeriod;
+    period_start: string;
+    period_end: string;
+    warning_threshold_percent: number;
+    overall_target: SpendingTargetProgress | null;
+    top_risk_target: SpendingTargetProgress | null;
+    targets: SpendingTargetProgress[];
+    summary: {
+        active_count: number;
+        warning_count: number;
+        exceeded_count: number;
+    };
+};
+
 export type DashboardTransaction = {
     id: number;
     type: 'income' | 'expense';

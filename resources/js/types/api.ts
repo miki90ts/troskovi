@@ -38,6 +38,13 @@ export type TransactionFilters = {
 
 export type ReportPeriod = 'weekly' | 'monthly' | 'yearly';
 
+export type SpendingTargetPayload = {
+    period: 'daily' | 'weekly' | 'monthly';
+    target_amount: number;
+    category_id?: number | null;
+    is_active?: boolean;
+};
+
 export type ChartData = {
     labels: string[];
     values: number[];

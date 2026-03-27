@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\BankAccountController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\RecurringTransactionController;
 use App\Http\Controllers\Api\V1\ReportController;
+use App\Http\Controllers\Api\V1\SpendingTargetController;
 use App\Http\Controllers\Api\V1\TransactionController;
 use Illuminate\Support\Facades\Route;
 
@@ -24,6 +25,9 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     // Recurring Transactions
     Route::apiResource('recurring-transactions', RecurringTransactionController::class);
 
+    // Spending Targets
+    Route::apiResource('spending-targets', SpendingTargetController::class)->except(['show']);
+
     // Reports
     Route::prefix('reports')->group(function () {
         Route::get('summary', [ReportController::class, 'summary']);
@@ -32,5 +36,6 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
         Route::get('expense-breakdown', [ReportController::class, 'expenseBreakdown']);
         Route::get('income-breakdown', [ReportController::class, 'incomeBreakdown']);
         Route::get('cash-vs-bank', [ReportController::class, 'cashVsBank']);
+        Route::get('spending-progress', [ReportController::class, 'spendingProgress']);
     });
 });

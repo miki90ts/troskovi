@@ -452,6 +452,26 @@ const messages = {
             totalExpenses: 'Ukupni troškovi',
             netSavings: 'Neto štednja',
             savingsRateKpi: 'Stopa štednje',
+            budgetsTitle: 'Budžeti i upozorenja',
+            budgetsDescription:
+                'Prati koliko si blizu planirane potrošnje za ukupni budžet i pojedinačne kategorije.',
+            budgetsRange: 'Aktivni opseg',
+            budgetsTracked: 'Praćenih budžeta',
+            budgetsWarnings: 'U upozorenju',
+            budgetsExceeded: 'Prekoračeno',
+            budgetTarget: 'Planirano',
+            budgetSpent: 'Potrošeno',
+            budgetRemaining: 'Preostalo',
+            budgetOver: 'Prekoračenje',
+            budgetOverallLabel: 'Ukupna potrošnja',
+            budgetEmptyTitle: 'Nema budžeta za ovaj period',
+            budgetEmptyDescription:
+                'Dodaj budžete u podešavanjima da bi video upozorenja i napredak potrošnje.',
+            manageBudgets: 'Upravljaj budžetima',
+            statusOk: 'U okviru plana',
+            statusWarning: 'Blizu limita',
+            statusExceeded: 'Prekoračeno',
+            warningNote: 'Upozorenje se aktivira od :value% budžeta.',
         },
         bankAccounts: {
             head: 'Bankovni računi',
@@ -677,6 +697,22 @@ const messages = {
             manage: 'Upravljaj',
             empty: 'Još nema dodatih bankovnih računa.',
         },
+        budgets: {
+            title: 'Budžeti potrošnje',
+            description:
+                'Brz pregled mesečnog budžeta i kategorije koja je najbliža limitu.',
+            overall: 'Ukupan budžet',
+            topRisk: 'Najrizičnija kategorija',
+            emptyTitle: 'Još nema aktivnih mesečnih budžeta.',
+            emptyDescription:
+                'Postavi budžete u podešavanjima da bi dobio upozorenja na pregled tabli.',
+            manage: 'Podesi budžete',
+            review: 'Otvori izveštaje',
+            spentOfTarget: ':spent od :target',
+            statusOk: 'U okviru plana',
+            statusWarning: 'Pri vrhu limita',
+            statusExceeded: 'Limit je probijen',
+        },
     },
     settings: {
         common: {
@@ -688,9 +724,10 @@ const messages = {
         nav: {
             profile: 'Profil',
             security: 'Bezbednost',
+            budgets: 'Budžeti',
             appearance: 'Izgled',
             description:
-                'Upravljaj profilom, bezbednošću i izgledom interfejsa iz jednog mesta.',
+                'Upravljaj profilom, bezbednošću, budžetima i izgledom interfejsa iz jednog mesta.',
         },
         profile: {
             head: 'Podešavanja profila',
@@ -732,6 +769,83 @@ const messages = {
             light: 'Svetla',
             dark: 'Tamna',
             system: 'Sistemska',
+        },
+        budgets: {
+            head: 'Budžeti potrošnje',
+            title: 'Ciljevi potrošnje',
+            description:
+                'Postavi informativne budžete za ukupan trošak i pojedinačne kategorije, pa prati upozorenja kroz izveštaje i pregled.',
+            badge: 'Budžeti i upozorenja',
+            totalTargets: 'Ukupno budžeta',
+            activeTargets: 'Aktivni',
+            categoryTargets: 'Po kategoriji',
+            atRiskTargets: 'U riziku',
+            managementTitle: 'Upravljanje budžetima',
+            managementDescription:
+                'Dodaj dnevne, nedeljne i mesečne budžete bez blokiranja potrošnje.',
+            topRiskTitle: 'Najrizičnije kategorije',
+            topRiskDescription:
+                'Prvo prikaži budžete koji su najbliži ili preko cilja.',
+            topRiskEmpty:
+                'Trenutno nema aktivnih kategorija koje odstupaju dovoljno da uđu u prioritetni prikaz.',
+            filterTitle: 'Filter po statusu',
+            filterDescription:
+                'Suzi prikaz na budžete koji traže pažnju ili proveri one koji su mirni.',
+            filteredCount: 'Prikazano :count budžeta',
+            add: 'Dodaj budžet',
+            addForPeriod: 'Dodaj za :period',
+            emptyTitle: 'Još nema postavljenih budžeta',
+            emptyDescription:
+                'Kreiraj prvi budžet da bi video upozorenja na dashboard-u i reports stranici.',
+            filterEmpty: 'Za izabrani status nema budžeta u ovom periodu.',
+            periodSectionDescription:
+                'Budžeti koji prate :period nivo potrošnje.',
+            overallLabel: 'Ukupna potrošnja',
+            categoryLabel: 'Kategorija',
+            inactive: 'Neaktivan',
+            active: 'Aktivan',
+            statusAll: 'Svi statusi',
+            statusOk: 'U okviru plana',
+            statusWarning: 'Blizu limita',
+            statusExceeded: 'Prekoračeno',
+            statusInactive: 'Pauzirano',
+            targetAmount: 'Iznos budžeta',
+            period: 'Period',
+            scope: 'Opseg',
+            scopeHint:
+                'Izaberi ukupnu potrošnju ili konkretnu kategoriju troškova.',
+            overallOption: 'Ukupna potrošnja',
+            activeOnCreate: 'Aktivan odmah',
+            spent: 'Potrošeno',
+            remaining: 'Preostalo',
+            overBy: 'Preko cilja',
+            progress: 'Napredak',
+            progressPaused: 'Praćenje pauzirano',
+            progressPausedHint:
+                'Aktiviraj budžet da ponovo vidiš napredak i warning stanje.',
+            formBadge: 'Podešavanje budžeta',
+            newTitle: 'Novi budžet',
+            editTitle: 'Izmeni budžet',
+            createDescription:
+                'Dodaj cilj potrošnje koji služi za praćenje i upozorenja, bez zaustavljanja unosa troškova.',
+            editDescription:
+                'Izmeni iznos, period ili opseg budžeta bez gubitka postojeće istorije troškova.',
+            created: 'Budžet je kreiran',
+            updated: 'Budžet je ažuriran',
+            activated: 'Budžet je aktiviran',
+            deactivated: 'Budžet je pauziran',
+            saveError: 'Čuvanje budžeta nije uspelo',
+            loadError: 'Učitavanje budžeta nije uspelo',
+            toggleError: 'Promena statusa budžeta nije uspela',
+            deleted: 'Budžet je obrisan',
+            deleteError: 'Brisanje budžeta nije uspelo',
+            deleteTitle: 'Obriši budžet',
+            deleteDescription:
+                'Praćenje za ovaj budžet će biti uklonjeno, ali postojeće transakcije ostaju netaknute.',
+            activate: 'Aktiviraj',
+            pause: 'Pauziraj',
+            statusNote:
+                'Warning se prikazuje od 80% i prelazi u kritično nakon 100%.',
         },
         deleteAccount: {
             title: 'Brisanje naloga',

@@ -4,12 +4,16 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Services\ReportService;
+use App\Services\SpendingTargetService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ReportController extends Controller
 {
-    public function __construct(private ReportService $service) {}
+    public function __construct(
+        private ReportService $service,
+        private SpendingTargetService $spendingTargetService,
+    ) {}
 
     public function summary(Request $request): JsonResponse
     {
@@ -62,6 +66,15 @@ class ReportController extends Controller
 
         return response()->json([
             'data' => $this->service->getCashVsBank($request->user(), $period),
+        ]);
+    }
+
+    public function spendingProgress(Request $request): JsonResponse
+    {
+        $period = $request->query('period', 'monthly');
+
+        return response()->json([
+            'data' => $this->spendingTargetService->getProgress($request->user(), $period),
         ]);
     }
 }
