@@ -5,6 +5,7 @@ use App\Http\Controllers\CategoryPageController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExpensePageController;
 use App\Http\Controllers\IncomePageController;
+use App\Http\Controllers\LoyaltyCardPageController;
 use App\Http\Controllers\RecurringTransactionPageController;
 use App\Http\Controllers\ReportPageController;
 use Illuminate\Support\Facades\Auth;
@@ -33,6 +34,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('reports', [ReportPageController::class, 'index'])->name('reports.index');
     Route::get('categories', [CategoryPageController::class, 'index'])->name('categories.index');
+    Route::get('loyalty-cards', [LoyaltyCardPageController::class, 'index'])->name('loyalty-cards.index');
 });
 
 require __DIR__ . '/settings.php';

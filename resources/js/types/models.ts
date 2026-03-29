@@ -142,3 +142,13 @@ export type DashboardTransaction = {
     bank_account: { name: string } | null;
     payment_method: 'cash' | 'bank_account';
 };
+
+export type LoyaltyCard = {
+    id: number;
+    name: string;
+    card_number: string;
+    notes: string | null;
+    color: string | null;
+    created_at: string;
+    updated_at: string;
+};

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\BankAccountController;
 use App\Http\Controllers\Api\V1\CategoryController;
+use App\Http\Controllers\Api\V1\LoyaltyCardController;
 use App\Http\Controllers\Api\V1\RecurringTransactionController;
 use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\SpendingTargetController;
@@ -27,6 +28,9 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
 
     // Spending Targets
     Route::apiResource('spending-targets', SpendingTargetController::class)->except(['show']);
+
+    // Loyalty Cards
+    Route::apiResource('loyalty-cards', LoyaltyCardController::class)->except(['show']);
 
     // Reports
     Route::prefix('reports')->group(function () {

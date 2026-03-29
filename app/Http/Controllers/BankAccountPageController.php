@@ -17,7 +17,7 @@ class BankAccountPageController extends Controller
 
     public function index(Request $request): Response
     {
-        $accounts = $this->service->list($request->user(), $request->boolean('include_archived'));
+        $accounts = $this->service->list($request->user(), includeArchived: true);
 
         return Inertia::render('bank-accounts/Index', [
             'accounts' => BankAccountResource::collection($accounts),

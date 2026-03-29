@@ -21,6 +21,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const {
+    categories,
     activeTab,
     expenseCategories,
     incomeCategories,
@@ -47,7 +48,7 @@ const {
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-col gap-6 p-4 md:p-6">
             <CategoriesHeroSection
-                :total-categories="props.categories.data.length"
+                :total-categories="categories.length"
                 :expense-count="expenseCategories.length"
                 :income-count="incomeCategories.length"
                 :active-tab="activeTab"

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Check } from 'lucide-vue-next';
 import { computed } from 'vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,26 +11,21 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { t } from '@/lib/i18n';
-import type { Category } from '@/types';
+import type { BankAccount } from '@/types/models';
 
 const props = defineProps<{
     open: boolean;
-    editingCategory: Category | null;
+    editingAccount: BankAccount | null;
     formSubmitting: boolean;
     colorPresets: string[];
     form: {
         name: string;
-        type: 'expense' | 'income';
-        icon: string;
+        bank_name: string;
+        account_number: string;
+        currency: string;
         color: string;
+        initial_balance: string;
     };
 }>();
 
@@ -40,9 +34,11 @@ const emit = defineEmits<{
     'update:form': [
         value: {
             name: string;
-            type: 'expense' | 'income';
-            icon: string;
+            bank_name: string;
+            account_number: string;
+            currency: string;
             color: string;
+            initial_balance: string;
         },
     ];
     submit: [];
@@ -53,9 +49,11 @@ const emit = defineEmits<{
 function updateForm(
     patch: Partial<{
         name: string;
-        type: 'expense' | 'income';
-        icon: string;
+        bank_name: string;
+        account_number: string;
+        currency: string;
         color: string;
+        initial_balance: string;
     }>,
 ) {
     emit('update:form', {
@@ -69,14 +67,24 @@ const nameModel = computed({
     set: (value: string) => updateForm({ name: value }),
 });
 
-const typeModel = computed({
-    get: () => props.form.type,
-    set: (value: 'expense' | 'income') => updateForm({ type: value }),
+const bankNameModel = computed({
+    get: () => props.form.bank_name,
+    set: (value: string) => updateForm({ bank_name: value }),
 });
 
-const iconModel = computed({
-    get: () => props.form.icon,
-    set: (value: string) => updateForm({ icon: value }),
+const accountNumberModel = computed({
+    get: () => props.form.account_number,
+    set: (value: string) => updateForm({ account_number: value }),
+});
+
+const currencyModel = computed({
+    get: () => props.form.currency,
+    set: (value: string) => updateForm({ currency: value }),
+});
+
+const initialBalanceModel = computed({
+    get: () => props.form.initial_balance,
+    set: (value: string) => updateForm({ initial_balance: value }),
 });
 
 const colorModel = computed({
@@ -106,22 +114,22 @@ const colorModel = computed({
                     <div
                         class="relative inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold tracking-[0.24em] text-primary uppercase"
                     >
-                        {{ t('finance.categories.formBadge') }}
+                        {{ t('finance.bankAccounts.accountEditBadge') }}
                     </div>
                     <DialogTitle class="relative mt-4 text-2xl tracking-tight">
                         {{
-                            props.editingCategory
-                                ? t('finance.categories.editTitle')
-                                : t('finance.categories.newTitle')
+                            props.editingAccount
+                                ? t('finance.bankAccounts.editTitle')
+                                : t('finance.bankAccounts.newTitle')
                         }}
                     </DialogTitle>
                     <DialogDescription
                         class="relative mt-2 max-w-lg text-sm leading-6"
                     >
                         {{
-                            props.editingCategory
-                                ? t('finance.categories.editDescription')
-                                : t('finance.categories.createDescription')
+                            props.editingAccount
+                                ? t('finance.bankAccounts.editDescription')
+                                : t('finance.bankAccounts.createDescription')
                         }}
                     </DialogDescription>
                 </div>
@@ -130,59 +138,68 @@ const colorModel = computed({
             <form class="space-y-6 px-6 py-6" @submit.prevent="emit('submit')">
                 <div class="grid gap-2">
                     <Label
-                        for="cat_name"
+                        for="ba_name"
                         class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
                     >
-                        {{ t('finance.categories.name') }}
+                        {{ t('finance.bankAccounts.accountName') }}
                     </Label>
                     <Input
-                        id="cat_name"
+                        id="ba_name"
                         v-model="nameModel"
-                        :placeholder="t('finance.categories.namePlaceholder')"
+                        :placeholder="
+                            t('finance.bankAccounts.accountNamePlaceholder')
+                        "
                         class="h-11 rounded-2xl border-border/60 bg-background"
                         required
                     />
                 </div>
 
-                <div class="grid gap-4 md:grid-cols-2">
-                    <div class="grid gap-2">
-                        <Label
-                            class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                        >
-                            {{ t('common.labels.type') }}
-                        </Label>
-                        <Select
-                            v-model="typeModel"
-                            :disabled="!!props.editingCategory"
-                        >
-                            <SelectTrigger
-                                class="h-11 rounded-2xl border-border/60 bg-background"
-                            >
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="expense">
-                                    {{ t('finance.categories.expenseLabel') }}
-                                </SelectItem>
-                                <SelectItem value="income">
-                                    {{ t('finance.categories.incomeLabel') }}
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+                <div class="grid gap-2">
+                    <Label
+                        for="ba_bank_name"
+                        class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
+                    >
+                        {{ t('finance.bankAccounts.bankName') }}
+                    </Label>
+                    <Input
+                        id="ba_bank_name"
+                        v-model="bankNameModel"
+                        :placeholder="
+                            t('finance.bankAccounts.bankNamePlaceholder')
+                        "
+                        class="h-11 rounded-2xl border-border/60 bg-background"
+                        required
+                    />
+                </div>
 
+                <div class="grid grid-cols-2 gap-4">
                     <div class="grid gap-2">
                         <Label
-                            for="cat_icon"
+                            for="ba_account_number"
                             class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
                         >
-                            {{ t('finance.categories.icon') }}
+                            {{ t('finance.bankAccounts.accountNumber') }}
                         </Label>
                         <Input
-                            id="cat_icon"
-                            v-model="iconModel"
-                            placeholder="🛒"
+                            id="ba_account_number"
+                            v-model="accountNumberModel"
+                            :placeholder="t('finance.bankAccounts.optional')"
                             class="h-11 rounded-2xl border-border/60 bg-background"
+                        />
+                    </div>
+                    <div class="grid gap-2">
+                        <Label
+                            for="ba_currency"
+                            class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
+                        >
+                            {{ t('finance.bankAccounts.currency') }}
+                        </Label>
+                        <Input
+                            id="ba_currency"
+                            v-model="currencyModel"
+                            placeholder="RSD"
+                            class="h-11 rounded-2xl border-border/60 bg-background"
+                            required
                         />
                     </div>
                 </div>
@@ -190,68 +207,29 @@ const colorModel = computed({
                 <div class="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
                     <div class="grid gap-2">
                         <Label
-                            for="cat_color"
+                            for="ba_initial_balance"
                             class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
                         >
-                            {{ t('finance.categories.color') }}
+                            {{ t('finance.bankAccounts.initialBalance') }}
                         </Label>
-                        <div
-                            class="rounded-3xl border border-dashed border-border/70 bg-muted/20 px-4 py-3"
-                        >
-                            <p class="text-sm font-medium">
-                                {{ t('finance.categories.visualPreview') }}
-                            </p>
-                            <div class="mt-3 flex items-center gap-3">
-                                <div
-                                    class="flex h-12 w-12 items-center justify-center rounded-2xl text-sm font-semibold shadow-sm"
-                                    :style="{
-                                        backgroundColor:
-                                            (props.form.color || '#3b82f6') +
-                                            '20',
-                                        color: props.form.color || '#3b82f6',
-                                    }"
-                                >
-                                    {{
-                                        props.form.icon ||
-                                        props.form.name.charAt(0) ||
-                                        '?'
-                                    }}
-                                </div>
-                                <div>
-                                    <p class="font-medium">
-                                        {{
-                                            props.form.name ||
-                                            t(
-                                                'finance.categories.categoryNameFallback',
-                                            )
-                                        }}
-                                    </p>
-                                    <p
-                                        class="text-xs text-muted-foreground capitalize"
-                                    >
-                                        {{
-                                            props.form.type === 'expense'
-                                                ? t(
-                                                      'finance.categories.expenseCategory',
-                                                  )
-                                                : t(
-                                                      'finance.categories.incomeCategory',
-                                                  )
-                                        }}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+                        <Input
+                            id="ba_initial_balance"
+                            v-model="initialBalanceModel"
+                            type="number"
+                            step="0.01"
+                            class="h-11 rounded-2xl border-border/60 bg-background"
+                            required
+                        />
                     </div>
                     <div class="grid gap-2">
                         <Label
-                            for="cat_color"
+                            for="ba_color"
                             class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
                         >
-                            {{ t('finance.categories.chooseColor') }}
+                            {{ t('finance.bankAccounts.chooseColor') }}
                         </Label>
                         <Input
-                            id="cat_color"
+                            id="ba_color"
                             v-model="colorModel"
                             type="color"
                             class="h-14 w-full rounded-2xl border-border/60 bg-background p-2 md:w-24"
@@ -263,7 +241,7 @@ const colorModel = computed({
                     <Label
                         class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
                     >
-                        {{ t('finance.categories.quickChoices') }}
+                        {{ t('finance.bankAccounts.quickChoices') }}
                     </Label>
                     <div
                         class="flex flex-wrap gap-2 rounded-3xl border border-dashed border-border/70 bg-muted/20 p-3"
@@ -272,15 +250,10 @@ const colorModel = computed({
                             v-for="preset in props.colorPresets"
                             :key="preset"
                             type="button"
-                            class="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/40 shadow-sm transition hover:scale-105"
+                            class="h-10 w-10 rounded-2xl border border-white/40 shadow-sm transition hover:scale-105"
                             :style="{ backgroundColor: preset }"
                             @click="emit('applyPresetColor', preset)"
-                        >
-                            <Check
-                                v-if="props.form.color === preset"
-                                class="h-4 w-4 text-white"
-                            />
-                        </button>
+                        />
                     </div>
                 </div>
 
@@ -301,7 +274,7 @@ const colorModel = computed({
                         {{
                             props.formSubmitting
                                 ? t('finance.bankAccounts.saving')
-                                : props.editingCategory
+                                : props.editingAccount
                                   ? t('common.actions.update')
                                   : t('common.actions.create')
                         }}

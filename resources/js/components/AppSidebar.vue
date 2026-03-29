@@ -5,6 +5,7 @@ import {
     ArrowUpCircle,
     BarChart3,
     CircleDollarSign,
+    CreditCard,
     Landmark,
     LayoutGrid,
     RefreshCcw,
@@ -61,6 +62,11 @@ const mainNavItems: NavItem[] = [
         title: t('app.nav.categories'),
         href: '/categories',
         icon: Tags,
+    },
+    {
+        title: t('app.nav.loyaltyCards'),
+        href: '/loyalty-cards',
+        icon: CreditCard,
     },
 ];
 

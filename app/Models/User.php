@@ -58,4 +58,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(AccountTransfer::class);
     }
+
+    public function loyaltyCards(): HasMany
+    {
+        return $this->hasMany(LoyaltyCard::class);
+    }
 }

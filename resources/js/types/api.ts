@@ -56,3 +56,10 @@ export type IncomeVsExpensesData = {
     income: number[];
     expenses: number[];
 };
+
+export type LoyaltyCardPayload = {
+    name: string;
+    card_number: string;
+    notes?: string | null;
+    color?: string | null;
+};

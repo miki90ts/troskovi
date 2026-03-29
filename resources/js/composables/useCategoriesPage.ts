@@ -1,4 +1,3 @@
-import { router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import { useCategories } from '@/composables/useCategories';
 import { useToast } from '@/composables/useToast';
@@ -23,10 +22,11 @@ function createEmptyForm(type: CategoryTab = 'expense'): CategoryFormState {
     };
 }
 
-export function useCategoriesPage(categories: Category[]) {
+export function useCategoriesPage(initialCategories: Category[]) {
     const { success, error: showError } = useToast();
     const { createCategory, updateCategory, deleteCategory } = useCategories();
 
+    const categories = ref<Category[]>([...initialCategories]);
     const activeTab = ref<CategoryTab>('expense');
     const showForm = ref(false);
     const editingCategory = ref<Category | null>(null);
@@ -35,10 +35,10 @@ export function useCategoriesPage(categories: Category[]) {
     const categoryForm = ref<CategoryFormState>(createEmptyForm());
 
     const expenseCategories = computed(() =>
-        categories.filter((category) => category.type === 'expense'),
+        categories.value.filter((category) => category.type === 'expense'),
     );
     const incomeCategories = computed(() =>
-        categories.filter((category) => category.type === 'income'),
+        categories.value.filter((category) => category.type === 'income'),
     );
     const activeCategories = computed(() =>
         activeTab.value === 'expense'
@@ -103,15 +103,24 @@ export function useCategoriesPage(categories: Category[]) {
             };
 
             if (editingCategory.value) {
-                await updateCategory(editingCategory.value.id, payload);
+                const updated = await updateCategory(
+                    editingCategory.value.id,
+                    payload,
+                );
+                const index = categories.value.findIndex(
+                    (c) => c.id === editingCategory.value!.id,
+                );
+                if (index !== -1) {
+                    categories.value.splice(index, 1, updated);
+                }
                 success(t('finance.categories.updated'));
             } else {
-                await createCategory(payload);
+                const created = await createCategory(payload);
+                categories.value.push(created);
                 success(t('finance.categories.created'));
             }
 
             showForm.value = false;
-            router.reload();
         } catch {
             showError(t('finance.categories.saveError'));
         } finally {
@@ -125,16 +134,18 @@ export function useCategoriesPage(categories: Category[]) {
         }
 
         try {
-            await deleteCategory(deleteTarget.value.id);
+            const id = deleteTarget.value.id;
+            await deleteCategory(id);
+            categories.value = categories.value.filter((c) => c.id !== id);
             success(t('finance.categories.deleted'));
             deleteTarget.value = null;
-            router.reload();
         } catch {
             showError(t('finance.categories.deleteError'));
         }
     }
 
     return {
+        categories,
         activeTab,
         expenseCategories,
         incomeCategories,
