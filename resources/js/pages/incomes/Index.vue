@@ -3,8 +3,10 @@ import { Head, router } from '@inertiajs/vue3';
 import {
     ArrowUpCircle,
     CalendarRange,
+    Download,
     Filter,
     Landmark,
+    Loader2,
     Plus,
     ReceiptText,
     Search,
@@ -174,6 +176,37 @@ function goToPage(page: number) {
     );
 }
 
+const exportingPdf = ref(false);
+
+function exportPdf() {
+    const params = new URLSearchParams();
+    params.set('type', 'income');
+    if (search.value) params.set('search', search.value);
+    if (categoryFilter.value) params.set('category_id', categoryFilter.value);
+    if (dateFrom.value) params.set('date_from', dateFrom.value);
+    if (dateTo.value) params.set('date_to', dateTo.value);
+
+    exportingPdf.value = true;
+    const url = `/api/v1/export/transactions/pdf?${params.toString()}`;
+
+    fetch(url, { credentials: 'same-origin' })
+        .then((res) => {
+            if (!res.ok) throw new Error('Export failed');
+            return res.blob();
+        })
+        .then((blob) => {
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `prihodi_${new Date().toISOString().slice(0, 10)}.pdf`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        })
+        .catch(() => showError('Greška pri eksportovanju PDF-a.'))
+        .finally(() => {
+            exportingPdf.value = false;
+        });
+}
+
 function formatDate(dateStr: string): string {
     return new Date(dateStr).toLocaleDateString('sr-RS', {
         month: 'short',
@@ -305,6 +338,19 @@ function formatDate(dateStr: string): string {
                             >
                                 {{ activeFiltersCount }}
                             </span>
+                        </Button>
+                        <Button
+                            variant="outline"
+                            class="h-11 rounded-2xl border-border/60 bg-red-500 px-4 text-white"
+                            :disabled="exportingPdf"
+                            @click="exportPdf"
+                        >
+                            <Loader2
+                                v-if="exportingPdf"
+                                class="mr-2 h-4 w-4 animate-spin"
+                            />
+                            <Download v-else class="mr-2 h-4 w-4" />
+                            PDF
                         </Button>
                         <Button
                             class="h-11 rounded-2xl px-5"

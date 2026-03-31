@@ -49,6 +49,9 @@ export type Transaction = {
     notes: string | null;
     payment_method: 'cash' | 'bank_account';
     receipt_url: string | null;
+    is_warranty: boolean;
+    warranty_expires_at: string | null;
+    warranty_is_expired: boolean;
     category: CategoryCompact | null;
     bank_account: { id: number; name: string } | null;
     created_at: string;

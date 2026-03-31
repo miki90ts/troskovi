@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\BankAccountController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\LoyaltyCardController;
+use App\Http\Controllers\Api\V1\PdfExportController;
 use App\Http\Controllers\Api\V1\RecurringTransactionController;
 use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\SpendingTargetController;
@@ -41,5 +42,11 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
         Route::get('income-breakdown', [ReportController::class, 'incomeBreakdown']);
         Route::get('cash-vs-bank', [ReportController::class, 'cashVsBank']);
         Route::get('spending-progress', [ReportController::class, 'spendingProgress']);
+    });
+
+    // PDF Export
+    Route::prefix('export')->group(function () {
+        Route::get('transactions/pdf', [PdfExportController::class, 'transactions']);
+        Route::get('report/pdf', [PdfExportController::class, 'report']);
     });
 });

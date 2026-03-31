@@ -3,7 +3,6 @@
 namespace App\Http\Resources;
 
 use App\Enums\TransactionType;
-use App\Http\Resources\BankAccountResource;
 use Illuminate\Http\Request;
 
 class BankAccountOverviewResource extends BankAccountResource

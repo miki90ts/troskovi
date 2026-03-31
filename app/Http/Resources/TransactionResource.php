@@ -20,6 +20,9 @@ class TransactionResource extends JsonResource
             'receipt_url' => $this->receipt_path
                 ? url("/api/v1/transactions/{$this->id}/receipt")
                 : null,
+            'is_warranty' => (bool) $this->is_warranty,
+            'warranty_expires_at' => $this->warranty_expires_at?->toDateString(),
+            'warranty_is_expired' => $this->warranty_is_expired,
             'category' => $this->whenLoaded('category', fn() => $this->category ? [
                 'id' => $this->category->id,
                 'name' => $this->category->name,

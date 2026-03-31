@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\BankAccount;
-use App\Models\Transaction;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 

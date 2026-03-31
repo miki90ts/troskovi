@@ -27,7 +27,7 @@ class DashboardController extends Controller
             'summary' => $this->reportService->getSummary($user, 'monthly'),
             'budgetProgress' => $this->spendingTargetService->getProgress($user, 'monthly'),
             'recentTransactions' => $this->transactionService->getRecent($user, 5)
-                ->map(fn($t) => [
+                ->map(fn ($t) => [
                     'id' => $t->id,
                     'type' => $t->type->value,
                     'amount' => (float) $t->amount,
@@ -37,7 +37,7 @@ class DashboardController extends Controller
                     'bank_account' => $t->bankAccount ? ['name' => $t->bankAccount->name] : null,
                     'payment_method' => $t->payment_method->value,
                 ]),
-            'accounts' => $this->bankAccountService->list($user)->map(fn($a) => [
+            'accounts' => $this->bankAccountService->list($user)->map(fn ($a) => [
                 'id' => $a->id,
                 'name' => $a->name,
                 'bank_name' => $a->bank_name,

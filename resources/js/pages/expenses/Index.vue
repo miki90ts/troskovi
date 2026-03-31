@@ -4,10 +4,13 @@ import {
     ArrowDownCircle,
     CalendarRange,
     CircleDollarSign,
+    Download,
     Filter,
+    Loader2,
     Plus,
     ReceiptText,
     Search,
+    ShieldCheck,
     SlidersHorizontal,
     Trash2,
     Pencil,
@@ -190,6 +193,39 @@ function goToPage(page: number) {
     );
 }
 
+const exportingPdf = ref(false);
+
+function exportPdf() {
+    const params = new URLSearchParams();
+    params.set('type', 'expense');
+    if (search.value) params.set('search', search.value);
+    if (categoryFilter.value) params.set('category_id', categoryFilter.value);
+    if (paymentMethodFilter.value)
+        params.set('payment_method', paymentMethodFilter.value);
+    if (dateFrom.value) params.set('date_from', dateFrom.value);
+    if (dateTo.value) params.set('date_to', dateTo.value);
+
+    exportingPdf.value = true;
+    const url = `/api/v1/export/transactions/pdf?${params.toString()}`;
+
+    fetch(url, { credentials: 'same-origin' })
+        .then((res) => {
+            if (!res.ok) throw new Error('Export failed');
+            return res.blob();
+        })
+        .then((blob) => {
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `troskovi_${new Date().toISOString().slice(0, 10)}.pdf`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        })
+        .catch(() => showError('Greška pri eksportovanju PDF-a.'))
+        .finally(() => {
+            exportingPdf.value = false;
+        });
+}
+
 function formatDate(dateStr: string): string {
     return new Date(dateStr).toLocaleDateString('sr-RS', {
         month: 'short',
@@ -321,6 +357,19 @@ function formatDate(dateStr: string): string {
                             >
                                 {{ activeFiltersCount }}
                             </span>
+                        </Button>
+                        <Button
+                            variant="outline"
+                            class="h-11 rounded-2xl border-border/60 bg-red-500 px-4 text-white"
+                            :disabled="exportingPdf"
+                            @click="exportPdf"
+                        >
+                            <Loader2
+                                v-if="exportingPdf"
+                                class="mr-2 h-4 w-4 animate-spin"
+                            />
+                            <Download v-else class="mr-2 h-4 w-4" />
+                            PDF
                         </Button>
                         <Button
                             class="h-11 rounded-2xl px-5"
@@ -532,9 +581,18 @@ function formatDate(dateStr: string): string {
                                         />
                                     </div>
                                     <div class="space-y-1">
-                                        <span class="block font-medium">{{
-                                            tx.description
-                                        }}</span>
+                                        <span class="block font-medium">
+                                            {{ tx.description }}
+                                            <ShieldCheck
+                                                v-if="tx.is_warranty"
+                                                class="ml-1 inline h-3.5 w-3.5 text-emerald-500"
+                                                :title="
+                                                    t(
+                                                        'components.transactionForm.warranty',
+                                                    )
+                                                "
+                                            />
+                                        </span>
                                         <span
                                             class="text-xs text-muted-foreground"
                                         >

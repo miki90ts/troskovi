@@ -4,9 +4,6 @@ namespace App\Models;
 
 use App\Enums\PaymentMethod;
 use App\Enums\TransactionType;
-use App\Models\BankAccount;
-use App\Models\Category;
-use App\Models\RecurringTransaction;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -28,6 +25,8 @@ class Transaction extends Model
         'notes',
         'payment_method',
         'receipt_path',
+        'is_warranty',
+        'warranty_expires_at',
     ];
 
     protected function casts(): array
@@ -37,6 +36,8 @@ class Transaction extends Model
             'amount' => 'decimal:2',
             'date' => 'date',
             'payment_method' => PaymentMethod::class,
+            'is_warranty' => 'boolean',
+            'warranty_expires_at' => 'date',
         ];
     }
 
@@ -90,5 +91,17 @@ class Transaction extends Model
     public function scopeForAccount($query, int $accountId)
     {
         return $query->where('bank_account_id', $accountId);
+    }
+
+    public function scopeWarranty($query)
+    {
+        return $query->where('is_warranty', true);
+    }
+
+    public function getWarrantyIsExpiredAttribute(): bool
+    {
+        return $this->is_warranty
+            && $this->warranty_expires_at
+            && $this->warranty_expires_at->isPast();
     }
 }

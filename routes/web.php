@@ -8,6 +8,7 @@ use App\Http\Controllers\IncomePageController;
 use App\Http\Controllers\LoyaltyCardPageController;
 use App\Http\Controllers\RecurringTransactionPageController;
 use App\Http\Controllers\ReportPageController;
+use App\Http\Controllers\WarrantyPageController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
@@ -30,6 +31,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('expenses', [ExpensePageController::class, 'index'])->name('expenses.index');
     Route::get('incomes', [IncomePageController::class, 'index'])->name('incomes.index');
+    Route::get('warranties', [WarrantyPageController::class, 'index'])->name('warranties.index');
     Route::get('recurring-transactions', [RecurringTransactionPageController::class, 'index'])->name('recurring-transactions.index');
 
     Route::get('reports', [ReportPageController::class, 'index'])->name('reports.index');

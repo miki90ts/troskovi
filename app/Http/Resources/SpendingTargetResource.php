@@ -15,7 +15,7 @@ class SpendingTargetResource extends JsonResource
             'target_amount' => (float) $this->target_amount,
             'is_active' => $this->is_active,
             'scope' => $this->category_id ? 'category' : 'overall',
-            'category' => $this->whenLoaded('category', fn() => $this->category ? [
+            'category' => $this->whenLoaded('category', fn () => $this->category ? [
                 'id' => $this->category->id,
                 'name' => $this->category->name,
                 'icon' => $this->category->icon,

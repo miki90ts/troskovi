@@ -6,6 +6,7 @@ use App\Enums\RecurringFrequency;
 use App\Models\RecurringTransaction;
 use App\Models\Transaction;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 
 class RecurringTransactionService
@@ -71,7 +72,7 @@ class RecurringTransactionService
 
     private function advanceDate(\DateTimeInterface $date, RecurringFrequency $frequency): \DateTimeInterface
     {
-        $carbon = \Carbon\CarbonImmutable::parse($date);
+        $carbon = CarbonImmutable::parse($date);
 
         return match ($frequency) {
             RecurringFrequency::Daily => $carbon->addDay(),

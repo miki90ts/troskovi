@@ -9,6 +9,7 @@ import {
     Landmark,
     LayoutGrid,
     RefreshCcw,
+    ShieldCheck,
     Tags,
 } from 'lucide-vue-next';
 import AppLogo from '@/components/AppLogo.vue';
@@ -47,6 +48,11 @@ const mainNavItems: NavItem[] = [
         title: t('app.nav.income'),
         href: '/incomes',
         icon: ArrowUpCircle,
+    },
+    {
+        title: t('app.nav.warranties'),
+        href: '/warranties',
+        icon: ShieldCheck,
     },
     {
         title: t('app.nav.recurring'),

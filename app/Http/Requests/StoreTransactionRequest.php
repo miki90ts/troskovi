@@ -25,7 +25,8 @@ class StoreTransactionRequest extends FormRequest
             'bank_account_id' => ['nullable', 'exists:bank_accounts,id'],
             'payment_method' => ['required_if:type,expense', Rule::enum(PaymentMethod::class)],
             'notes' => ['nullable', 'string'],
-            'receipt' => ['nullable', 'image', 'max:5120'],
+            'receipt' => ['nullable', 'image', 'max:1024'],
+            'is_warranty' => ['nullable', 'boolean'],
         ];
     }
 }

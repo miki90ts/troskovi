@@ -26,7 +26,7 @@ class RecurringTransactionPageController extends Controller
             ->active()
             ->orderBy('name')
             ->get()
-            ->map(fn($account) => [
+            ->map(fn ($account) => [
                 'id' => $account->id,
                 'name' => $account->name,
             ]);

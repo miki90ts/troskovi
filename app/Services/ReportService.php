@@ -89,8 +89,8 @@ class ReportService
 
         return [
             'labels' => $periods->toArray(),
-            'income' => $periods->map(fn($p) => round($income->get($p, 0), 2))->toArray(),
-            'expenses' => $periods->map(fn($p) => round($expenses->get($p, 0), 2))->toArray(),
+            'income' => $periods->map(fn ($p) => round($income->get($p, 0), 2))->toArray(),
+            'expenses' => $periods->map(fn ($p) => round($expenses->get($p, 0), 2))->toArray(),
         ];
     }
 
@@ -152,9 +152,9 @@ class ReportService
             ->get();
 
         return [
-            'labels' => $breakdown->map(fn($b) => $b->category?->name ?? 'Uncategorized')->toArray(),
-            'values' => $breakdown->map(fn($b) => round($b->total, 2))->toArray(),
-            'colors' => $breakdown->map(fn($b) => $b->category?->color ?? '#6b7280')->toArray(),
+            'labels' => $breakdown->map(fn ($b) => $b->category?->name ?? 'Uncategorized')->toArray(),
+            'values' => $breakdown->map(fn ($b) => round($b->total, 2))->toArray(),
+            'colors' => $breakdown->map(fn ($b) => $b->category?->color ?? '#6b7280')->toArray(),
         ];
     }
 
@@ -173,9 +173,9 @@ class ReportService
             ->get();
 
         return [
-            'labels' => $breakdown->map(fn($b) => $b->category?->name ?? 'Uncategorized')->toArray(),
-            'values' => $breakdown->map(fn($b) => round($b->total, 2))->toArray(),
-            'colors' => $breakdown->map(fn($b) => $b->category?->color ?? '#6b7280')->toArray(),
+            'labels' => $breakdown->map(fn ($b) => $b->category?->name ?? 'Uncategorized')->toArray(),
+            'values' => $breakdown->map(fn ($b) => round($b->total, 2))->toArray(),
+            'colors' => $breakdown->map(fn ($b) => $b->category?->color ?? '#6b7280')->toArray(),
         ];
     }
 

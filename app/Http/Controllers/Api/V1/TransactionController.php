@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class TransactionController extends Controller
 {
@@ -59,7 +60,7 @@ class TransactionController extends Controller
         return response()->json(['message' => 'Transaction deleted']);
     }
 
-    public function receipt(Transaction $transaction): \Symfony\Component\HttpFoundation\BinaryFileResponse|JsonResponse
+    public function receipt(Request $request, Transaction $transaction): BinaryFileResponse|JsonResponse
     {
         Gate::authorize('view', $transaction);
 
@@ -67,6 +68,12 @@ class TransactionController extends Controller
             return response()->json(['message' => 'No receipt found'], 404);
         }
 
-        return response()->download(Storage::disk('local')->path($transaction->receipt_path));
+        $path = Storage::disk('local')->path($transaction->receipt_path);
+
+        if ($request->boolean('preview')) {
+            return response()->file($path);
+        }
+
+        return response()->download($path);
     }
 }

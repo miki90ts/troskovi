@@ -3,8 +3,6 @@
 namespace App\Models;
 
 use App\Enums\TransactionType;
-use App\Models\AccountTransfer;
-use App\Models\Transaction;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -67,7 +65,7 @@ class BankAccount extends Model
 
         $last4 = substr($this->account_number, -4);
 
-        return '••••' . $last4;
+        return '••••'.$last4;
     }
 
     public function getCurrentBalanceAttribute(): string

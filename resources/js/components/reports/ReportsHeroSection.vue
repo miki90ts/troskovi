@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { TrendingDown, TrendingUp } from 'lucide-vue-next';
+import { ref } from 'vue';
+import { Download, Loader2, TrendingDown, TrendingUp } from 'lucide-vue-next';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { formatCurrency, t } from '@/lib/i18n';
 import type { ReportPeriod } from '@/types/api';
 import type { ReportSummary } from '@/types/models';
 
-defineProps<{
+const props = defineProps<{
     period: ReportPeriod;
     formattedPeriodRange: string;
     summary: ReportSummary | null;
@@ -20,6 +22,38 @@ const periodLabels: Record<ReportPeriod, string> = {
     monthly: t('common.recurringFrequencies.monthly'),
     yearly: t('common.recurringFrequencies.yearly'),
 };
+
+const exportingPdf = ref(false);
+
+function exportPdf() {
+    exportingPdf.value = true;
+    const url = `/api/v1/export/report/pdf?period=${props.period}`;
+
+    fetch(url, { credentials: 'same-origin' })
+        .then((res) => {
+            if (!res.ok) throw new Error('Export failed');
+            return res.blob();
+        })
+        .then((blob) => {
+            const suffix =
+                props.period === 'weekly'
+                    ? 'nedeljni'
+                    : props.period === 'yearly'
+                      ? 'godisnji'
+                      : 'mesecni';
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `izvestaj_${suffix}_${new Date().toISOString().slice(0, 10)}.pdf`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        })
+        .catch(() => {
+            /* silent fail */
+        })
+        .finally(() => {
+            exportingPdf.value = false;
+        });
+}
 </script>
 
 <template>
@@ -89,35 +123,50 @@ const periodLabels: Record<ReportPeriod, string> = {
             </div>
 
             <div class="flex flex-col gap-4 lg:items-end">
-                <Tabs
-                    :model-value="period"
-                    @update:model-value="
-                        emit('update:period', $event as ReportPeriod)
-                    "
-                >
-                    <TabsList
-                        class="grid h-auto grid-cols-3 rounded-2xl border border-border/60 bg-background/85 p-1"
+                <div class="flex items-center gap-3">
+                    <Button
+                        variant="outline"
+                        class="h-11 rounded-2xl border-border/60 bg-red-500 px-4 text-white"
+                        :disabled="exportingPdf"
+                        @click="exportPdf"
                     >
-                        <TabsTrigger
-                            value="weekly"
-                            class="rounded-xl px-4 py-2.5"
+                        <Loader2
+                            v-if="exportingPdf"
+                            class="mr-2 h-4 w-4 animate-spin"
+                        />
+                        <Download v-else class="mr-2 h-4 w-4" />
+                        PDF
+                    </Button>
+                    <Tabs
+                        :model-value="period"
+                        @update:model-value="
+                            emit('update:period', $event as ReportPeriod)
+                        "
+                    >
+                        <TabsList
+                            class="grid h-auto grid-cols-3 rounded-2xl border border-border/60 bg-background/85 p-1"
                         >
-                            {{ t('common.recurringFrequencies.weekly') }}
-                        </TabsTrigger>
-                        <TabsTrigger
-                            value="monthly"
-                            class="rounded-xl px-4 py-2.5"
-                        >
-                            {{ t('common.recurringFrequencies.monthly') }}
-                        </TabsTrigger>
-                        <TabsTrigger
-                            value="yearly"
-                            class="rounded-xl px-4 py-2.5"
-                        >
-                            Godisnje
-                        </TabsTrigger>
-                    </TabsList>
-                </Tabs>
+                            <TabsTrigger
+                                value="weekly"
+                                class="rounded-xl px-4 py-2.5"
+                            >
+                                {{ t('common.recurringFrequencies.weekly') }}
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="monthly"
+                                class="rounded-xl px-4 py-2.5"
+                            >
+                                {{ t('common.recurringFrequencies.monthly') }}
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="yearly"
+                                class="rounded-xl px-4 py-2.5"
+                            >
+                                Godisnje
+                            </TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+                </div>
 
                 <div class="grid w-full gap-3 sm:grid-cols-2 lg:w-100">
                     <div
