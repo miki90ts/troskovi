@@ -1,15 +1,19 @@
 <script setup lang="ts">
+import { computed } from 'vue';
+
 const props = defineProps<{
     amount: number;
     currency?: string;
     colored?: boolean;
 }>();
 
-const formatted = new Intl.NumberFormat('sr-RS', {
-    style: 'currency',
-    currency: props.currency ?? 'RSD',
-    minimumFractionDigits: 2,
-}).format(props.amount);
+const formatted = computed(() => {
+    return new Intl.NumberFormat('sr-RS', {
+        style: 'currency',
+        currency: props.currency ?? 'RSD',
+        minimumFractionDigits: 2,
+    }).format(props.amount);
+});
 </script>
 
 <template>

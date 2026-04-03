@@ -1,14 +1,8 @@
 <script setup lang="ts">
-import {
-    Download,
-    Eye,
-    Landmark,
-    ShieldCheck,
-    Upload,
-    X,
-    Wallet,
-} from 'lucide-vue-next';
+import { Download, Eye, ShieldCheck, Upload, X } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
+import CategoryBadge from '@/components/categories/CategoryBadge.vue';
+import PaymentMethodBadge from '@/components/transactions/PaymentMethodBadge.vue';
 import { useToast } from '@/composables/useToast';
 import { useTransactions } from '@/composables/useTransactions';
 import { Button } from '@/components/ui/button';
@@ -86,6 +80,22 @@ const bankAccountSelectValue = computed({
     },
 });
 
+const usesBankAccount = computed(() => {
+    return form.value.payment_method === 'bank_account';
+});
+
+const bookingPreviewDescription = computed(() => {
+    if (form.value.type === 'expense') {
+        return form.value.payment_method === 'cash'
+            ? t('components.transactionForm.bookingExpenseCash')
+            : t('components.transactionForm.bookingExpenseBank');
+    }
+
+    return form.value.payment_method === 'cash'
+        ? t('components.transactionForm.bookingIncomeCash')
+        : t('components.transactionForm.bookingIncomeBank');
+});
+
 watch(
     () => props.open,
     (isOpen) => {
@@ -128,6 +138,14 @@ watch(
 
 const filteredCategories = () =>
     props.categories.filter((c) => c.type === form.value.type);
+
+const selectedCategory = computed(() => {
+    return (
+        filteredCategories().find(
+            (category) => String(category.id) === form.value.category_id,
+        ) ?? null
+    );
+});
 
 const warrantyExpiresDate = computed(() => {
     if (!form.value.is_warranty || !form.value.date) return null;
@@ -195,17 +213,15 @@ async function onSubmit() {
             amount: parseFloat(form.value.amount),
             date: form.value.date,
             description: form.value.description,
-            payment_method:
-                form.value.type === 'expense'
-                    ? form.value.payment_method
-                    : 'bank_account',
+            payment_method: form.value.payment_method,
             notes: form.value.notes || null,
             category_id: form.value.category_id
                 ? parseInt(form.value.category_id)
                 : null,
-            bank_account_id: form.value.bank_account_id
-                ? parseInt(form.value.bank_account_id)
-                : null,
+            bank_account_id:
+                usesBankAccount.value && form.value.bank_account_id
+                    ? parseInt(form.value.bank_account_id)
+                    : null,
             is_warranty:
                 form.value.type === 'expense' ? form.value.is_warranty : false,
         };
@@ -374,7 +390,7 @@ async function onSubmit() {
                         >
                         <Select v-model="form.category_id">
                             <SelectTrigger
-                                class="h-11 rounded-2xl border-border/60 bg-background"
+                                class="h-11 w-full rounded-2xl border-border/60 bg-background"
                             >
                                 <SelectValue
                                     :placeholder="
@@ -382,7 +398,14 @@ async function onSubmit() {
                                             'components.transactionForm.selectCategory',
                                         )
                                     "
-                                />
+                                >
+                                    <CategoryBadge
+                                        v-if="selectedCategory"
+                                        :category="selectedCategory"
+                                        compact
+                                        class="max-w-full"
+                                    />
+                                </SelectValue>
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem
@@ -390,79 +413,59 @@ async function onSubmit() {
                                     :key="cat.id"
                                     :value="String(cat.id)"
                                 >
-                                    {{ cat.name }}
+                                    <CategoryBadge
+                                        :category="cat"
+                                        compact
+                                        class="max-w-full"
+                                    />
                                 </SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
 
-                    <div v-if="form.type === 'expense'" class="grid gap-2">
+                    <div class="grid gap-2">
                         <Label
                             class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
                             >{{ t('common.labels.paymentMethod') }}</Label
                         >
                         <Select v-model="form.payment_method">
                             <SelectTrigger
-                                class="h-11 rounded-2xl border-border/60 bg-background"
+                                class="h-11 w-full rounded-2xl border-border/60 bg-background"
                             >
-                                <SelectValue />
+                                <SelectValue>
+                                    <PaymentMethodBadge
+                                        :payment-method="form.payment_method"
+                                        compact
+                                        class="max-w-full"
+                                    />
+                                </SelectValue>
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="cash">{{
-                                    t('common.paymentMethods.cash')
-                                }}</SelectItem>
+                                <SelectItem value="cash">
+                                    <PaymentMethodBadge
+                                        payment-method="cash"
+                                        compact
+                                    />
+                                </SelectItem>
                                 <SelectItem value="bank_account">
-                                    {{ t('common.paymentMethods.bankAccount') }}
+                                    <PaymentMethodBadge
+                                        payment-method="bank_account"
+                                        compact
+                                    />
                                 </SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
-                    <div
-                        v-else
-                        class="rounded-2xl border border-border/60 bg-muted/20 p-4"
-                    >
-                        <div class="flex items-start gap-3">
-                            <div
-                                class="rounded-2xl bg-primary/10 p-2 text-primary"
-                            >
-                                <Landmark class="h-4 w-4" />
-                            </div>
-                            <div>
-                                <p class="text-sm font-medium">
-                                    {{
-                                        t(
-                                            'components.transactionForm.incomeAccountFlowTitle',
-                                        )
-                                    }}
-                                </p>
-                                <p
-                                    class="mt-1 text-xs leading-5 text-muted-foreground"
-                                >
-                                    {{
-                                        t(
-                                            'components.transactionForm.incomeAccountFlowDescription',
-                                        )
-                                    }}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
-                <div
-                    v-if="
-                        form.payment_method === 'bank_account' ||
-                        form.type === 'income'
-                    "
-                    class="grid gap-2"
-                >
+                <div v-if="usesBankAccount" class="grid gap-2">
                     <Label
                         class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
                         >{{ t('common.labels.bankAccount') }}</Label
                     >
                     <Select v-model="bankAccountSelectValue">
                         <SelectTrigger
-                            class="h-11 rounded-2xl border-border/60 bg-background"
+                            class="h-11 w-full rounded-2xl border-border/60 bg-background"
                         >
                             <SelectValue
                                 :placeholder="
@@ -688,16 +691,11 @@ async function onSubmit() {
                     class="rounded-3xl border border-dashed border-border/70 bg-muted/20 p-4"
                 >
                     <div class="flex items-start gap-3">
-                        <div class="rounded-2xl bg-primary/10 p-2 text-primary">
-                            <Wallet
-                                v-if="
-                                    form.payment_method === 'cash' &&
-                                    form.type === 'expense'
-                                "
-                                class="h-4 w-4"
-                            />
-                            <Landmark v-else class="h-4 w-4" />
-                        </div>
+                        <PaymentMethodBadge
+                            :payment-method="form.payment_method"
+                            compact
+                            class="mt-0.5"
+                        />
                         <div>
                             <p class="text-sm font-medium">
                                 {{
@@ -709,19 +707,7 @@ async function onSubmit() {
                             <p
                                 class="mt-1 text-xs leading-5 text-muted-foreground"
                             >
-                                {{
-                                    form.type === 'expense'
-                                        ? form.payment_method === 'cash'
-                                            ? t(
-                                                  'components.transactionForm.bookingExpenseCash',
-                                              )
-                                            : t(
-                                                  'components.transactionForm.bookingExpenseBank',
-                                              )
-                                        : t(
-                                              'components.transactionForm.bookingIncome',
-                                          )
-                                }}
+                                {{ bookingPreviewDescription }}
                             </p>
                         </div>
                     </div>

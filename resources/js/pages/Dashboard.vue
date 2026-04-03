@@ -8,6 +8,7 @@ import {
     PiggyBank,
     TrendingUp,
 } from 'lucide-vue-next';
+import CategoryBadge from '@/components/categories/CategoryBadge.vue';
 import CurrencyDisplay from '@/components/CurrencyDisplay.vue';
 import KpiCard from '@/components/KpiCard.vue';
 import ToastContainer from '@/components/ToastContainer.vue';
@@ -392,15 +393,26 @@ const {
                                 <p class="truncate text-sm font-medium">
                                     {{ tx.description }}
                                 </p>
-                                <p class="text-xs text-muted-foreground">
-                                    {{
-                                        tx.category?.name ??
-                                        t(
-                                            'dashboard.recentTransactions.uncategorized',
-                                        )
-                                    }}
-                                    &middot; {{ formatShortDate(tx.date) }}
-                                </p>
+                                <div
+                                    class="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground"
+                                >
+                                    <CategoryBadge
+                                        v-if="tx.category"
+                                        :category="tx.category"
+                                        compact
+                                    />
+                                    <span v-else>
+                                        {{
+                                            t(
+                                                'dashboard.recentTransactions.uncategorized',
+                                            )
+                                        }}
+                                    </span>
+                                    <span
+                                        >&middot;
+                                        {{ formatShortDate(tx.date) }}</span
+                                    >
+                                </div>
                             </div>
                             <CurrencyDisplay
                                 :amount="

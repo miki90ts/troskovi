@@ -7,6 +7,7 @@ import {
     Sparkles,
     Trash2,
 } from 'lucide-vue-next';
+import CategoryBadge from '@/components/categories/CategoryBadge.vue';
 import { Button } from '@/components/ui/button';
 import { formatCurrency, t } from '@/lib/i18n';
 import type {
@@ -27,10 +28,6 @@ const emit = defineEmits<{
 
 function labelForPeriod(period: TargetWithProgress['target']['period']) {
     return t(`common.recurringFrequencies.${period}`);
-}
-
-function targetLabel(target: TargetWithProgress['target']) {
-    return target.category?.name ?? t('settings.budgets.overallLabel');
 }
 
 function statusLabel(status: TargetDisplayStatus) {
@@ -109,8 +106,13 @@ function remainingValue(entry: TargetWithProgress) {
                                 'rgb(20 184 166)',
                         }"
                     />
-                    <p class="font-semibold text-foreground">
-                        {{ targetLabel(entry.target) }}
+                    <CategoryBadge
+                        v-if="entry.target.category"
+                        :category="entry.target.category"
+                        compact
+                    />
+                    <p v-else class="font-semibold text-foreground">
+                        {{ t('settings.budgets.overallLabel') }}
                     </p>
                 </div>
                 <div

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { AlertTriangle, ShieldCheck, Slash, Sparkles } from 'lucide-vue-next';
+import CategoryBadge from '@/components/categories/CategoryBadge.vue';
 import { Button } from '@/components/ui/button';
 import { formatCurrency, t } from '@/lib/i18n';
 import type {
@@ -22,10 +23,6 @@ const emit = defineEmits<{
 
 function labelForPeriod(period: TargetWithProgress['target']['period']) {
     return t(`common.recurringFrequencies.${period}`);
-}
-
-function targetLabel(target: TargetWithProgress['target']) {
-    return target.category?.name ?? t('settings.budgets.overallLabel');
 }
 
 function statusLabel(status: TargetDisplayStatus) {
@@ -107,8 +104,13 @@ function statusIcon(status: TargetDisplayStatus) {
                 >
                     <div class="flex items-start justify-between gap-3">
                         <div>
-                            <p class="font-semibold text-foreground">
-                                {{ targetLabel(entry.target) }}
+                            <CategoryBadge
+                                v-if="entry.target.category"
+                                :category="entry.target.category"
+                                compact
+                            />
+                            <p v-else class="font-semibold text-foreground">
+                                {{ t('settings.budgets.overallLabel') }}
                             </p>
                             <p class="mt-1 text-sm text-muted-foreground">
                                 {{ labelForPeriod(entry.target.period) }}

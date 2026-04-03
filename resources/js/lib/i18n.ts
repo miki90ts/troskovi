@@ -336,9 +336,6 @@ const messages = {
             incomeSubtitle: 'Plata, uplata ili priliv',
             descriptionPlaceholder: 'Za šta je ova stavka?',
             selectCategory: 'Izaberi kategoriju',
-            incomeAccountFlowTitle: 'Prihod ide kroz tok računa',
-            incomeAccountFlowDescription:
-                'Prihodi podrazumevano koriste bankovni račun kako bi stanje i izveštaji ostali usklađeni.',
             selectAccountOptional: 'Izaberi račun (opciono)',
             notesPlaceholder: 'Dodatne napomene...',
             bookingPreview: 'Pregled knjiženja',
@@ -346,7 +343,10 @@ const messages = {
                 'Ovaj trošak će biti evidentiran kao keš odlazak.',
             bookingExpenseBank:
                 'Ovaj trošak će umanjiti tok izabranog bankovnog računa.',
-            bookingIncome: 'Ovaj prihod će uvećati tok izabranog računa.',
+            bookingIncomeCash:
+                'Ovaj prihod će biti evidentiran kao keš priliv.',
+            bookingIncomeBank:
+                'Ovaj prihod će uvećati tok izabranog bankovnog računa.',
             created: 'Transakcija je kreirana',
             updated: 'Transakcija je ažurirana',
             saveError: 'Čuvanje transakcije nije uspelo',
@@ -414,6 +414,7 @@ const messages = {
             heroTitle: 'Svi garancijski računi na jednom mestu.',
             heroDescription:
                 'Prati aktivne garancije, proveri kada ističu i preuzmi slike računa pre nego što postanu nepotrebne.',
+            searchPlaceholder: 'Pretraži garancije...',
             activeWarranties: 'Aktivne garancije',
             expiringSoon: 'Ističe uskoro',
             expired: 'Istekle',
@@ -454,6 +455,7 @@ const messages = {
             searchPlaceholder: 'Pretraži prihode...',
             add: 'Dodaj prihod',
             allCategories: 'Sve kategorije',
+            allMethods: 'Svi načini',
             historyTitle: 'Istorija prihoda',
             emptyTitle: 'Nema pronađenih prihoda',
             emptyDescription:

@@ -8,6 +8,7 @@ import {
     Wallet,
 } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
+import CategoryBadge from '@/components/categories/CategoryBadge.vue';
 import CurrencyDisplay from '@/components/CurrencyDisplay.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import KpiCard from '@/components/KpiCard.vue';
@@ -299,13 +300,19 @@ function formatCurrency(amount: number): string {
                             <p class="truncate text-sm font-medium">
                                 {{ tx.description }}
                             </p>
-                            <p class="text-xs text-muted-foreground">
-                                {{
-                                    tx.category?.name ??
-                                    t('common.states.uncategorized')
-                                }}
-                                &middot; {{ formatDate(tx.date) }}
-                            </p>
+                            <div
+                                class="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground"
+                            >
+                                <CategoryBadge
+                                    v-if="tx.category"
+                                    :category="tx.category"
+                                    compact
+                                />
+                                <span v-else>
+                                    {{ t('common.states.uncategorized') }}
+                                </span>
+                                <span>&middot; {{ formatDate(tx.date) }}</span>
+                            </div>
                         </div>
                         <CurrencyDisplay
                             :amount="

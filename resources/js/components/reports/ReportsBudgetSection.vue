@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import { PiggyBank } from 'lucide-vue-next';
+import CategoryBadge from '@/components/categories/CategoryBadge.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import LoadingSkeleton from '@/components/LoadingSkeleton.vue';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -20,10 +21,6 @@ defineProps<{
 const emit = defineEmits<{
     'update:budgetPeriod': [value: SpendingTargetPeriod];
 }>();
-
-function budgetLabel(target: SpendingTargetProgress) {
-    return target.category?.name ?? t('finance.reports.budgetOverallLabel');
-}
 
 function budgetStatusLabel(status: SpendingTargetProgress['status']) {
     return t(
@@ -317,8 +314,15 @@ function budgetBarWidth(progressPercent: number) {
                     >
                         <div class="flex items-start justify-between gap-3">
                             <div>
-                                <p class="font-semibold text-foreground">
-                                    {{ budgetLabel(target) }}
+                                <CategoryBadge
+                                    v-if="target.category"
+                                    :category="target.category"
+                                    compact
+                                />
+                                <p v-else class="font-semibold text-foreground">
+                                    {{
+                                        t('finance.reports.budgetOverallLabel')
+                                    }}
                                 </p>
                                 <p class="mt-1 text-sm text-muted-foreground">
                                     {{ formatCurrency(target.spent_amount) }}
