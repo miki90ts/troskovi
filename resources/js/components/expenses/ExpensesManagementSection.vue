@@ -1,9 +1,9 @@
 <script setup lang="ts">
+import TransactionManagementShell from '@/components/transactions/TransactionManagementShell.vue';
+import TransactionManagementToolbar from '@/components/transactions/TransactionManagementToolbar.vue';
 import { t } from '@/lib/i18n';
 import type { PaginationMeta } from '@/types/api';
 import type { Category, Transaction } from '@/types/models';
-import TransactionManagementShell from '@/components/transactions/TransactionManagementShell.vue';
-import TransactionManagementToolbar from '@/components/transactions/TransactionManagementToolbar.vue';
 import ExpenseFiltersPanel from './ExpenseFiltersPanel.vue';
 import ExpensesTransactionsTable from './ExpensesTransactionsTable.vue';
 

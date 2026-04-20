@@ -3,8 +3,6 @@ import { Download, Eye, ShieldCheck, Upload, X } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
 import CategoryBadge from '@/components/categories/CategoryBadge.vue';
 import PaymentMethodBadge from '@/components/transactions/PaymentMethodBadge.vue';
-import { useToast } from '@/composables/useToast';
-import { useTransactions } from '@/composables/useTransactions';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -23,15 +21,18 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { useToast } from '@/composables/useToast';
+import { useTransactions } from '@/composables/useTransactions';
 import { t } from '@/lib/i18n';
 
-import type { Category, Transaction } from '@/types/models';
+import type { Category, Debt, Transaction } from '@/types/models';
 
 const props = defineProps<{
     open: boolean;
     transaction?: Transaction | null;
     categories: Category[];
     accounts: { id: number; name: string }[];
+    debts?: Debt[];
     defaultType?: 'income' | 'expense';
 }>();
 
@@ -44,6 +45,7 @@ const { createTransaction, updateTransaction } = useTransactions();
 const { success, error: showError } = useToast();
 
 const NO_BANK_ACCOUNT_VALUE = '__none__';
+const NO_DEBT_VALUE = '__none__';
 
 const form = ref({
     type: 'expense' as 'income' | 'expense',
@@ -52,6 +54,7 @@ const form = ref({
     description: '',
     category_id: '',
     bank_account_id: '',
+    debt_id: '',
     payment_method: 'cash' as 'cash' | 'bank_account',
     notes: '',
     is_warranty: false,
@@ -79,6 +82,15 @@ const bankAccountSelectValue = computed({
             value === NO_BANK_ACCOUNT_VALUE ? '' : value;
     },
 });
+
+const debtSelectValue = computed({
+    get: () => form.value.debt_id || NO_DEBT_VALUE,
+    set: (value: string) => {
+        form.value.debt_id = value === NO_DEBT_VALUE ? '' : value;
+    },
+});
+
+const availableDebts = computed(() => props.debts ?? []);
 
 const usesBankAccount = computed(() => {
     return form.value.payment_method === 'bank_account';
@@ -112,6 +124,9 @@ watch(
                     bank_account_id: props.transaction.bank_account?.id
                         ? String(props.transaction.bank_account.id)
                         : '',
+                    debt_id: props.transaction.debt?.id
+                        ? String(props.transaction.debt.id)
+                        : '',
                     payment_method: props.transaction.payment_method,
                     notes: props.transaction.notes ?? '',
                     is_warranty: props.transaction.is_warranty ?? false,
@@ -124,11 +139,13 @@ watch(
                     description: '',
                     category_id: '',
                     bank_account_id: '',
+                    debt_id: '',
                     payment_method: 'cash',
                     notes: '',
                     is_warranty: false,
                 };
             }
+
             receiptFile.value = null;
             receiptPreview.value = null;
             errors.value = {};
@@ -148,9 +165,13 @@ const selectedCategory = computed(() => {
 });
 
 const warrantyExpiresDate = computed(() => {
-    if (!form.value.is_warranty || !form.value.date) return null;
+    if (!form.value.is_warranty || !form.value.date) {
+return null;
+}
+
     const date = new Date(form.value.date);
     date.setFullYear(date.getFullYear() + 2);
+
     return date.toLocaleDateString('sr-RS', {
         day: 'numeric',
         month: 'long',
@@ -171,6 +192,7 @@ function onFileChange(event: Event) {
         receiptFile.value = null;
         receiptPreview.value = null;
         input.value = '';
+
         return;
     }
 
@@ -222,6 +244,7 @@ async function onSubmit() {
                 usesBankAccount.value && form.value.bank_account_id
                     ? parseInt(form.value.bank_account_id)
                     : null,
+            debt_id: form.value.debt_id ? parseInt(form.value.debt_id) : null,
             is_warranty:
                 form.value.type === 'expense' ? form.value.is_warranty : false,
         };
@@ -230,6 +253,7 @@ async function onSubmit() {
 
         if (receiptFile.value) {
             const formData = new FormData();
+
             for (const [key, value] of Object.entries(payload)) {
                 if (value !== null && value !== undefined) {
                     formData.append(
@@ -242,6 +266,7 @@ async function onSubmit() {
                     );
                 }
             }
+
             formData.append('receipt', receiptFile.value);
             submitPayload = formData;
         }
@@ -485,6 +510,62 @@ async function onSubmit() {
                                 :value="String(account.id)"
                             >
                                 {{ account.name }}
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <div v-if="availableDebts.length > 0" class="grid gap-2">
+                    <Label
+                        class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
+                        >{{ t('components.transactionForm.linkedDebt') }}</Label
+                    >
+                    <Select v-model="debtSelectValue">
+                        <SelectTrigger
+                            class="h-11 w-full rounded-2xl border-border/60 bg-background"
+                        >
+                            <SelectValue
+                                :placeholder="
+                                    t(
+                                        'components.transactionForm.selectDebtOptional',
+                                    )
+                                "
+                            />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem :value="NO_DEBT_VALUE">{{
+                                t('common.states.none')
+                            }}</SelectItem>
+                            <SelectItem
+                                v-for="debt in availableDebts"
+                                :key="debt.id"
+                                :value="String(debt.id)"
+                            >
+                                <span class="flex items-center gap-2">
+                                    <span
+                                        class="inline-flex shrink-0 rounded-md px-1.5 py-0.5 text-[10px] leading-none font-semibold uppercase"
+                                        :class="
+                                            debt.type === 'i_owe'
+                                                ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400'
+                                                : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
+                                        "
+                                    >
+                                        {{
+                                            debt.type === 'i_owe'
+                                                ? t('debts.iOweLabel')
+                                                : t('debts.owedToMeLabel')
+                                        }}
+                                    </span>
+                                    <span>{{ debt.person_name }}</span>
+                                    <span class="text-muted-foreground">
+                                        {{
+                                            debt.remaining_amount.toLocaleString(
+                                                'sr-RS',
+                                            )
+                                        }}
+                                        RSD
+                                    </span>
+                                </span>
                             </SelectItem>
                         </SelectContent>
                     </Select>

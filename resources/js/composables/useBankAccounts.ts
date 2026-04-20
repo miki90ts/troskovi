@@ -1,7 +1,7 @@
 import { ref } from 'vue';
+import type { BankAccount, BankAccountOverview } from '@/types/models';
 import api from './useApi';
 
-import type { BankAccount, BankAccountOverview } from '@/types/models';
 
 export function useBankAccounts() {
     const loading = ref(false);

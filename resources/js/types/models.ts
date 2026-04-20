@@ -54,6 +54,11 @@ export type Transaction = {
     warranty_is_expired: boolean;
     category: CategoryCompact | null;
     bank_account: { id: number; name: string } | null;
+    debt: {
+        id: number;
+        person_name: string;
+        type: 'i_owe' | 'owed_to_me';
+    } | null;
     created_at: string;
 };
 
@@ -77,8 +82,17 @@ export type RecurringTransaction = {
     last_processed_date: string | null;
     payment_method: 'cash' | 'bank_account';
     is_active: boolean;
+    linked_transactions_count: number;
+    can_delete: boolean;
     category: CategoryCompact | null;
     bank_account: { id: number; name: string } | null;
+    debt: {
+        id: number;
+        person_name: string;
+        type: 'i_owe' | 'owed_to_me';
+        remaining_amount: number;
+        status: 'active' | 'settled' | 'overdue';
+    } | null;
     created_at: string;
 };
 
@@ -154,4 +168,34 @@ export type LoyaltyCard = {
     color: string | null;
     created_at: string;
     updated_at: string;
+};
+
+export type DebtType = 'i_owe' | 'owed_to_me';
+export type DebtStatus = 'active' | 'settled' | 'overdue';
+
+export type Debt = {
+    id: number;
+    type: DebtType;
+    person_name: string;
+    description: string;
+    amount: number;
+    remaining_amount: number;
+    paid_amount: number;
+    date: string;
+    due_date: string | null;
+    status: DebtStatus;
+    is_overdue: boolean;
+    progress_percent: number;
+    notes: string | null;
+    linked_transactions_count: number;
+    created_at: string;
+};
+
+export type DebtSummary = {
+    total_i_owe: number;
+    total_owed_to_me: number;
+    active_count: number;
+    overdue_count: number;
+    settled_count: number;
+    total_count: number;
 };

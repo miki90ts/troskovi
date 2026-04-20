@@ -7,18 +7,18 @@ import {
     Landmark,
     Wallet,
 } from 'lucide-vue-next';
-import AppLayout from '@/layouts/AppLayout.vue';
+import { ref, onMounted } from 'vue';
 import CategoryBadge from '@/components/categories/CategoryBadge.vue';
 import CurrencyDisplay from '@/components/CurrencyDisplay.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import KpiCard from '@/components/KpiCard.vue';
 import ToastContainer from '@/components/ToastContainer.vue';
-import { useTransactions } from '@/composables/useTransactions';
-import { formatShortDate, t } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
+import { useTransactions } from '@/composables/useTransactions';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { formatShortDate, t } from '@/lib/i18n';
 import type { BreadcrumbItem } from '@/types';
 import type { BankAccountOverview, Transaction } from '@/types/models';
-import { ref, onMounted } from 'vue';
 
 const props = defineProps<{
     account: { data: BankAccountOverview };

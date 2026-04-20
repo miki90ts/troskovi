@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { computed } from 'vue';
 import {
     ArrowDownCircle,
     ArrowUpCircle,
@@ -7,7 +6,10 @@ import {
     Pencil,
     Plus,
     Power,
+    RotateCcw,
+    Trash2,
 } from 'lucide-vue-next';
+import { computed } from 'vue';
 import CategoryBadge from '@/components/categories/CategoryBadge.vue';
 import CurrencyDisplay from '@/components/CurrencyDisplay.vue';
 import EmptyState from '@/components/EmptyState.vue';
@@ -33,7 +35,9 @@ const props = defineProps<{
 const emit = defineEmits<{
     create: [];
     edit: [transaction: RecurringTransaction];
+    activate: [transaction: RecurringTransaction];
     deactivate: [transaction: RecurringTransaction];
+    delete: [transaction: RecurringTransaction];
 }>();
 
 const isExpense = computed(() => props.type === 'expense');
@@ -89,6 +93,36 @@ function frequencyLabel(frequency: RecurringTransaction['frequency']): string {
             monthly: t('common.recurringFrequencies.monthly'),
         }[frequency] ?? frequency
     );
+}
+
+function statusLabel(item: RecurringTransaction): string {
+    return item.is_active
+        ? t('finance.recurring.statusActive')
+        : t('finance.recurring.statusInactive');
+}
+
+function debtTypeLabel(item: RecurringTransaction): string | null {
+    if (!item.debt) {
+        return null;
+    }
+
+    return item.debt.type === 'i_owe'
+        ? t('debts.iOweLabel')
+        : t('debts.owedToMeLabel');
+}
+
+function debtImpactLabel(item: RecurringTransaction): string | null {
+    if (!item.debt) {
+        return null;
+    }
+
+    if (item.debt.type === 'i_owe') {
+        return item.type === 'expense' ? 'Smanjuje dug' : 'Povećava dug';
+    }
+
+    return item.type === 'income'
+        ? 'Smanjuje potraživanje'
+        : 'Povećava potraživanje';
 }
 </script>
 
@@ -152,24 +186,28 @@ function frequencyLabel(frequency: RecurringTransaction['frequency']): string {
                         <TableHead class="text-right">{{
                             t('common.labels.amount')
                         }}</TableHead>
-                        <TableHead class="w-24" />
+                        <TableHead class="w-36" />
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     <TableRow
                         v-for="item in props.transactions"
                         :key="item.id"
-                        class="border-border/60"
+                        class="border-border/60 transition-colors"
+                        :class="!item.is_active ? 'bg-muted/20' : ''"
                     >
                         <TableCell>
                             <div class="flex items-center gap-3">
                                 <div
-                                    class="flex h-10 w-10 items-center justify-center rounded-2xl"
+                                    class="flex h-10 w-10 items-center justify-center rounded-2xl transition-opacity"
                                     :class="
                                         isExpense
                                             ? 'bg-red-500/10'
                                             : 'bg-green-500/10'
                                     "
+                                    :style="{
+                                        opacity: item.is_active ? '1' : '0.5',
+                                    }"
                                 >
                                     <ArrowDownCircle
                                         v-if="isExpense"
@@ -181,9 +219,40 @@ function frequencyLabel(frequency: RecurringTransaction['frequency']): string {
                                     />
                                 </div>
                                 <div>
-                                    <p class="font-medium">
-                                        {{ item.description }}
-                                    </p>
+                                    <div
+                                        class="flex flex-wrap items-center gap-2"
+                                    >
+                                        <p
+                                            class="font-medium"
+                                            :class="
+                                                !item.is_active
+                                                    ? 'text-muted-foreground'
+                                                    : ''
+                                            "
+                                        >
+                                            {{ item.description }}
+                                        </p>
+                                        <span
+                                            class="rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-[0.16em] uppercase"
+                                            :class="
+                                                item.is_active
+                                                    ? 'bg-emerald-500/10 text-emerald-600'
+                                                    : 'bg-muted text-muted-foreground'
+                                            "
+                                        >
+                                            {{ statusLabel(item) }}
+                                        </span>
+                                        <span
+                                            v-if="!item.can_delete"
+                                            class="rounded-full bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold tracking-[0.16em] text-amber-700 uppercase"
+                                        >
+                                            {{
+                                                t(
+                                                    'finance.recurring.hasHistory',
+                                                )
+                                            }}
+                                        </span>
+                                    </div>
                                     <p class="text-xs text-muted-foreground">
                                         {{
                                             t(
@@ -200,12 +269,28 @@ function frequencyLabel(frequency: RecurringTransaction['frequency']): string {
                                             )
                                         }}
                                     </p>
+                                    <p
+                                        v-if="item.debt"
+                                        class="text-xs text-muted-foreground"
+                                    >
+                                        {{ item.debt.person_name }} •
+                                        {{ debtTypeLabel(item) }} •
+                                        {{ debtImpactLabel(item) }}
+                                    </p>
                                 </div>
                             </div>
                         </TableCell>
-                        <TableCell>{{
-                            frequencyLabel(item.frequency)
-                        }}</TableCell>
+                        <TableCell>
+                            <div class="space-y-1">
+                                <p>{{ frequencyLabel(item.frequency) }}</p>
+                                <p
+                                    v-if="!item.is_active"
+                                    class="text-xs text-muted-foreground"
+                                >
+                                    {{ t('finance.recurring.inactiveHint') }}
+                                </p>
+                            </div>
+                        </TableCell>
                         <TableCell>
                             <div class="flex items-center gap-2 text-sm">
                                 <CalendarClock
@@ -242,25 +327,52 @@ function frequencyLabel(frequency: RecurringTransaction['frequency']): string {
                                 :amount="isExpense ? -item.amount : item.amount"
                                 colored
                                 class="font-semibold"
+                                :class="!item.is_active ? 'opacity-60' : ''"
                             />
                         </TableCell>
                         <TableCell>
                             <div class="flex justify-end gap-1">
                                 <Button
+                                    v-if="item.is_active"
                                     variant="ghost"
                                     size="icon"
                                     class="h-9 w-9 rounded-2xl"
+                                    :title="t('common.actions.edit')"
                                     @click="emit('edit', item)"
                                 >
                                     <Pencil class="h-3.5 w-3.5" />
                                 </Button>
                                 <Button
+                                    v-if="item.is_active"
                                     variant="ghost"
                                     size="icon"
                                     class="h-9 w-9 rounded-2xl text-destructive"
+                                    :title="
+                                        t('finance.recurring.deactivateConfirm')
+                                    "
                                     @click="emit('deactivate', item)"
                                 >
                                     <Power class="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                    v-else
+                                    variant="ghost"
+                                    size="icon"
+                                    class="h-9 w-9 rounded-2xl text-emerald-600"
+                                    :title="t('finance.recurring.activate')"
+                                    @click="emit('activate', item)"
+                                >
+                                    <RotateCcw class="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                    v-if="item.can_delete"
+                                    variant="ghost"
+                                    size="icon"
+                                    class="h-9 w-9 rounded-2xl text-destructive"
+                                    :title="t('common.actions.delete')"
+                                    @click="emit('delete', item)"
+                                >
+                                    <Trash2 class="h-3.5 w-3.5" />
                                 </Button>
                             </div>
                         </TableCell>

@@ -3,8 +3,8 @@ import { usePage } from '@inertiajs/vue3';
 import { Wallet2 } from 'lucide-vue-next';
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import type { BreadcrumbItem } from '@/types';
 import { t } from '@/lib/i18n';
+import type { BreadcrumbItem } from '@/types';
 
 const page = usePage();
 

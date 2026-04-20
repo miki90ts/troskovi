@@ -1,5 +1,6 @@
 import { router } from '@inertiajs/vue3';
-import { computed, nextTick, onBeforeUnmount, ref, watch, type Ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref, watch  } from 'vue';
+import type {Ref} from 'vue';
 
 export type WarrantyListingFilters = Record<string, string | undefined>;
 
@@ -50,6 +51,7 @@ export function useWarrantiesPage(options: {
         if (search.value) {
             query.search = search.value;
         }
+
         if (statusFilter.value) {
             query.status = statusFilter.value;
         }

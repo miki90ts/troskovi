@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { CreditCard, Plus, Search } from 'lucide-vue-next';
 import { Head } from '@inertiajs/vue3';
+import { CreditCard, Plus, Search } from 'lucide-vue-next';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
+import EmptyState from '@/components/EmptyState.vue';
 import BarcodeFullscreenDialog from '@/components/loyalty-cards/BarcodeFullscreenDialog.vue';
 import LoyaltyCardFormDialog from '@/components/loyalty-cards/LoyaltyCardFormDialog.vue';
 import LoyaltyCardItem from '@/components/loyalty-cards/LoyaltyCardItem.vue';
 import LoyaltyCardsHeroSection from '@/components/loyalty-cards/LoyaltyCardsHeroSection.vue';
-import ConfirmDialog from '@/components/ConfirmDialog.vue';
-import EmptyState from '@/components/EmptyState.vue';
 import ToastContainer from '@/components/ToastContainer.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\PaymentMethod;
 use App\Enums\TransactionType;
+use App\Models\Transaction;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -21,12 +22,69 @@ class StoreTransactionRequest extends FormRequest
             'amount' => ['required', 'numeric', 'gt:0'],
             'date' => ['required', 'date'],
             'description' => ['required', 'string', 'max:255'],
-            'category_id' => ['nullable', 'exists:categories,id'],
-            'bank_account_id' => ['nullable', 'exists:bank_accounts,id'],
+            'category_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('categories', 'id')->where(function ($query) {
+                    $query->where(function ($nested) {
+                        $nested->where('user_id', $this->user()?->id)
+                            ->orWhere('is_system', true);
+                    });
+                }),
+            ],
+            'bank_account_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('bank_accounts', 'id')->where(
+                    fn($query) => $query->where('user_id', $this->user()?->id)
+                ),
+            ],
             'payment_method' => ['required_if:type,expense', Rule::enum(PaymentMethod::class)],
             'notes' => ['nullable', 'string'],
             'receipt' => ['nullable', 'image', 'max:1024'],
             'is_warranty' => ['nullable', 'boolean'],
+            'debt_id' => [
+                'nullable',
+                Rule::exists('debts', 'id')->where(
+                    fn($query) => $query->where('user_id', $this->user()?->id)
+                ),
+            ],
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            if ($validator->errors()->isNotEmpty()) {
+                return;
+            }
+
+            $transaction = $this->route('transaction');
+            $paymentMethod = $this->input('payment_method');
+
+            if ($paymentMethod === null && $transaction instanceof Transaction) {
+                $paymentMethod = $transaction->payment_method?->value;
+            }
+
+            $bankAccountId = $this->has('bank_account_id')
+                ? $this->input('bank_account_id')
+                : ($transaction instanceof Transaction ? $transaction->bank_account_id : null);
+
+            $hasBankAccount = $bankAccountId !== null && $bankAccountId !== '';
+
+            if ($paymentMethod === PaymentMethod::BankAccount->value && ! $hasBankAccount) {
+                $validator->errors()->add(
+                    'bank_account_id',
+                    'Bankovni racun je obavezan kada je nacin placanja bankovni racun.'
+                );
+            }
+
+            if ($paymentMethod !== null && $paymentMethod !== PaymentMethod::BankAccount->value && $hasBankAccount) {
+                $validator->errors()->add(
+                    'bank_account_id',
+                    'Bankovni racun moze biti postavljen samo kada je nacin placanja bankovni racun.'
+                );
+            }
+        });
     }
 }

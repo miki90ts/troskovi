@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue';
 import { Download, Loader2, TrendingDown, TrendingUp } from 'lucide-vue-next';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ref } from 'vue';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency, t } from '@/lib/i18n';
 import type { ReportPeriod } from '@/types/api';
 import type { ReportSummary } from '@/types/models';
@@ -31,7 +31,10 @@ function exportPdf() {
 
     fetch(url, { credentials: 'same-origin' })
         .then((res) => {
-            if (!res.ok) throw new Error('Export failed');
+            if (!res.ok) {
+throw new Error('Export failed');
+}
+
             return res.blob();
         })
         .then((blob) => {

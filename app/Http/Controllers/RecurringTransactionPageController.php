@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\CategoryResource;
 use App\Http\Resources\RecurringTransactionResource;
+use App\Models\Debt;
 use App\Services\CategoryService;
 use App\Services\RecurringTransactionService;
 use Illuminate\Http\Request;
@@ -26,15 +27,20 @@ class RecurringTransactionPageController extends Controller
             ->active()
             ->orderBy('name')
             ->get()
-            ->map(fn ($account) => [
+            ->map(fn($account) => [
                 'id' => $account->id,
                 'name' => $account->name,
             ]);
+        $debts = Debt::where('user_id', $user->id)
+            ->whereIn('status', ['active', 'overdue'])
+            ->orderBy('person_name')
+            ->get(['id', 'type', 'person_name', 'remaining_amount', 'status']);
 
         return Inertia::render('recurring-transactions/Index', [
             'recurringTransactions' => RecurringTransactionResource::collection($recurringTransactions),
             'categories' => CategoryResource::collection($categories),
             'accounts' => $accounts,
+            'debts' => $debts,
         ]);
     }
 }

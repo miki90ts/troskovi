@@ -110,9 +110,11 @@ export function useCategoriesPage(initialCategories: Category[]) {
                 const index = categories.value.findIndex(
                     (c) => c.id === editingCategory.value!.id,
                 );
+
                 if (index !== -1) {
                     categories.value.splice(index, 1, updated);
                 }
+
                 success(t('finance.categories.updated'));
             } else {
                 const created = await createCategory(payload);

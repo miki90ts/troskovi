@@ -1,9 +1,11 @@
-import { computed, type Ref } from 'vue';
+import { computed  } from 'vue';
+import type {Ref} from 'vue';
 import {
-    useTransactionListingPage,
-    type TransactionListingFilters,
-    type TransactionsPage,
+    useTransactionListingPage
+    
+    
 } from '@/composables/useTransactionListingPage';
+import type {TransactionListingFilters, TransactionsPage} from '@/composables/useTransactionListingPage';
 import { t } from '@/lib/i18n';
 
 export type IncomeFilters = TransactionListingFilters;

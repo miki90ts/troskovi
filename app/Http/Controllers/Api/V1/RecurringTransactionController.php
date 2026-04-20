@@ -27,7 +27,7 @@ class RecurringTransactionController extends Controller
     {
         $recurring = $this->service->create($request->user(), $request->validated());
 
-        return (new RecurringTransactionResource($recurring->load(['category', 'bankAccount'])))
+        return (new RecurringTransactionResource($recurring))
             ->response()
             ->setStatusCode(201);
     }
@@ -37,7 +37,10 @@ class RecurringTransactionController extends Controller
         Gate::authorize('view', $recurringTransaction);
 
         return new RecurringTransactionResource(
-            $recurringTransaction->load(['category', 'bankAccount'])
+            $recurringTransaction->load(['category', 'bankAccount', 'debt'])
+                ->loadCount([
+                    'transactions as linked_transactions_count' => fn($query) => $query->withTrashed(),
+                ])
         );
     }
 
@@ -56,6 +59,6 @@ class RecurringTransactionController extends Controller
 
         $this->service->delete($recurringTransaction);
 
-        return response()->json(['message' => 'Recurring transaction deactivated']);
+        return response()->json(['message' => 'Recurring transaction deleted']);
     }
 }

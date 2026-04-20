@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue';
 import { Search } from 'lucide-vue-next';
+import { computed } from 'vue';
 import TransactionManagementShell from '@/components/transactions/TransactionManagementShell.vue';
 import { Input } from '@/components/ui/input';
 import {

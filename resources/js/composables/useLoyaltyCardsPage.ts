@@ -97,9 +97,11 @@ export function useLoyaltyCardsPage(initialCards: LoyaltyCard[]) {
                 const index = cards.value.findIndex(
                     (c) => c.id === editingCard.value!.id,
                 );
+
                 if (index !== -1) {
                     cards.value.splice(index, 1, updated);
                 }
+
                 success(t('loyaltyCards.updated'));
             } else {
                 const created = await createCard(payload);

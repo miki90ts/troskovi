@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { computed } from 'vue';
 import { Plus } from 'lucide-vue-next';
+import { computed } from 'vue';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import type { RecurringTransactionTab } from '@/composables/useRecurringTransactionsPage';
 import { t } from '@/lib/i18n';
 import type { RecurringTransaction } from '@/types/models';
-import type { RecurringTransactionTab } from '@/composables/useRecurringTransactionsPage';
 import RecurringTransactionsTable from './RecurringTransactionsTable.vue';
 
 const props = defineProps<{
@@ -19,7 +19,9 @@ const emit = defineEmits<{
     'update:activeTab': [value: RecurringTransactionTab];
     create: [];
     edit: [transaction: RecurringTransaction];
+    activate: [transaction: RecurringTransaction];
     deactivate: [transaction: RecurringTransaction];
+    delete: [transaction: RecurringTransaction];
 }>();
 
 const activeTabModel = computed({
@@ -70,7 +72,9 @@ const activeTabModel = computed({
                     :accounts-count="accountsCount"
                     @create="emit('create')"
                     @edit="emit('edit', $event)"
+                    @activate="emit('activate', $event)"
                     @deactivate="emit('deactivate', $event)"
+                    @delete="emit('delete', $event)"
                 />
             </TabsContent>
 
@@ -81,7 +85,9 @@ const activeTabModel = computed({
                     :accounts-count="accountsCount"
                     @create="emit('create')"
                     @edit="emit('edit', $event)"
+                    @activate="emit('activate', $event)"
                     @deactivate="emit('deactivate', $event)"
+                    @delete="emit('delete', $event)"
                 />
             </TabsContent>
         </Tabs>

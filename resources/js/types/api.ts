@@ -63,3 +63,20 @@ export type LoyaltyCardPayload = {
     notes?: string | null;
     color?: string | null;
 };
+
+export type DebtPayload = {
+    type: 'i_owe' | 'owed_to_me';
+    person_name: string;
+    description: string;
+    amount: number;
+    date: string;
+    due_date?: string | null;
+    notes?: string | null;
+    status?: 'active' | 'settled';
+};
+
+export type DebtFilters = {
+    type?: 'i_owe' | 'owed_to_me';
+    status?: 'active' | 'settled' | 'overdue';
+    search?: string;
+};

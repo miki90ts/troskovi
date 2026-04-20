@@ -1,3 +1,5 @@
+import { netBalance } from '@/actions/App/Http/Controllers/Api/V1/ReportController';
+
 interface MessageDictionary {
     [key: string]: string | MessageDictionary;
 }
@@ -212,6 +214,7 @@ const messages = {
             reports: 'Izveštaji',
             categories: 'Kategorije',
             loyaltyCards: 'Lojaliti kartice',
+            debts: 'Dugovanja',
             warranties: 'Garancije',
             repository: 'Repozitorijum',
             documentation: 'Dokumentacija',
@@ -337,6 +340,8 @@ const messages = {
             descriptionPlaceholder: 'Za šta je ova stavka?',
             selectCategory: 'Izaberi kategoriju',
             selectAccountOptional: 'Izaberi račun (opciono)',
+            linkedDebt: 'Povezano dugovanje',
+            selectDebtOptional: 'Izaberi dugovanje (opciono)',
             notesPlaceholder: 'Dodatne napomene...',
             bookingPreview: 'Pregled knjiženja',
             bookingExpenseCash:
@@ -366,12 +371,16 @@ const messages = {
             newTitle: 'Novo ponavljanje',
             editTitle: 'Izmeni ponavljanje',
             description:
-                'Podesi sablon za ponavljajući prihod ili trošak sa istom strukturom kao i na ostalim finansijskim ekranima.',
+                'Podesi šablon za ponavljajući prihod ili trošak sa istom strukturom kao i na ostalim finansijskim ekranima.',
             expenseSubtitle: 'Zakazano izlazno plaćanje',
             incomeSubtitle: 'Zakazano ulazno plaćanje',
             descriptionPlaceholder: 'npr. Netflix, Plata',
             selectCategory: 'Izaberi kategoriju',
             selectAccount: 'Izaberi račun',
+            executionDateLabel: 'Datum izvršenja',
+            executionDatePlaceholder: 'Izaberi datum',
+            executionDateHint:
+                'Ti biraš prvi sledeći termin izvršenja. Polje poslednje obrade ostaje prazno dok se pravilo stvarno ne izvrši.',
             rulePreview: 'Pregled pravila',
             ruleSentence:
                 'Ovo pravilo će se ponavljati :frequency počev od :date.',
@@ -517,6 +526,9 @@ const messages = {
             statusWarning: 'Blizu limita',
             statusExceeded: 'Prekoračeno',
             warningNote: 'Upozorenje se aktivira od :value% budžeta.',
+            income: 'Prihodi',
+            expenses: 'Troškovi',
+            netBalance: 'Neto stanje',
         },
         bankAccounts: {
             head: 'Bankovni računi',
@@ -702,6 +714,14 @@ const messages = {
                 'Ovde dodaj platu, honorare ili druge ponavljajuće prihode.',
             emptyIncomeAction: 'Dodaj ponavljajući prihod',
             lastProcessed: 'Poslednje obrađeno: :date',
+            statusActive: 'Aktivna',
+            statusInactive: 'Neaktivna',
+            inactiveHint:
+                'Ne kreira nove transakcije dok je ne aktiviraš ponovo.',
+            hasHistory: 'Ima istoriju',
+            activate: 'Aktiviraj',
+            activated: 'Ponavljajuća transakcija je aktivirana',
+            activateError: 'Aktivacija ponavljajuće transakcije nije uspela',
             deactivated: 'Ponavljajuća transakcija je deaktivirana',
             deactivateError:
                 'Deaktivacija ponavljajuće transakcije nije uspela',
@@ -709,6 +729,12 @@ const messages = {
             deactivateDescription:
                 'Ovo pravilo više neće praviti buduće transakcije, ali postojeća istorija ostaje sačuvana.',
             deactivateConfirm: 'Deaktiviraj',
+            deleted: 'Ponavljajuća transakcija je obrisana',
+            deleteError: 'Brisanje ponavljajuće transakcije nije uspelo',
+            deleteTitle: 'Obriši ponavljanje',
+            deleteDescription:
+                'Ovo pravilo će biti trajno obrisano zato što još nema povezanih transakcija.',
+            deleteConfirm: 'Obriši',
         },
     },
     dashboard: {
@@ -946,6 +972,66 @@ const messages = {
             'Dodaj svoju prvu lojaliti karticu i imaj barkod uvek pri ruci.',
         noResults: 'Nema rezultata',
         noResultsDescription: 'Nijedna kartica ne odgovara pretrazi.',
+    },
+    debts: {
+        head: 'Dugovanja',
+        badge: 'Dugovanja',
+        heroTitle: 'Tvoja dugovanja',
+        heroDescription:
+            'Prati koliko duguješ i koliko ti drugi duguju na jednom mestu.',
+        iOweTotal: 'Ja dugujem',
+        owedToMeTotal: 'Meni duguju',
+        activeDebts: 'Aktivna dugovanja',
+        overdueDebts: 'Prekoračena',
+        add: 'Dodaj dugovanje',
+        managementTitle: 'Dugovanja',
+        managementDescription: 'Pregledaj i upravljaj dugovanja',
+        searchPlaceholder: 'Pretraži po imenu osobe...',
+        iOweTab: 'Ja dugujem (:count)',
+        owedToMeTab: 'Meni duguju (:count)',
+        filterAll: 'Sva',
+        statusActive: 'Aktivno',
+        statusSettled: 'Izmireno',
+        statusOverdue: 'Prekoračeno',
+        showingCount: 'Prikazano :count dugovanja',
+        totalRemaining: 'Ukupno preostalo',
+        emptyIOweTitle: 'Nema dugovanja',
+        emptyIOweDescription:
+            'Nemaš nijedan zapis o dugovanima. Dodaj novo dugovanje.',
+        emptyOwedToMeTitle: 'Niko ti ne duguje',
+        emptyOwedToMeDescription:
+            'Nemaš nijedan zapis o potraživanjima. Dodaj novo.',
+        formBadge: 'Dugovanje',
+        newTitle: 'Novo dugovanje',
+        editTitle: 'Izmeni dugovanje',
+        createDescription: 'Dodaj novo dugovanje ili potraživanje.',
+        editDescription: 'Izmeni podatke o dugovanju.',
+        typeLabel: 'Tip dugovanja',
+        iOweLabel: 'Ja dugujem',
+        iOweSubtitle: 'Neko mi je pozajmio',
+        owedToMeLabel: 'Meni duguju',
+        owedToMeSubtitle: 'Ja sam pozajmio nekome',
+        personName: 'Ime osobe',
+        personNamePlaceholder: 'Unesi ime osobe',
+        amountPlaceholder: 'Unesi iznos',
+        descriptionPlaceholder: 'Kratki opis dugovanja',
+        dueDate: 'Rok za vraćanje',
+        notesPlaceholder: 'Dodatne napomene...',
+        paid: 'Plaćeno',
+        remaining: 'Preostalo',
+        dueDateShort: 'Rok',
+        linkedTransactions: 'Povezane transakcije',
+        markSettled: 'Označi kao izmireno',
+        created: 'Dugovanje je kreirano',
+        updated: 'Dugovanje je ažurirano',
+        deleted: 'Dugovanje je obrisano',
+        settled: 'Dugovanje je izmireno',
+        saveError: 'Čuvanje dugovanja nije uspelo',
+        deleteError: 'Brisanje dugovanja nije uspelo',
+        settleError: 'Izmirenje dugovanja nije uspelo',
+        deleteTitle: 'Obriši dugovanje',
+        deleteDescription:
+            'Da li si siguran/na da želiš da obrišeš ovo dugovanje? Ova radnja se ne može poništiti.',
     },
 } satisfies MessageDictionary;
 

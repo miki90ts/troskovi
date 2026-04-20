@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\CategoryResource;
 use App\Http\Resources\TransactionResource;
+use App\Models\Debt;
 use App\Services\CategoryService;
 use App\Services\TransactionService;
 use Illuminate\Http\Request;
@@ -24,15 +25,21 @@ class IncomePageController extends Controller
         $transactions = $this->transactionService->list($user, $filters);
         $categories = $this->categoryService->list($user, 'income');
 
-        $accounts = $user->bankAccounts()->active()->orderBy('name')->get()->map(fn ($a) => [
+        $accounts = $user->bankAccounts()->active()->orderBy('name')->get()->map(fn($a) => [
             'id' => $a->id,
             'name' => $a->name,
         ]);
+
+        $debts = Debt::where('user_id', $user->id)
+            ->whereIn('status', ['active', 'overdue'])
+            ->orderBy('person_name')
+            ->get(['id', 'type', 'person_name', 'remaining_amount', 'status']);
 
         return Inertia::render('incomes/Index', [
             'transactions' => TransactionResource::collection($transactions),
             'categories' => CategoryResource::collection($categories),
             'accounts' => $accounts,
+            'debts' => $debts,
             'filters' => $request->only(['date_from', 'date_to', 'category_id', 'bank_account_id', 'search']),
         ]);
     }

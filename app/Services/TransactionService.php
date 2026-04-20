@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Debt;
 use App\Models\Transaction;
 use App\Models\User;
 use Carbon\Carbon;
@@ -12,9 +13,10 @@ use Illuminate\Support\Facades\Storage;
 
 class TransactionService
 {
+    public function __construct(private DebtService $debtService) {}
     public function list(User $user, array $filters = []): LengthAwarePaginator
     {
-        $query = $user->transactions()->with(['category', 'bankAccount']);
+        $query = $user->transactions()->with(['category', 'bankAccount', 'debt']);
 
         if (! empty($filters['type'])) {
             $query->where('type', $filters['type']);
@@ -82,11 +84,17 @@ class TransactionService
 
         $transaction = $user->transactions()->create($data);
 
+        if ($transaction->debt_id) {
+            $this->debtService->recalculateRemaining($transaction->debt);
+        }
+
         return $transaction->load(['category', 'bankAccount']);
     }
 
     public function update(Transaction $transaction, array $data): Transaction
     {
+        $oldDebtId = $transaction->debt_id;
+
         if (isset($data['receipt']) && $data['receipt'] instanceof UploadedFile) {
             if ($transaction->receipt_path) {
                 Storage::disk('local')->delete($transaction->receipt_path);
@@ -106,21 +114,43 @@ class TransactionService
 
         $transaction->update($data);
 
+        $newDebtId = $transaction->debt_id;
+
+        if ($oldDebtId && $oldDebtId !== $newDebtId) {
+            $oldDebt = Debt::find($oldDebtId);
+            if ($oldDebt) {
+                $this->debtService->recalculateRemaining($oldDebt);
+            }
+        }
+
+        if ($newDebtId) {
+            $this->debtService->recalculateRemaining($transaction->debt);
+        }
+
         return $transaction->fresh(['category', 'bankAccount']);
     }
 
     public function delete(Transaction $transaction): void
     {
+        $debtId = $transaction->debt_id;
+
         if ($transaction->receipt_path) {
             Storage::disk('local')->delete($transaction->receipt_path);
         }
 
         $transaction->delete();
+
+        if ($debtId) {
+            $debt = Debt::find($debtId);
+            if ($debt) {
+                $this->debtService->recalculateRemaining($debt);
+            }
+        }
     }
 
     public function listAll(User $user, array $filters = [], int $limit = 5000): Collection
     {
-        $query = $user->transactions()->with(['category', 'bankAccount']);
+        $query = $user->transactions()->with(['category', 'bankAccount', 'debt']);
 
         if (! empty($filters['type'])) {
             $query->where('type', $filters['type']);

@@ -21,12 +21,15 @@ export function getWarrantyStatusClass(expiresAt: string | null): string {
     if (days === null) {
         return 'text-muted-foreground';
     }
+
     if (days < 0) {
         return 'text-destructive';
     }
+
     if (days <= 30) {
         return 'text-orange-500';
     }
+
     if (days <= 180) {
         return 'text-yellow-500';
     }
@@ -46,6 +49,7 @@ export function getWarrantyStatusBadge(expiresAt: string | null): {
             class: 'border-destructive/20 bg-destructive/10 text-destructive',
         };
     }
+
     if (days <= 30) {
         return {
             label: t('finance.warranties.statusExpiringSoon'),
@@ -73,6 +77,7 @@ export function formatWarrantyDaysRemaining(expiresAt: string | null): string {
     if (days === null) {
         return '';
     }
+
     if (days < 0) {
         return t('finance.warranties.daysOverdue', { count: Math.abs(days) });
     }

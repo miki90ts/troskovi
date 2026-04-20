@@ -3,6 +3,7 @@
 use App\Http\Controllers\BankAccountPageController;
 use App\Http\Controllers\CategoryPageController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DebtPageController;
 use App\Http\Controllers\ExpensePageController;
 use App\Http\Controllers\IncomePageController;
 use App\Http\Controllers\LoyaltyCardPageController;
@@ -37,6 +38,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('reports', [ReportPageController::class, 'index'])->name('reports.index');
     Route::get('categories', [CategoryPageController::class, 'index'])->name('categories.index');
     Route::get('loyalty-cards', [LoyaltyCardPageController::class, 'index'])->name('loyalty-cards.index');
+    Route::get('debts', [DebtPageController::class, 'index'])->name('debts.index');
 });
 
 require __DIR__ . '/settings.php';

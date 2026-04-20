@@ -1,5 +1,4 @@
 import { ref } from 'vue';
-import api from './useApi';
 
 import type {
     ChartData,
@@ -7,6 +6,7 @@ import type {
     ReportPeriod,
 } from '@/types/api';
 import type { ReportSummary } from '@/types/models';
+import api from './useApi';
 
 export function useReports() {
     const loading = ref(false);

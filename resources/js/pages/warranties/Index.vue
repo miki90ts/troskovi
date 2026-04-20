@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import { toRef } from 'vue';
-import AppLayout from '@/layouts/AppLayout.vue';
 import WarrantiesHeroSection from '@/components/warranties/WarrantiesHeroSection.vue';
 import WarrantiesManagementSection from '@/components/warranties/WarrantiesManagementSection.vue';
 import {
     ALL_WARRANTY_STATUSES_VALUE,
     useWarrantiesPage,
 } from '@/composables/useWarrantiesPage';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { t } from '@/lib/i18n';
 import type { BreadcrumbItem } from '@/types';
 import type { PaginationMeta } from '@/types/api';

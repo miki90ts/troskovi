@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\BankAccountController;
 use App\Http\Controllers\Api\V1\CategoryController;
+use App\Http\Controllers\Api\V1\DebtController;
 use App\Http\Controllers\Api\V1\LoyaltyCardController;
 use App\Http\Controllers\Api\V1\PdfExportController;
 use App\Http\Controllers\Api\V1\RecurringTransactionController;
@@ -32,6 +33,10 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
 
     // Loyalty Cards
     Route::apiResource('loyalty-cards', LoyaltyCardController::class)->except(['show']);
+
+    // Debts
+    Route::get('debts/summary', [DebtController::class, 'summary']);
+    Route::apiResource('debts', DebtController::class);
 
     // Reports
     Route::prefix('reports')->group(function () {

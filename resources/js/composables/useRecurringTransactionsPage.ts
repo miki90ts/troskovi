@@ -1,5 +1,6 @@
 import { router } from '@inertiajs/vue3';
-import { computed, ref, type Ref } from 'vue';
+import { computed, ref  } from 'vue';
+import type {Ref} from 'vue';
 import { useRecurringTransactions } from '@/composables/useRecurringTransactions';
 import { useToast } from '@/composables/useToast';
 import { t } from '@/lib/i18n';
@@ -10,18 +11,20 @@ export type RecurringTransactionsPage = {
 };
 
 export type RecurringTransactionTab = 'expense' | 'income';
+type PendingRecurringAction = 'deactivate' | 'delete';
 
 export function useRecurringTransactionsPage(options: {
     recurringTransactionsPage: Ref<RecurringTransactionsPage>;
 }) {
     const { recurringTransactionsPage } = options;
     const { success, error: showError } = useToast();
-    const { deleteRecurring } = useRecurringTransactions();
+    const { deleteRecurring, updateRecurring } = useRecurringTransactions();
 
     const activeTab = ref<RecurringTransactionTab>('expense');
     const showForm = ref(false);
     const editingRecurring = ref<RecurringTransaction | null>(null);
-    const deactivateTarget = ref<RecurringTransaction | null>(null);
+    const actionTarget = ref<RecurringTransaction | null>(null);
+    const pendingAction = ref<PendingRecurringAction | null>(null);
 
     const recurringTransactions = computed(
         () => recurringTransactionsPage.value.data,
@@ -45,6 +48,21 @@ export function useRecurringTransactionsPage(options: {
     const visibleAmountTotal = computed(() =>
         filteredRecurring.value.reduce((sum, item) => sum + item.amount, 0),
     );
+    const confirmDialogTitle = computed(() =>
+        pendingAction.value === 'delete'
+            ? t('finance.recurring.deleteTitle')
+            : t('finance.recurring.deactivateTitle'),
+    );
+    const confirmDialogDescription = computed(() =>
+        pendingAction.value === 'delete'
+            ? t('finance.recurring.deleteDescription')
+            : t('finance.recurring.deactivateDescription'),
+    );
+    const confirmDialogConfirmText = computed(() =>
+        pendingAction.value === 'delete'
+            ? t('finance.recurring.deleteConfirm')
+            : t('finance.recurring.deactivateConfirm'),
+    );
 
     function openCreate() {
         editingRecurring.value = null;
@@ -63,21 +81,60 @@ export function useRecurringTransactionsPage(options: {
 
     function onSaved() {
         closeForm();
-        router.reload();
+        router.reload({ only: ['recurringTransactions'] });
     }
 
-    async function handleDeactivate() {
-        if (!deactivateTarget.value) {
+    function requestDeactivate(item: RecurringTransaction) {
+        actionTarget.value = item;
+        pendingAction.value = 'deactivate';
+    }
+
+    function requestDelete(item: RecurringTransaction) {
+        actionTarget.value = item;
+        pendingAction.value = 'delete';
+    }
+
+    function clearPendingAction() {
+        actionTarget.value = null;
+        pendingAction.value = null;
+    }
+
+    async function handleActivate(item: RecurringTransaction) {
+        try {
+            await updateRecurring(item.id, { is_active: true });
+            success(t('finance.recurring.activated'));
+            router.reload({ only: ['recurringTransactions'] });
+        } catch {
+            showError(t('finance.recurring.activateError'));
+        }
+    }
+
+    async function handleConfirmedAction() {
+        if (!actionTarget.value || !pendingAction.value) {
             return;
         }
 
         try {
-            await deleteRecurring(deactivateTarget.value.id);
-            success(t('finance.recurring.deactivated'));
-            deactivateTarget.value = null;
-            router.reload();
+            if (pendingAction.value === 'delete') {
+                await deleteRecurring(actionTarget.value.id);
+                success(t('finance.recurring.deleted'));
+            } else {
+                await updateRecurring(actionTarget.value.id, {
+                    is_active: false,
+                });
+                success(t('finance.recurring.deactivated'));
+            }
+
+            clearPendingAction();
+            router.reload({ only: ['recurringTransactions'] });
         } catch {
-            showError(t('finance.recurring.deactivateError'));
+            showError(
+                t(
+                    pendingAction.value === 'delete'
+                        ? 'finance.recurring.deleteError'
+                        : 'finance.recurring.deactivateError',
+                ),
+            );
         }
     }
 
@@ -90,11 +147,19 @@ export function useRecurringTransactionsPage(options: {
         visibleAmountTotal,
         showForm,
         editingRecurring,
-        deactivateTarget,
+        actionTarget,
+        pendingAction,
+        confirmDialogTitle,
+        confirmDialogDescription,
+        confirmDialogConfirmText,
         openCreate,
         openEdit,
         closeForm,
         onSaved,
-        handleDeactivate,
+        requestDeactivate,
+        requestDelete,
+        clearPendingAction,
+        handleActivate,
+        handleConfirmedAction,
     };
 }

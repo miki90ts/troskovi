@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Filter } from 'lucide-vue-next';
 import { computed } from 'vue';
 import CategoryBadge from '@/components/categories/CategoryBadge.vue';
 import PaymentMethodBadge from '@/components/transactions/PaymentMethodBadge.vue';
@@ -11,7 +12,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Filter } from 'lucide-vue-next';
 import { t } from '@/lib/i18n';
 import type { Category } from '@/types/models';
 

@@ -14,6 +14,7 @@ import ReportChartCard from '@/components/reports/ReportChartCard.vue';
 import ReportsBudgetSection from '@/components/reports/ReportsBudgetSection.vue';
 import ReportsHeroSection from '@/components/reports/ReportsHeroSection.vue';
 import ToastContainer from '@/components/ToastContainer.vue';
+import { Button } from '@/components/ui/button';
 import { useReportsPage } from '@/composables/useReportsPage';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { t } from '@/lib/i18n';
@@ -36,7 +37,10 @@ const {
     incomeBreakdown,
     cashVsBank,
     budgetProgress,
+    comparisonSeriesVisibility,
+    comparisonChartKey,
     formattedPeriodRange,
+    toggleComparisonSeries,
     barChartOptions,
     barChartSeries,
     lineChartOptions,
@@ -115,8 +119,51 @@ const {
                         :title="t('finance.reports.incomeVsExpenses')"
                         :icon="CircleDollarSign"
                     >
+                        <div class="mb-4 flex flex-wrap gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                class="rounded-full border-emerald-500/30 px-3 disabled:opacity-100"
+                                :disabled="
+                                    comparisonSeriesVisibility.income &&
+                                    !comparisonSeriesVisibility.expenses
+                                "
+                                :class="
+                                    comparisonSeriesVisibility.income
+                                        ? 'bg-emerald-500/10 text-emerald-700'
+                                        : 'text-muted-foreground opacity-60'
+                                "
+                                @click="toggleComparisonSeries('income')"
+                            >
+                                <span
+                                    class="mr-2 h-2.5 w-2.5 rounded-full bg-emerald-500"
+                                />
+                                {{ t('finance.reports.income') }}
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                class="rounded-full border-orange-500/30 px-3 disabled:opacity-100"
+                                :disabled="
+                                    comparisonSeriesVisibility.expenses &&
+                                    !comparisonSeriesVisibility.income
+                                "
+                                :class="
+                                    comparisonSeriesVisibility.expenses
+                                        ? 'bg-orange-500/10 text-orange-700'
+                                        : 'text-muted-foreground opacity-60'
+                                "
+                                @click="toggleComparisonSeries('expenses')"
+                            >
+                                <span
+                                    class="mr-2 h-2.5 w-2.5 rounded-full bg-orange-500"
+                                />
+                                {{ t('finance.reports.expenses') }}
+                            </Button>
+                        </div>
                         <VueApexCharts
                             v-if="incomeVsExpenses"
+                            :key="comparisonChartKey"
                             type="bar"
                             height="300"
                             :options="barChartOptions()"

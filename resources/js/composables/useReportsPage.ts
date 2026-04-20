@@ -36,6 +36,10 @@ export function useReportsPage() {
     const incomeBreakdown = ref<ChartData | null>(null);
     const cashVsBank = ref<ChartData | null>(null);
     const budgetProgress = ref<SpendingTargetProgressResponse | null>(null);
+    const comparisonSeriesVisibility = ref({
+        income: true,
+        expenses: true,
+    });
 
     const formattedPeriodRange = computed(() => {
         if (!summary.value) {
@@ -55,6 +59,20 @@ export function useReportsPage() {
             year: 'numeric',
         })}`;
     });
+    const visibleComparisonSeriesCount = computed(
+        () =>
+            Number(comparisonSeriesVisibility.value.income) +
+            Number(comparisonSeriesVisibility.value.expenses),
+    );
+    const comparisonChartKey = computed(() =>
+        [
+            period.value,
+            comparisonSeriesVisibility.value.income ? 'income' : 'no-income',
+            comparisonSeriesVisibility.value.expenses
+                ? 'expenses'
+                : 'no-expenses',
+        ].join('-'),
+    );
 
     async function loadData() {
         loading.value = true;
@@ -97,6 +115,20 @@ export function useReportsPage() {
         }
     }
 
+    function toggleComparisonSeries(series: 'income' | 'expenses') {
+        if (
+            comparisonSeriesVisibility.value[series] &&
+            visibleComparisonSeriesCount.value === 1
+        ) {
+            return;
+        }
+
+        comparisonSeriesVisibility.value = {
+            ...comparisonSeriesVisibility.value,
+            [series]: !comparisonSeriesVisibility.value[series],
+        };
+    }
+
     onMounted(() => {
         loadData();
         loadBudgetProgress();
@@ -117,9 +149,16 @@ export function useReportsPage() {
         incomeBreakdown,
         cashVsBank,
         budgetProgress,
+        comparisonSeriesVisibility,
+        comparisonChartKey,
         formattedPeriodRange,
+        toggleComparisonSeries,
         barChartOptions: () => charts.barChartOptions(incomeVsExpenses.value),
-        barChartSeries: () => charts.barChartSeries(incomeVsExpenses.value),
+        barChartSeries: () =>
+            charts.barChartSeries(
+                incomeVsExpenses.value,
+                comparisonSeriesVisibility.value,
+            ),
         lineChartOptions: () => charts.lineChartOptions(netBalance.value),
         lineChartSeries: () => charts.lineChartSeries(netBalance.value),
         donutOptions: (data: ChartData | null, title: string) =>

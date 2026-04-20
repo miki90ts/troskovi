@@ -18,6 +18,7 @@ class Transaction extends Model
         'bank_account_id',
         'category_id',
         'recurring_transaction_id',
+        'debt_id',
         'type',
         'amount',
         'date',
@@ -61,6 +62,11 @@ class Transaction extends Model
     public function recurringTransaction(): BelongsTo
     {
         return $this->belongsTo(RecurringTransaction::class);
+    }
+
+    public function debt(): BelongsTo
+    {
+        return $this->belongsTo(Debt::class);
     }
 
     // ── Scopes ──

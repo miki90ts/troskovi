@@ -1,7 +1,7 @@
 import { ref } from 'vue';
+import type { Category } from '@/types/models';
 import api from './useApi';
 
-import type { Category } from '@/types/models';
 
 export function useCategories() {
     const loading = ref(false);

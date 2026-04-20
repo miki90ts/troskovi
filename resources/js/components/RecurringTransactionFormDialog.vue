@@ -3,8 +3,6 @@ import { ArrowDownCircle, ArrowUpCircle, CalendarClock } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
 import CategoryBadge from '@/components/categories/CategoryBadge.vue';
 import PaymentMethodBadge from '@/components/transactions/PaymentMethodBadge.vue';
-import { useRecurringTransactions } from '@/composables/useRecurringTransactions';
-import { useToast } from '@/composables/useToast';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -23,15 +21,18 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { useRecurringTransactions } from '@/composables/useRecurringTransactions';
+import { useToast } from '@/composables/useToast';
 import { t } from '@/lib/i18n';
 
-import type { Category, RecurringTransaction } from '@/types/models';
+import type { Category, Debt, RecurringTransaction } from '@/types/models';
 
 const props = defineProps<{
     open: boolean;
     recurringTransaction?: RecurringTransaction | null;
     categories: Category[];
     accounts: { id: number; name: string }[];
+    debts?: Debt[];
     defaultType?: 'income' | 'expense';
 }>();
 
@@ -45,15 +46,17 @@ const { success, error: showError } = useToast();
 
 const NO_CATEGORY_VALUE = '__none_category__';
 const NO_BANK_ACCOUNT_VALUE = '__none_bank_account__';
+const NO_DEBT_VALUE = '__none_debt__';
 
 const form = ref({
     type: 'expense' as 'income' | 'expense',
     amount: '',
     description: '',
     frequency: 'monthly' as 'daily' | 'weekly' | 'monthly',
-    next_due_date: new Date().toISOString().split('T')[0],
+    next_due_date: '',
     category_id: '',
     bank_account_id: '',
+    debt_id: '',
     payment_method: 'cash' as 'cash' | 'bank_account',
 });
 
@@ -74,8 +77,41 @@ const bankAccountSelectValue = computed({
     },
 });
 
+const debtSelectValue = computed({
+    get: () => form.value.debt_id || NO_DEBT_VALUE,
+    set: (value: string) => {
+        form.value.debt_id = value === NO_DEBT_VALUE ? '' : value;
+    },
+});
+
+const availableDebts = computed(() => props.debts ?? []);
+
 const usesBankAccount = computed(() => {
     return form.value.payment_method === 'bank_account';
+});
+
+const selectedDebt = computed(() => {
+    return (
+        availableDebts.value.find(
+            (debt) => String(debt.id) === form.value.debt_id,
+        ) ?? null
+    );
+});
+
+const debtImpactPreview = computed(() => {
+    if (!selectedDebt.value) {
+        return null;
+    }
+
+    if (selectedDebt.value.type === 'i_owe') {
+        return form.value.type === 'expense'
+            ? 'Svako izvršenje će se knjižiti kao trošak i smanjivaće ovo dugovanje.'
+            : 'Svako izvršenje će se knjižiti kao prihod i povećavaće ovo dugovanje.';
+    }
+
+    return form.value.type === 'income'
+        ? 'Svako izvršenje će se knjižiti kao prihod i smanjivaće ovo potraživanje.'
+        : 'Svako izvršenje će se knjižiti kao trošak i povećavaće ovo potraživanje.';
 });
 
 function previewFrequencyLabel() {
@@ -87,6 +123,13 @@ function previewFrequencyLabel() {
         }[form.value.frequency] ?? form.value.frequency
     );
 }
+
+const previewStartDate = computed(() => {
+    return (
+        form.value.next_due_date ||
+        t('components.recurringForm.executionDatePlaceholder')
+    );
+});
 
 watch(
     () => props.open,
@@ -105,6 +148,9 @@ watch(
                     bank_account_id: props.recurringTransaction.bank_account?.id
                         ? String(props.recurringTransaction.bank_account.id)
                         : '',
+                    debt_id: props.recurringTransaction.debt?.id
+                        ? String(props.recurringTransaction.debt.id)
+                        : '',
                     payment_method: props.recurringTransaction.payment_method,
                 };
             } else {
@@ -113,9 +159,10 @@ watch(
                     amount: '',
                     description: '',
                     frequency: 'monthly',
-                    next_due_date: new Date().toISOString().split('T')[0],
+                    next_due_date: '',
                     category_id: '',
                     bank_account_id: '',
+                    debt_id: '',
                     payment_method: 'cash',
                 };
             }
@@ -151,6 +198,7 @@ async function onSubmit() {
                 usesBankAccount.value && form.value.bank_account_id
                     ? parseInt(form.value.bank_account_id)
                     : null,
+            debt_id: form.value.debt_id ? parseInt(form.value.debt_id) : null,
             payment_method: form.value.payment_method,
         };
 
@@ -326,7 +374,9 @@ async function onSubmit() {
                         <Label
                             for="next_due_date"
                             class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                            >{{ t('common.labels.nextDate') }}</Label
+                            >{{
+                                t('components.recurringForm.executionDateLabel')
+                            }}</Label
                         >
                         <Input
                             id="next_due_date"
@@ -447,6 +497,68 @@ async function onSubmit() {
                     </div>
                 </div>
 
+                <div v-if="availableDebts.length > 0" class="grid gap-2">
+                    <Label
+                        class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
+                        >{{ t('components.transactionForm.linkedDebt') }}</Label
+                    >
+                    <Select v-model="debtSelectValue">
+                        <SelectTrigger
+                            class="h-11 w-full rounded-2xl border-border/60 bg-background"
+                        >
+                            <SelectValue
+                                :placeholder="
+                                    t(
+                                        'components.transactionForm.selectDebtOptional',
+                                    )
+                                "
+                            />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem :value="NO_DEBT_VALUE">{{
+                                t('common.states.none')
+                            }}</SelectItem>
+                            <SelectItem
+                                v-for="debt in availableDebts"
+                                :key="debt.id"
+                                :value="String(debt.id)"
+                            >
+                                <span class="flex items-center gap-2">
+                                    <span
+                                        class="inline-flex shrink-0 rounded-md px-1.5 py-0.5 text-[10px] leading-none font-semibold uppercase"
+                                        :class="
+                                            debt.type === 'i_owe'
+                                                ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400'
+                                                : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
+                                        "
+                                    >
+                                        {{
+                                            debt.type === 'i_owe'
+                                                ? t('debts.iOweLabel')
+                                                : t('debts.owedToMeLabel')
+                                        }}
+                                    </span>
+                                    <span>{{ debt.person_name }}</span>
+                                    <span class="text-muted-foreground">
+                                        {{
+                                            debt.remaining_amount.toLocaleString(
+                                                'sr-RS',
+                                            )
+                                        }}
+                                        RSD
+                                    </span>
+                                </span>
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <p
+                        v-if="debtImpactPreview"
+                        class="text-xs leading-5 text-muted-foreground"
+                    >
+                        {{ debtImpactPreview }}
+                    </p>
+                </div>
+
                 <div
                     class="rounded-3xl border border-dashed border-border/70 bg-muted/20 p-4"
                 >
@@ -469,8 +581,19 @@ async function onSubmit() {
                                 {{
                                     t('components.recurringForm.ruleSentence', {
                                         frequency: previewFrequencyLabel(),
-                                        date: form.next_due_date,
+                                        date: previewStartDate,
                                     })
+                                }}
+                            </p>
+                            <p
+                                v-if="selectedDebt"
+                                class="mt-1 text-xs leading-5 text-muted-foreground"
+                            >
+                                {{ selectedDebt.person_name }} •
+                                {{
+                                    selectedDebt.type === 'i_owe'
+                                        ? t('debts.iOweLabel')
+                                        : t('debts.owedToMeLabel')
                                 }}
                             </p>
                         </div>

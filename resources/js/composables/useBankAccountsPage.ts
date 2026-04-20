@@ -120,6 +120,7 @@ export function useBankAccountsPage(initialAccounts: BankAccount[]) {
 
     async function submitForm() {
         formSubmitting.value = true;
+
         try {
             const payload = {
                 ...accountForm.value,
@@ -134,9 +135,11 @@ export function useBankAccountsPage(initialAccounts: BankAccount[]) {
                 const index = accounts.value.findIndex(
                     (a) => a.id === editingAccount.value!.id,
                 );
+
                 if (index !== -1) {
                     accounts.value.splice(index, 1, updated);
                 }
+
                 success(t('finance.bankAccounts.updated'));
             } else {
                 const created = await createAccount(payload);
@@ -153,17 +156,22 @@ export function useBankAccountsPage(initialAccounts: BankAccount[]) {
     }
 
     async function handleArchive() {
-        if (!archiveConfirm.value) return;
+        if (!archiveConfirm.value) {
+return;
+}
+
         try {
             const id = archiveConfirm.value.id;
             await archiveAccount(id);
             const index = accounts.value.findIndex((a) => a.id === id);
+
             if (index !== -1) {
                 accounts.value.splice(index, 1, {
                     ...accounts.value[index],
                     is_archived: true,
                 });
             }
+
             success(t('finance.bankAccounts.archivedSuccess'));
             archiveConfirm.value = null;
         } catch {
@@ -175,9 +183,11 @@ export function useBankAccountsPage(initialAccounts: BankAccount[]) {
         try {
             const restored = await restoreAccount(account.id);
             const index = accounts.value.findIndex((a) => a.id === account.id);
+
             if (index !== -1) {
                 accounts.value.splice(index, 1, restored);
             }
+
             success(t('finance.bankAccounts.restoredSuccess'));
         } catch {
             showError(t('finance.bankAccounts.restoreError'));
@@ -186,6 +196,7 @@ export function useBankAccountsPage(initialAccounts: BankAccount[]) {
 
     async function submitTransfer() {
         transferSubmitting.value = true;
+
         try {
             await transferFunds({
                 from_account_id: parseInt(transferForm.value.from_account_id),

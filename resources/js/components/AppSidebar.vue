@@ -6,6 +6,7 @@ import {
     BarChart3,
     CircleDollarSign,
     CreditCard,
+    HandCoins,
     Landmark,
     LayoutGrid,
     RefreshCcw,
@@ -16,7 +17,6 @@ import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
-import { t } from '@/lib/i18n';
 import {
     Sidebar,
     SidebarContent,
@@ -26,6 +26,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { t } from '@/lib/i18n';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -33,11 +34,6 @@ const mainNavItems: NavItem[] = [
         title: t('app.nav.dashboard'),
         href: '/dashboard',
         icon: LayoutGrid,
-    },
-    {
-        title: t('app.nav.bankAccounts'),
-        href: '/bank-accounts',
-        icon: Landmark,
     },
     {
         title: t('app.nav.expenses'),
@@ -50,19 +46,29 @@ const mainNavItems: NavItem[] = [
         icon: ArrowUpCircle,
     },
     {
-        title: t('app.nav.warranties'),
-        href: '/warranties',
-        icon: ShieldCheck,
-    },
-    {
         title: t('app.nav.recurring'),
         href: '/recurring-transactions',
         icon: RefreshCcw,
     },
     {
+        title: t('app.nav.debts'),
+        href: '/debts',
+        icon: HandCoins,
+    },
+    {
+        title: t('app.nav.warranties'),
+        href: '/warranties',
+        icon: ShieldCheck,
+    },
+    {
         title: t('app.nav.reports'),
         href: '/reports',
         icon: BarChart3,
+    },
+    {
+        title: t('app.nav.bankAccounts'),
+        href: '/bank-accounts',
+        icon: Landmark,
     },
     {
         title: t('app.nav.categories'),

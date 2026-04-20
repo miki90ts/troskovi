@@ -18,6 +18,7 @@ class RecurringTransaction extends Model
         'user_id',
         'bank_account_id',
         'category_id',
+        'debt_id',
         'type',
         'amount',
         'description',
@@ -56,6 +57,11 @@ class RecurringTransaction extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function debt(): BelongsTo
+    {
+        return $this->belongsTo(Debt::class);
     }
 
     public function transactions(): HasMany

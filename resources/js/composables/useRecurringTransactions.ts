@@ -1,7 +1,7 @@
 import { ref } from 'vue';
+import type { RecurringTransaction } from '@/types/models';
 import api from './useApi';
 
-import type { RecurringTransaction } from '@/types/models';
 
 export function useRecurringTransactions() {
     const loading = ref(false);

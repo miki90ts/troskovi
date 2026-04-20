@@ -1,6 +1,11 @@
 import { t } from '@/lib/i18n';
 import type { ChartData, IncomeVsExpensesData } from '@/types';
 
+type ComparisonSeriesVisibility = {
+    income: boolean;
+    expenses: boolean;
+};
+
 function chartTheme() {
     return {
         mode:
@@ -31,26 +36,48 @@ export function useReportCharts() {
             xaxis: { categories: data.labels },
             colors: ['#14b8a6', '#f97316'],
             dataLabels: { enabled: false },
-            legend: { position: 'top' as const },
+            legend: { show: false },
+            tooltip: {
+                shared: false,
+                intersect: true,
+                y: {
+                    formatter: (value: number | undefined) =>
+                        typeof value === 'number'
+                            ? value.toLocaleString('sr-RS', {
+                                  style: 'currency',
+                                  currency: 'RSD',
+                              })
+                            : '',
+                },
+            },
             grid: { borderColor: 'var(--border)' },
         };
     }
 
-    function barChartSeries(data: IncomeVsExpensesData | null) {
+    function barChartSeries(
+        data: IncomeVsExpensesData | null,
+        visibility: ComparisonSeriesVisibility,
+    ) {
         if (!data) {
             return [];
         }
 
         return [
-            {
-                name: t('finance.reports.income'),
-                data: data.income,
-            },
-            {
-                name: t('finance.reports.expenses'),
-                data: data.expenses,
-            },
-        ];
+            visibility.income
+                ? {
+                      name: t('finance.reports.income'),
+                      data: data.income,
+                  }
+                : null,
+            visibility.expenses
+                ? {
+                      name: t('finance.reports.expenses'),
+                      data: data.expenses,
+                  }
+                : null,
+        ].filter(
+            (series): series is { name: string; data: number[] } => !!series,
+        );
     }
 
     function lineChartOptions(data: ChartData | null): ApexCharts.ApexOptions {

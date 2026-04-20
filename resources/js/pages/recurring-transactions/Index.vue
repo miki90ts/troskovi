@@ -1,21 +1,22 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import { toRef } from 'vue';
-import AppLayout from '@/layouts/AppLayout.vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
-import RecurringTransactionFormDialog from '@/components/RecurringTransactionFormDialog.vue';
-import ToastContainer from '@/components/ToastContainer.vue';
 import RecurringTransactionsHeroSection from '@/components/recurring-transactions/RecurringTransactionsHeroSection.vue';
 import RecurringTransactionsManagementSection from '@/components/recurring-transactions/RecurringTransactionsManagementSection.vue';
+import RecurringTransactionFormDialog from '@/components/RecurringTransactionFormDialog.vue';
+import ToastContainer from '@/components/ToastContainer.vue';
 import { useRecurringTransactionsPage } from '@/composables/useRecurringTransactionsPage';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { t } from '@/lib/i18n';
 import type { BreadcrumbItem } from '@/types';
-import type { Category, RecurringTransaction } from '@/types/models';
+import type { Category, Debt, RecurringTransaction } from '@/types/models';
 
 const props = defineProps<{
     recurringTransactions: { data: RecurringTransaction[] };
     categories: { data: Category[] };
     accounts: { id: number; name: string }[];
+    debts: Debt[];
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -31,12 +32,20 @@ const {
     visibleAmountTotal,
     showForm,
     editingRecurring,
-    deactivateTarget,
+    actionTarget,
+    pendingAction,
+    confirmDialogTitle,
+    confirmDialogDescription,
+    confirmDialogConfirmText,
     openCreate,
     openEdit,
     closeForm,
     onSaved,
-    handleDeactivate,
+    requestDeactivate,
+    requestDelete,
+    clearPendingAction,
+    handleActivate,
+    handleConfirmedAction,
 } = useRecurringTransactionsPage({
     recurringTransactionsPage: toRef(props, 'recurringTransactions'),
 });
@@ -63,7 +72,9 @@ const {
                 @update:active-tab="activeTab = $event"
                 @create="openCreate"
                 @edit="openEdit"
-                @deactivate="deactivateTarget = $event"
+                @activate="handleActivate"
+                @deactivate="requestDeactivate"
+                @delete="requestDelete"
             />
         </div>
 
@@ -72,19 +83,21 @@ const {
             :recurring-transaction="editingRecurring"
             :categories="categories.data"
             :accounts="accounts"
+            :debts="debts"
             :default-type="activeTab"
             @close="closeForm"
             @saved="onSaved"
         />
 
         <ConfirmDialog
-            :open="!!deactivateTarget"
-            :title="t('finance.recurring.deactivateTitle')"
-            :description="t('finance.recurring.deactivateDescription')"
-            :confirm-text="t('finance.recurring.deactivateConfirm')"
+            :open="!!pendingAction && !!actionTarget"
+            :title="confirmDialogTitle"
+            :description="confirmDialogDescription"
+            :confirm-text="confirmDialogConfirmText"
+            :cancel-text="t('common.actions.cancel')"
             destructive
-            @confirm="handleDeactivate"
-            @cancel="deactivateTarget = null"
+            @confirm="handleConfirmedAction"
+            @cancel="clearPendingAction"
         />
     </AppLayout>
 </template>

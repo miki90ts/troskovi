@@ -1,26 +1,27 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import { toRef } from 'vue';
-import AppLayout from '@/layouts/AppLayout.vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
-import ToastContainer from '@/components/ToastContainer.vue';
-import TransactionFormDialog from '@/components/TransactionFormDialog.vue';
 import IncomeHeroSection from '@/components/incomes/IncomeHeroSection.vue';
 import IncomesManagementSection from '@/components/incomes/IncomesManagementSection.vue';
+import ToastContainer from '@/components/ToastContainer.vue';
+import TransactionFormDialog from '@/components/TransactionFormDialog.vue';
 import {
     ALL_CATEGORIES_VALUE,
     ALL_PAYMENT_METHODS_VALUE,
     useIncomesPage,
 } from '@/composables/useIncomesPage';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { t } from '@/lib/i18n';
 import type { BreadcrumbItem } from '@/types';
 import type { PaginationMeta } from '@/types/api';
-import type { Category, Transaction } from '@/types/models';
+import type { Category, Debt, Transaction } from '@/types/models';
 
 const props = defineProps<{
     transactions: { data: Transaction[]; meta: PaginationMeta };
     categories: { data: Category[] };
     accounts: { id: number; name: string }[];
+    debts: Debt[];
     filters: Record<string, string | undefined>;
 }>();
 
@@ -112,6 +113,7 @@ const {
             :transaction="editingTransaction"
             :categories="categories.data"
             :accounts="accounts"
+            :debts="debts"
             default-type="income"
             @close="showForm = false"
             @saved="onSaved"

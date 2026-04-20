@@ -1,5 +1,6 @@
 import { router } from '@inertiajs/vue3';
-import { computed, nextTick, onBeforeUnmount, ref, watch, type Ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref, watch  } from 'vue';
+import type {Ref} from 'vue';
 import { useToast } from '@/composables/useToast';
 import { useTransactions } from '@/composables/useTransactions';
 import type { PaginationMeta } from '@/types/api';
@@ -108,15 +109,19 @@ export function useTransactionListingPage(options: {
         if (search.value) {
             query.search = search.value;
         }
+
         if (categoryFilter.value) {
             query.category_id = categoryFilter.value;
         }
+
         if (paymentMethodFilter.value) {
             query.payment_method = paymentMethodFilter.value;
         }
+
         if (dateFrom.value) {
             query.date_from = dateFrom.value;
         }
+
         if (dateTo.value) {
             query.date_to = dateTo.value;
         }

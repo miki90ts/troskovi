@@ -33,6 +33,11 @@ class TransactionResource extends JsonResource
                 'id' => $this->bankAccount->id,
                 'name' => $this->bankAccount->name,
             ] : null),
+            'debt' => $this->whenLoaded('debt', fn() => $this->debt ? [
+                'id' => $this->debt->id,
+                'person_name' => $this->debt->person_name,
+                'type' => $this->debt->type->value,
+            ] : null),
             'created_at' => $this->created_at->toISOString(),
         ];
     }

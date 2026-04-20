@@ -1,8 +1,8 @@
 import { ref } from 'vue';
-import api from './useApi';
 
 import type { PaginatedResponse, TransactionFilters } from '@/types/api';
 import type { Transaction } from '@/types/models';
+import api from './useApi';
 
 export function useTransactions() {
     const loading = ref(false);
