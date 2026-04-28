@@ -2,7 +2,7 @@ import { computed, ref } from 'vue';
 import { useBankAccounts } from '@/composables/useBankAccounts';
 import { useToast } from '@/composables/useToast';
 import { t } from '@/lib/i18n';
-import type { BankAccount } from '@/types/models';
+import type { AccountTransfer, BankAccount } from '@/types/models';
 
 export type BankAccountFormState = {
     name: string;
@@ -40,7 +40,10 @@ function createEmptyTransferForm(): TransferFormState {
     };
 }
 
-export function useBankAccountsPage(initialAccounts: BankAccount[]) {
+export function useBankAccountsPage(
+    initialAccounts: BankAccount[],
+    initialTransfers: AccountTransfer[],
+) {
     const { success, error: showError } = useToast();
     const {
         createAccount,
@@ -51,6 +54,7 @@ export function useBankAccountsPage(initialAccounts: BankAccount[]) {
     } = useBankAccounts();
 
     const accounts = ref<BankAccount[]>([...initialAccounts]);
+    const transfers = ref<AccountTransfer[]>([...initialTransfers]);
     const showForm = ref(false);
     const editingAccount = ref<BankAccount | null>(null);
     const formSubmitting = ref(false);
@@ -157,8 +161,8 @@ export function useBankAccountsPage(initialAccounts: BankAccount[]) {
 
     async function handleArchive() {
         if (!archiveConfirm.value) {
-return;
-}
+            return;
+        }
 
         try {
             const id = archiveConfirm.value.id;
@@ -198,7 +202,7 @@ return;
         transferSubmitting.value = true;
 
         try {
-            await transferFunds({
+            const createdTransfer = await transferFunds({
                 from_account_id: parseInt(transferForm.value.from_account_id),
                 to_account_id: parseInt(transferForm.value.to_account_id),
                 amount: parseFloat(transferForm.value.amount),
@@ -210,6 +214,7 @@ return;
             const { fetchAccounts } = useBankAccounts();
             const fresh = await fetchAccounts(true);
             accounts.value = fresh;
+            transfers.value.unshift(createdTransfer);
 
             success(t('finance.bankAccounts.transferSuccess'));
             showTransfer.value = false;
@@ -224,6 +229,7 @@ return;
         accounts,
         activeAccounts,
         archivedAccounts,
+        transfers,
         totalBalance,
         connectedBanks,
         colorPresets,

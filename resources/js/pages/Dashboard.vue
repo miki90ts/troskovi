@@ -131,7 +131,7 @@ const {
                 <KpiCard
                     :label="t('dashboard.kpis.totalIncome')"
                     :value="formatCurrency(summary.total_income)"
-                    :change="summary.mom_change"
+                    :change="summary.income_change"
                     :subtitle="t('dashboard.kpis.thisMonth')"
                 />
                 <KpiCard

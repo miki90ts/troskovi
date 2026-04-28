@@ -16,8 +16,6 @@ return new class extends Migration
             $table->decimal('amount', 12, 2);
             $table->string('description')->nullable();
             $table->date('date');
-            $table->foreignId('from_transaction_id')->constrained('transactions')->cascadeOnDelete();
-            $table->foreignId('to_transaction_id')->constrained('transactions')->cascadeOnDelete();
             $table->timestamps();
         });
     }

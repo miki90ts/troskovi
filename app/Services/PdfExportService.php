@@ -43,7 +43,7 @@ class PdfExportService
 
     public function exportReport(User $user, string $period): DomPDF
     {
-        $summary = $this->reportService->getSummary($user, $period);
+        $summary = $this->reportService->getCurrentSummary($user, $period);
         $expenseBreakdown = $this->reportService->getExpenseBreakdown($user, $period);
         $incomeBreakdown = $this->reportService->getIncomeBreakdown($user, $period);
         $cashVsBank = $this->reportService->getCashVsBank($user, $period);

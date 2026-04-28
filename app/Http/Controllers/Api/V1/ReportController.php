@@ -20,7 +20,7 @@ class ReportController extends Controller
         $period = $request->query('period', 'monthly');
 
         return response()->json([
-            'data' => $this->service->getSummary($request->user(), $period),
+            'data' => $this->service->getCurrentSummary($request->user(), $period),
         ]);
     }
 

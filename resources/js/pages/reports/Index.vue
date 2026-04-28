@@ -78,7 +78,7 @@ const {
                                 currency: 'RSD',
                             })
                         "
-                        :change="summary.mom_change"
+                        :change="summary.income_change"
                     />
                     <KpiCard
                         :label="t('finance.reports.totalExpenses')"
@@ -88,7 +88,7 @@ const {
                                 currency: 'RSD',
                             })
                         "
-                        :subtitle="summary.biggest_expense_category"
+                        :subtitle="formattedPeriodRange"
                     />
                     <KpiCard
                         :label="t('finance.reports.netSavings')"

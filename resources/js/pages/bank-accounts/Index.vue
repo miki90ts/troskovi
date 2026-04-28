@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import BankAccountFormDialog from '@/components/bank-accounts/BankAccountFormDialog.vue';
+import BankAccountTransfersHistorySection from '@/components/bank-accounts/BankAccountTransfersHistorySection.vue';
 import BankAccountsHeroSection from '@/components/bank-accounts/BankAccountsHeroSection.vue';
 import BankAccountsOverviewSection from '@/components/bank-accounts/BankAccountsOverviewSection.vue';
 import BankAccountTransferDialog from '@/components/bank-accounts/BankAccountTransferDialog.vue';
@@ -10,10 +11,11 @@ import { useBankAccountsPage } from '@/composables/useBankAccountsPage';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { t } from '@/lib/i18n';
 import type { BreadcrumbItem } from '@/types';
-import type { BankAccount } from '@/types/models';
+import type { AccountTransfer, BankAccount } from '@/types/models';
 
 const props = defineProps<{
     accounts: { data: BankAccount[] };
+    transfers: { data: AccountTransfer[] };
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -24,6 +26,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 const {
     activeAccounts,
     archivedAccounts,
+    transfers,
     totalBalance,
     connectedBanks,
     colorPresets,
@@ -43,7 +46,7 @@ const {
     handleArchive,
     handleRestore,
     submitTransfer,
-} = useBankAccountsPage(props.accounts.data);
+} = useBankAccountsPage(props.accounts.data, props.transfers.data);
 </script>
 
 <template>
@@ -70,6 +73,8 @@ const {
                 @archive="archiveConfirm = $event"
                 @restore="handleRestore"
             />
+
+            <BankAccountTransfersHistorySection :transfers="transfers" />
         </div>
 
         <BankAccountFormDialog

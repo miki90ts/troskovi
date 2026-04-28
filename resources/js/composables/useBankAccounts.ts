@@ -1,7 +1,10 @@
 import { ref } from 'vue';
-import type { BankAccount, BankAccountOverview } from '@/types/models';
+import type {
+    AccountTransfer,
+    BankAccount,
+    BankAccountOverview,
+} from '@/types/models';
 import api from './useApi';
-
 
 export function useBankAccounts() {
     const loading = ref(false);
@@ -61,7 +64,7 @@ export function useBankAccounts() {
         amount: number;
         description?: string;
         date: string;
-    }) {
+    }): Promise<AccountTransfer> {
         const { data } = await api.post('/bank-accounts/transfer', payload);
 
         return data.data;

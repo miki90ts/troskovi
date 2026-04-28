@@ -5,10 +5,8 @@ namespace App\Services;
 use App\Enums\TransactionType;
 use App\Models\AccountTransfer;
 use App\Models\BankAccount;
-use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\DB;
 
 class BankAccountService
 {
@@ -21,6 +19,18 @@ class BankAccountService
         }
 
         return $query->orderBy('name')->get();
+    }
+
+    public function listTransfers(User $user): Collection
+    {
+        return $user->accountTransfers()
+            ->with([
+                'fromAccount:id,name',
+                'toAccount:id,name',
+            ])
+            ->orderByDesc('date')
+            ->orderByDesc('id')
+            ->get();
     }
 
     public function create(User $user, array $data): BankAccount
@@ -73,37 +83,13 @@ class BankAccountService
 
     public function transfer(User $user, array $data): AccountTransfer
     {
-        return DB::transaction(function () use ($user, $data) {
-            $fromTransaction = Transaction::create([
-                'user_id' => $user->id,
-                'bank_account_id' => $data['from_account_id'],
-                'type' => TransactionType::Expense,
-                'amount' => $data['amount'],
-                'date' => $data['date'],
-                'description' => $data['description'] ?? 'Account Transfer',
-                'payment_method' => 'bank_account',
-            ]);
-
-            $toTransaction = Transaction::create([
-                'user_id' => $user->id,
-                'bank_account_id' => $data['to_account_id'],
-                'type' => TransactionType::Income,
-                'amount' => $data['amount'],
-                'date' => $data['date'],
-                'description' => $data['description'] ?? 'Account Transfer',
-                'payment_method' => 'bank_account',
-            ]);
-
-            return AccountTransfer::create([
-                'user_id' => $user->id,
-                'from_account_id' => $data['from_account_id'],
-                'to_account_id' => $data['to_account_id'],
-                'amount' => $data['amount'],
-                'description' => $data['description'] ?? null,
-                'date' => $data['date'],
-                'from_transaction_id' => $fromTransaction->id,
-                'to_transaction_id' => $toTransaction->id,
-            ]);
-        });
+        return AccountTransfer::create([
+            'user_id' => $user->id,
+            'from_account_id' => $data['from_account_id'],
+            'to_account_id' => $data['to_account_id'],
+            'amount' => $data['amount'],
+            'description' => $data['description'] ?? null,
+            'date' => $data['date'],
+        ]);
     }
 }

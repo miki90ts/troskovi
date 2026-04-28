@@ -13,55 +13,15 @@ class ReportService
         [$start, $end] = $this->getDateRange($period);
         [$prevStart, $prevEnd] = $this->getPreviousDateRange($period);
 
-        $totalIncome = $user->transactions()
-            ->income()
-            ->whereBetween('date', [$start, $end])
-            ->sum('amount');
+        return $this->buildSummary($user, $start, $end, $prevStart, $prevEnd);
+    }
 
-        $totalExpenses = $user->transactions()
-            ->expense()
-            ->whereBetween('date', [$start, $end])
-            ->sum('amount');
+    public function getCurrentSummary(User $user, string $period = 'monthly'): array
+    {
+        [$start, $end] = $this->getCurrentDateRange($period);
+        [$prevStart, $prevEnd] = $this->getPreviousCurrentDateRange($period);
 
-        $prevIncome = $user->transactions()
-            ->income()
-            ->whereBetween('date', [$prevStart, $prevEnd])
-            ->sum('amount');
-
-        $prevExpenses = $user->transactions()
-            ->expense()
-            ->whereBetween('date', [$prevStart, $prevEnd])
-            ->sum('amount');
-
-        $netSavings = $totalIncome - $totalExpenses;
-        $savingsRate = $totalIncome > 0 ? round(($netSavings / $totalIncome) * 100, 1) : 0;
-
-        $biggestExpenseCategory = $user->transactions()
-            ->expense()
-            ->whereBetween('date', [$start, $end])
-            ->whereNotNull('category_id')
-            ->select('category_id', DB::raw('SUM(amount) as total'))
-            ->groupBy('category_id')
-            ->orderByDesc('total')
-            ->with('category')
-            ->first();
-
-        $prevNet = $prevIncome - $prevExpenses;
-        $momChange = $prevNet != 0
-            ? round((($netSavings - $prevNet) / abs($prevNet)) * 100, 1)
-            : ($netSavings > 0 ? 100 : 0);
-
-        return [
-            'total_income' => round($totalIncome, 2),
-            'total_expenses' => round($totalExpenses, 2),
-            'net_savings' => round($netSavings, 2),
-            'savings_rate' => $savingsRate,
-            'biggest_expense_category' => $biggestExpenseCategory?->category?->name ?? 'N/A',
-            'biggest_expense_amount' => round($biggestExpenseCategory?->total ?? 0, 2),
-            'mom_change' => $momChange,
-            'period_start' => $start->toDateString(),
-            'period_end' => $end->toDateString(),
-        ];
+        return $this->buildSummary($user, $start, $end, $prevStart, $prevEnd);
     }
 
     public function getIncomeVsExpenses(User $user, string $period = 'monthly'): array
@@ -89,8 +49,8 @@ class ReportService
 
         return [
             'labels' => $periods->toArray(),
-            'income' => $periods->map(fn ($p) => round($income->get($p, 0), 2))->toArray(),
-            'expenses' => $periods->map(fn ($p) => round($expenses->get($p, 0), 2))->toArray(),
+            'income' => $periods->map(fn($p) => round($income->get($p, 0), 2))->toArray(),
+            'expenses' => $periods->map(fn($p) => round($expenses->get($p, 0), 2))->toArray(),
         ];
     }
 
@@ -152,9 +112,9 @@ class ReportService
             ->get();
 
         return [
-            'labels' => $breakdown->map(fn ($b) => $b->category?->name ?? 'Uncategorized')->toArray(),
-            'values' => $breakdown->map(fn ($b) => round($b->total, 2))->toArray(),
-            'colors' => $breakdown->map(fn ($b) => $b->category?->color ?? '#6b7280')->toArray(),
+            'labels' => $breakdown->map(fn($b) => $b->category?->name ?? 'Uncategorized')->toArray(),
+            'values' => $breakdown->map(fn($b) => round($b->total, 2))->toArray(),
+            'colors' => $breakdown->map(fn($b) => $b->category?->color ?? '#6b7280')->toArray(),
         ];
     }
 
@@ -173,9 +133,9 @@ class ReportService
             ->get();
 
         return [
-            'labels' => $breakdown->map(fn ($b) => $b->category?->name ?? 'Uncategorized')->toArray(),
-            'values' => $breakdown->map(fn ($b) => round($b->total, 2))->toArray(),
-            'colors' => $breakdown->map(fn ($b) => $b->category?->color ?? '#6b7280')->toArray(),
+            'labels' => $breakdown->map(fn($b) => $b->category?->name ?? 'Uncategorized')->toArray(),
+            'values' => $breakdown->map(fn($b) => round($b->total, 2))->toArray(),
+            'colors' => $breakdown->map(fn($b) => $b->category?->color ?? '#6b7280')->toArray(),
         ];
     }
 
@@ -199,6 +159,69 @@ class ReportService
         ];
     }
 
+    private function buildSummary(
+        User $user,
+        CarbonImmutable $start,
+        CarbonImmutable $end,
+        CarbonImmutable $prevStart,
+        CarbonImmutable $prevEnd,
+    ): array {
+        $totalIncome = $user->transactions()
+            ->income()
+            ->whereBetween('date', [$start, $end])
+            ->sum('amount');
+
+        $totalExpenses = $user->transactions()
+            ->expense()
+            ->whereBetween('date', [$start, $end])
+            ->sum('amount');
+
+        $prevIncome = $user->transactions()
+            ->income()
+            ->whereBetween('date', [$prevStart, $prevEnd])
+            ->sum('amount');
+
+        $prevExpenses = $user->transactions()
+            ->expense()
+            ->whereBetween('date', [$prevStart, $prevEnd])
+            ->sum('amount');
+
+        $incomeChange = $prevIncome != 0
+            ? round((($totalIncome - $prevIncome) / abs($prevIncome)) * 100, 1)
+            : ($totalIncome > 0 ? 100 : 0);
+
+        $netSavings = $totalIncome - $totalExpenses;
+        $savingsRate = $totalIncome > 0 ? round(($netSavings / $totalIncome) * 100, 1) : 0;
+
+        $biggestExpenseCategory = $user->transactions()
+            ->expense()
+            ->whereBetween('date', [$start, $end])
+            ->whereNotNull('category_id')
+            ->select('category_id', DB::raw('SUM(amount) as total'))
+            ->groupBy('category_id')
+            ->orderByDesc('total')
+            ->with('category')
+            ->first();
+
+        $prevNet = $prevIncome - $prevExpenses;
+        $momChange = $prevNet != 0
+            ? round((($netSavings - $prevNet) / abs($prevNet)) * 100, 1)
+            : ($netSavings > 0 ? 100 : 0);
+
+        return [
+            'total_income' => round($totalIncome, 2),
+            'total_expenses' => round($totalExpenses, 2),
+            'income_change' => $incomeChange,
+            'net_savings' => round($netSavings, 2),
+            'savings_rate' => $savingsRate,
+            'biggest_expense_category' => $biggestExpenseCategory?->category?->name ?? 'N/A',
+            'biggest_expense_amount' => round($biggestExpenseCategory?->total ?? 0, 2),
+            'mom_change' => $momChange,
+            'period_start' => $start->toDateString(),
+            'period_end' => $end->toDateString(),
+        ];
+    }
+
     private function getDateRange(string $period): array
     {
         $now = CarbonImmutable::now();
@@ -206,11 +229,33 @@ class ReportService
         return match ($period) {
             'weekly' => [$now->subWeeks(12)->startOfWeek(), $now->endOfWeek()],
             'yearly' => [$now->subYears(5)->startOfYear(), $now->endOfYear()],
-            default => [$now->subMonths(12)->startOfMonth(), $now->endOfMonth()], // monthly
+            default => [$now->subMonths(12)->startOfMonth(), $now->endOfMonth()],
+        };
+    }
+
+    private function getCurrentDateRange(string $period): array
+    {
+        $now = CarbonImmutable::now();
+
+        return match ($period) {
+            'weekly' => [$now->startOfWeek(), $now->endOfWeek()],
+            'yearly' => [$now->startOfYear(), $now->endOfYear()],
+            default => [$now->startOfMonth(), $now->endOfMonth()],
         };
     }
 
     private function getPreviousDateRange(string $period): array
+    {
+        $now = CarbonImmutable::now();
+
+        return match ($period) {
+            'weekly' => [$now->subWeek()->startOfWeek(), $now->subWeek()->endOfWeek()],
+            'yearly' => [$now->subYear()->startOfYear(), $now->subYear()->endOfYear()],
+            default => [$now->subMonth()->startOfMonth(), $now->subMonth()->endOfMonth()],
+        };
+    }
+
+    private function getPreviousCurrentDateRange(string $period): array
     {
         $now = CarbonImmutable::now();
 

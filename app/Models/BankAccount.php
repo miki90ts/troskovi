@@ -65,7 +65,7 @@ class BankAccount extends Model
 
         $last4 = substr($this->account_number, -4);
 
-        return '••••'.$last4;
+        return '••••' . $last4;
     }
 
     public function getCurrentBalanceAttribute(): string
@@ -78,7 +78,16 @@ class BankAccount extends Model
             ->where('type', TransactionType::Expense)
             ->sum('amount');
 
-        return number_format((float) $this->initial_balance + $income - $expense, 2, '.', '');
+        $transferredOut = $this->transfersFrom()->sum('amount');
+
+        $transferredIn = $this->transfersTo()->sum('amount');
+
+        return number_format(
+            (float) $this->initial_balance + $income - $expense - $transferredOut + $transferredIn,
+            2,
+            '.',
+            '',
+        );
     }
 
     // ── Scopes ──

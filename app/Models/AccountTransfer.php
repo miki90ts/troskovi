@@ -14,8 +14,6 @@ class AccountTransfer extends Model
         'amount',
         'description',
         'date',
-        'from_transaction_id',
-        'to_transaction_id',
     ];
 
     protected function casts(): array
@@ -41,15 +39,5 @@ class AccountTransfer extends Model
     public function toAccount(): BelongsTo
     {
         return $this->belongsTo(BankAccount::class, 'to_account_id');
-    }
-
-    public function fromTransaction(): BelongsTo
-    {
-        return $this->belongsTo(Transaction::class, 'from_transaction_id');
-    }
-
-    public function toTransaction(): BelongsTo
-    {
-        return $this->belongsTo(Transaction::class, 'to_transaction_id');
     }
 }

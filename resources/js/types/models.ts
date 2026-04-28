@@ -99,6 +99,7 @@ export type RecurringTransaction = {
 export type ReportSummary = {
     total_income: number;
     total_expenses: number;
+    income_change: number;
     net_savings: number;
     savings_rate: number;
     biggest_expense_category: string;

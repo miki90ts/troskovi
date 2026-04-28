@@ -23,9 +23,25 @@ class BankAccountOverviewResource extends BankAccountResource
             ->latest('date')
             ->first();
 
+        $lastTransferOut = $this->transfersFrom()
+            ->latest('date')
+            ->first();
+
+        $lastTransferIn = $this->transfersTo()
+            ->latest('date')
+            ->first();
+
+        $lastActivityDate = collect([
+            $lastTransaction?->date,
+            $lastTransferOut?->date,
+            $lastTransferIn?->date,
+        ])
+            ->filter()
+            ->max();
+
         $data['total_income'] = round($totalIncome, 2);
         $data['total_expenses'] = round($totalExpenses, 2);
-        $data['last_transaction_date'] = $lastTransaction?->date?->toDateString();
+        $data['last_transaction_date'] = $lastActivityDate?->toDateString();
 
         return $data;
     }

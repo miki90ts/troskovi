@@ -295,6 +295,8 @@ const messages = {
             dailyLower: 'dnevno',
             weeklyLower: 'nedeljno',
             monthlyLower: 'mesečno',
+            yearly: 'Godišnje',
+            yearlyLower: 'godišnje',
         },
     },
     components: {
@@ -592,6 +594,17 @@ const messages = {
             transfering: 'Prenos u toku...',
             transferSuccess: 'Prenos je završen',
             transferError: 'Prenos nije uspeo',
+            transfersHistoryTitle: 'Istorija prenosa',
+            displayedTransfers: ':count prikazanih prenosa',
+            emptyTransfersTitle: 'Nema zabeleženih prenosa',
+            emptyTransfersDescription:
+                'Istorija prenosa će se pojaviti ovde kada prebaciš sredstva između računa.',
+            transferSearchPlaceholder: 'Pretraži račun ili opis prenosa',
+            allAccounts: 'Svi računi',
+            filteredTransfersEmptyTitle: 'Nema prenosa za zadate filtere',
+            filteredTransfersEmptyDescription:
+                'Promeni kriterijume pretrage ili očisti filtere da bi video prenose.',
+            noTransferDescription: 'Bez opisa',
             archiveTitle: 'Arhiviraj račun',
             archiveDescription:
                 'Ovaj račun će biti sakriven iz aktivnih pregleda. Možeš ga vratiti kasnije.',

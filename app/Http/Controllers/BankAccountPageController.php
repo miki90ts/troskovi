@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\AccountTransferResource;
 use App\Http\Resources\BankAccountOverviewResource;
 use App\Http\Resources\BankAccountResource;
 use App\Models\BankAccount;
@@ -18,9 +19,11 @@ class BankAccountPageController extends Controller
     public function index(Request $request): Response
     {
         $accounts = $this->service->list($request->user(), includeArchived: true);
+        $transfers = $this->service->listTransfers($request->user());
 
         return Inertia::render('bank-accounts/Index', [
             'accounts' => BankAccountResource::collection($accounts),
+            'transfers' => AccountTransferResource::collection($transfers),
         ]);
     }
 
