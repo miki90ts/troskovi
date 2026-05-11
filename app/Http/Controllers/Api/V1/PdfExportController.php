@@ -16,7 +16,7 @@ class PdfExportController extends Controller
 
     public function transactions(ExportTransactionsPdfRequest $request): Response
     {
-        $filters = $request->only(['date_from', 'date_to', 'category_id', 'bank_account_id', 'payment_method', 'search']);
+        $filters = $request->only(['date_from', 'date_to', 'category_id', 'category_ids', 'bank_account_id', 'payment_method', 'search']);
         $type = $request->validated('type');
 
         $pdf = $this->pdfExportService->exportTransactions($request->user(), $filters, $type);

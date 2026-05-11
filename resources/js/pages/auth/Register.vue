@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
-import InputError from '@/components/InputError.vue';
+import FormInputField from '@/components/forms/FormInputField.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthBase from '@/layouts/AuthLayout.vue';
 import { t } from '@/lib/i18n';
@@ -36,80 +34,54 @@ import { store } from '@/routes/register';
             class="flex flex-col gap-7"
         >
             <div class="grid gap-5">
-                <div class="grid gap-2.5">
-                    <Label
-                        for="name"
-                        class="text-sm font-medium text-foreground/90"
-                        >{{ t('auth.register.name') }}</Label
-                    >
-                    <Input
-                        id="name"
-                        type="text"
-                        required
-                        autofocus
-                        :tabindex="1"
-                        autocomplete="name"
-                        name="name"
-                        :placeholder="t('auth.register.name')"
-                        class="h-12 rounded-2xl border-border/80 bg-background/70 px-4 shadow-none"
-                    />
-                    <InputError :message="errors.name" />
-                </div>
+                <FormInputField
+                    :label="t('auth.register.name')"
+                    field-id="name"
+                    type="text"
+                    required
+                    autofocus
+                    :tabindex="1"
+                    autocomplete="name"
+                    name="name"
+                    :placeholder="t('auth.register.name')"
+                    :error="errors.name"
+                />
 
-                <div class="grid gap-2.5">
-                    <Label
-                        for="email"
-                        class="text-sm font-medium text-foreground/90"
-                        >{{ t('auth.register.email') }}</Label
-                    >
-                    <Input
-                        id="email"
-                        type="email"
-                        required
-                        :tabindex="2"
-                        autocomplete="email"
-                        name="email"
-                        placeholder="email@example.com"
-                        class="h-12 rounded-2xl border-border/80 bg-background/70 px-4 shadow-none"
-                    />
-                    <InputError :message="errors.email" />
-                </div>
+                <FormInputField
+                    :label="t('auth.register.email')"
+                    field-id="email"
+                    type="email"
+                    required
+                    :tabindex="2"
+                    autocomplete="email"
+                    name="email"
+                    placeholder="email@example.com"
+                    :error="errors.email"
+                />
 
-                <div class="grid gap-2.5">
-                    <Label
-                        for="password"
-                        class="text-sm font-medium text-foreground/90"
-                        >{{ t('auth.register.password') }}</Label
-                    >
-                    <PasswordInput
-                        id="password"
-                        required
-                        :tabindex="3"
-                        autocomplete="new-password"
-                        name="password"
-                        :placeholder="t('auth.register.password')"
-                        class="h-12 rounded-2xl border-border/80 bg-background/70 px-4 shadow-none"
-                    />
-                    <InputError :message="errors.password" />
-                </div>
+                <FormInputField
+                    :component="PasswordInput"
+                    :label="t('auth.register.password')"
+                    field-id="password"
+                    required
+                    :tabindex="3"
+                    autocomplete="new-password"
+                    name="password"
+                    :placeholder="t('auth.register.password')"
+                    :error="errors.password"
+                />
 
-                <div class="grid gap-2.5">
-                    <Label
-                        for="password_confirmation"
-                        class="text-sm font-medium text-foreground/90"
-                        >{{ t('auth.register.confirmPassword') }}</Label
-                    >
-                    <PasswordInput
-                        id="password_confirmation"
-                        required
-                        :tabindex="4"
-                        autocomplete="new-password"
-                        name="password_confirmation"
-                        :placeholder="t('auth.register.confirmPassword')"
-                        class="h-12 rounded-2xl border-border/80 bg-background/70 px-4 shadow-none"
-                    />
-                    <InputError :message="errors.password_confirmation" />
-                </div>
+                <FormInputField
+                    :component="PasswordInput"
+                    :label="t('auth.register.confirmPassword')"
+                    field-id="password_confirmation"
+                    required
+                    :tabindex="4"
+                    autocomplete="new-password"
+                    name="password_confirmation"
+                    :placeholder="t('auth.register.confirmPassword')"
+                    :error="errors.password_confirmation"
+                />
 
                 <Button
                     type="submit"

@@ -45,9 +45,43 @@ class BankAccountTransfersTest extends TestCase
             'date' => now()->toDateString(),
         ])
             ->assertStatus(422)
-            ->assertJsonValidationErrors('amount');
+            ->assertJsonValidationErrors('amount')
+            ->assertJsonPath(
+                'errors.amount.0',
+                'Nema dovoljno sredstava na izvornom računu.',
+            );
 
         $this->assertDatabaseCount('account_transfers', 0);
+    }
+
+    public function test_transfer_requires_different_destination_account_with_custom_message(): void
+    {
+        $user = User::factory()->create();
+        $account = $user->bankAccounts()->create([
+            'name' => 'Glavni račun',
+            'bank_name' => 'Test banka',
+            'account_number' => '1111222233334444',
+            'currency' => 'RSD',
+            'color' => null,
+            'icon' => null,
+            'initial_balance' => 5000,
+            'is_archived' => false,
+        ]);
+
+        Sanctum::actingAs($user);
+
+        $this->postJson('/api/v1/bank-accounts/transfer', [
+            'from_account_id' => $account->id,
+            'to_account_id' => $account->id,
+            'amount' => 1000,
+            'description' => 'Nevalidan prenos',
+            'date' => now()->toDateString(),
+        ])
+            ->assertStatus(422)
+            ->assertJsonPath(
+                'errors.to_account_id.0',
+                'Odredišni račun mora biti različit od izvornog računa.',
+            );
     }
 
     public function test_transfer_updates_current_balance_for_both_accounts(): void

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Category;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Barryvdh\DomPDF\PDF as DomPDF;
@@ -23,7 +24,7 @@ class PdfExportService
 
         $typeLabel = $type === 'expense' ? 'Troškovi' : 'Prihodi';
 
-        $appliedFilters = $this->buildFilterSummary($filters);
+        $appliedFilters = $this->buildFilterSummary($user, $filters);
 
         $pdf = Pdf::loadView('pdf.transactions', [
             'transactions' => $transactions,
@@ -69,7 +70,7 @@ class PdfExportService
         return $pdf;
     }
 
-    private function buildFilterSummary(array $filters): array
+    private function buildFilterSummary(User $user, array $filters): array
     {
         $summary = [];
 
@@ -85,10 +86,41 @@ class PdfExportService
             $summary[] = 'Način plaćanja: ' . ($filters['payment_method'] === 'cash' ? 'Keš' : 'Bankovni račun');
         }
 
+        $categoryIds = $this->extractCategoryIds($filters);
+
+        if ($categoryIds !== []) {
+            $categoryNames = Category::query()
+                ->forUser($user->id)
+                ->whereIn('id', $categoryIds)
+                ->orderBy('name')
+                ->pluck('name')
+                ->all();
+
+            if ($categoryNames !== []) {
+                $summary[] = 'Kategorije: ' . implode(', ', $categoryNames);
+            }
+        }
+
         if (! empty($filters['search'])) {
             $summary[] = 'Pretraga: "' . $filters['search'] . '"';
         }
 
         return $summary;
+    }
+
+    private function extractCategoryIds(array $filters): array
+    {
+        $categoryIds = [];
+
+        if (! empty($filters['category_ids']) && is_string($filters['category_ids'])) {
+            $categoryIds = explode(',', $filters['category_ids']);
+        } elseif (! empty($filters['category_id'])) {
+            $categoryIds = [(string) $filters['category_id']];
+        }
+
+        return array_values(array_filter(
+            array_map(static fn($value) => trim((string) $value), $categoryIds),
+            static fn($value) => $value !== '',
+        ));
     }
 }

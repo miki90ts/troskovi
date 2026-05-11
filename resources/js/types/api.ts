@@ -27,6 +27,7 @@ export type TransactionFilters = {
     date_from?: string;
     date_to?: string;
     category_id?: number | string;
+    category_ids?: string;
     bank_account_id?: number | string;
     payment_method?: 'cash' | 'bank_account';
     search?: string;

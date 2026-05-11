@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Check } from 'lucide-vue-next';
 import { computed } from 'vue';
+import FormField from '@/components/forms/FormField.vue';
 import BarcodeDisplay from '@/components/loyalty-cards/BarcodeDisplay.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,8 +13,11 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { t } from '@/lib/i18n';
+import type {
+    LoyaltyCardFormErrors,
+    LoyaltyCardFormValues,
+} from '@/lib/validation/loyaltyCardValidation';
 import type { LoyaltyCard } from '@/types/models';
 
 const props = defineProps<{
@@ -21,41 +25,29 @@ const props = defineProps<{
     editingCard: LoyaltyCard | null;
     formSubmitting: boolean;
     colorPresets: string[];
-    form: {
-        name: string;
-        card_number: string;
-        notes: string;
-        color: string;
-    };
+    form: LoyaltyCardFormValues;
+    errors: LoyaltyCardFormErrors;
 }>();
 
 const emit = defineEmits<{
     'update:open': [value: boolean];
-    'update:form': [
-        value: {
-            name: string;
-            card_number: string;
-            notes: string;
-            color: string;
-        },
-    ];
+    'update:form': [value: LoyaltyCardFormValues];
     submit: [];
     close: [];
     applyPresetColor: [color: string];
 }>();
 
-function updateForm(
-    patch: Partial<{
-        name: string;
-        card_number: string;
-        notes: string;
-        color: string;
-    }>,
-) {
+function updateForm(patch: Partial<LoyaltyCardFormValues>) {
     emit('update:form', {
         ...props.form,
         ...patch,
     });
+}
+
+function fieldErrorClass(field: keyof LoyaltyCardFormValues): string {
+    return props.errors[field]
+        ? 'border-destructive focus-visible:ring-destructive/20'
+        : '';
 }
 
 const nameModel = computed({
@@ -122,37 +114,43 @@ const colorModel = computed({
             </DialogHeader>
 
             <form class="space-y-6 px-6 py-6" @submit.prevent="emit('submit')">
-                <div class="grid gap-2">
-                    <Label
-                        for="lc_name"
-                        class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                    >
-                        {{ t('loyaltyCards.cardName') }}
-                    </Label>
-                    <Input
-                        id="lc_name"
-                        v-model="nameModel"
-                        :placeholder="t('loyaltyCards.cardNamePlaceholder')"
-                        class="h-11 rounded-2xl border-border/60 bg-background"
-                        required
-                    />
-                </div>
+                <FormField
+                    :label="t('loyaltyCards.cardName')"
+                    field-id="lc_name"
+                    :error="props.errors.name"
+                >
+                    <template #default>
+                        <Input
+                            id="lc_name"
+                            v-model="nameModel"
+                            :placeholder="t('loyaltyCards.cardNamePlaceholder')"
+                            :class="[
+                                'h-11 rounded-2xl border-border/60 bg-background',
+                                fieldErrorClass('name'),
+                            ]"
+                        />
+                    </template>
+                </FormField>
 
-                <div class="grid gap-2">
-                    <Label
-                        for="lc_number"
-                        class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                    >
-                        {{ t('loyaltyCards.cardNumber') }}
-                    </Label>
-                    <Input
-                        id="lc_number"
-                        v-model="cardNumberModel"
-                        :placeholder="t('loyaltyCards.cardNumberPlaceholder')"
-                        class="h-11 rounded-2xl border-border/60 bg-background"
-                        required
-                    />
-                </div>
+                <FormField
+                    :label="t('loyaltyCards.cardNumber')"
+                    field-id="lc_number"
+                    :error="props.errors.card_number"
+                >
+                    <template #default>
+                        <Input
+                            id="lc_number"
+                            v-model="cardNumberModel"
+                            :placeholder="
+                                t('loyaltyCards.cardNumberPlaceholder')
+                            "
+                            :class="[
+                                'h-11 rounded-2xl border-border/60 bg-background',
+                                fieldErrorClass('card_number'),
+                            ]"
+                        />
+                    </template>
+                </FormField>
 
                 <!-- Live barcode preview -->
                 <div
@@ -172,21 +170,24 @@ const colorModel = computed({
                     />
                 </div>
 
-                <div class="grid gap-2">
-                    <Label
-                        for="lc_notes"
-                        class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                    >
-                        {{ t('loyaltyCards.notes') }}
-                    </Label>
-                    <textarea
-                        id="lc_notes"
-                        v-model="notesModel"
-                        :placeholder="t('loyaltyCards.notesPlaceholder')"
-                        rows="3"
-                        class="flex w-full rounded-2xl border border-border/60 bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                    />
-                </div>
+                <FormField
+                    :label="t('loyaltyCards.notes')"
+                    field-id="lc_notes"
+                    :error="props.errors.notes"
+                >
+                    <template #default>
+                        <textarea
+                            id="lc_notes"
+                            v-model="notesModel"
+                            :placeholder="t('loyaltyCards.notesPlaceholder')"
+                            rows="3"
+                            :class="[
+                                'flex w-full rounded-2xl border border-border/60 bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none',
+                                fieldErrorClass('notes'),
+                            ]"
+                        />
+                    </template>
+                </FormField>
 
                 <div class="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
                     <div class="grid gap-2">
@@ -213,20 +214,23 @@ const colorModel = computed({
                             </button>
                         </div>
                     </div>
-                    <div class="grid gap-2">
-                        <Label
-                            for="lc_color"
-                            class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                        >
-                            {{ t('loyaltyCards.chooseColor') }}
-                        </Label>
-                        <Input
-                            id="lc_color"
-                            v-model="colorModel"
-                            type="color"
-                            class="h-14 w-full rounded-2xl border-border/60 bg-background p-2 md:w-24"
-                        />
-                    </div>
+                    <FormField
+                        :label="t('loyaltyCards.chooseColor')"
+                        field-id="lc_color"
+                        :error="props.errors.color"
+                    >
+                        <template #default>
+                            <Input
+                                id="lc_color"
+                                v-model="colorModel"
+                                type="color"
+                                :class="[
+                                    'h-14 w-full rounded-2xl border-border/60 bg-background p-2 md:w-24',
+                                    fieldErrorClass('color'),
+                                ]"
+                            />
+                        </template>
+                    </FormField>
                 </div>
 
                 <DialogFooter class="border-t border-border/60 pt-2">

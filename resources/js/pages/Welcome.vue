@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import { Form, Head, Link } from '@inertiajs/vue3';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
-import InputError from '@/components/InputError.vue';
+import FormInputField from '@/components/forms/FormInputField.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { t } from '@/lib/i18n';
 import { dashboard, register } from '@/routes';
@@ -253,56 +251,52 @@ withDefaults(
                             class="flex flex-col gap-7"
                         >
                             <div class="grid gap-5">
-                                <div class="grid gap-2.5">
-                                    <Label
-                                        for="email"
-                                        class="text-sm font-medium text-foreground/90"
-                                        >{{ t('auth.login.email') }}</Label
-                                    >
-                                    <Input
-                                        id="email"
-                                        type="email"
-                                        name="email"
-                                        required
-                                        autofocus
-                                        :tabindex="1"
-                                        autocomplete="email"
-                                        placeholder="email@example.com"
-                                        class="h-12 rounded-2xl border-border/80 bg-background/70 px-4 shadow-none"
-                                    />
-                                    <InputError :message="errors.email" />
-                                </div>
+                                <FormInputField
+                                    :label="t('auth.login.email')"
+                                    field-id="email"
+                                    type="email"
+                                    name="email"
+                                    required
+                                    autofocus
+                                    :tabindex="1"
+                                    autocomplete="email"
+                                    placeholder="email@example.com"
+                                    :error="errors.email"
+                                />
 
-                                <div class="grid gap-2.5">
-                                    <div
-                                        class="flex items-center justify-between"
-                                    >
-                                        <Label
-                                            for="password"
-                                            class="text-sm font-medium text-foreground/90"
-                                            >{{
-                                                t('auth.login.password')
-                                            }}</Label
+                                <FormInputField
+                                    :component="PasswordInput"
+                                    field-id="password"
+                                    name="password"
+                                    required
+                                    :tabindex="2"
+                                    autocomplete="current-password"
+                                    :placeholder="t('auth.login.password')"
+                                    :error="errors.password"
+                                >
+                                    <template #label>
+                                        <div
+                                            class="flex items-center justify-between"
                                         >
-                                        <TextLink
-                                            :href="request()"
-                                            class="text-sm text-primary"
-                                            :tabindex="5"
-                                        >
-                                            {{ t('auth.login.forgotPassword') }}
-                                        </TextLink>
-                                    </div>
-                                    <PasswordInput
-                                        id="password"
-                                        name="password"
-                                        required
-                                        :tabindex="2"
-                                        autocomplete="current-password"
-                                        :placeholder="t('auth.login.password')"
-                                        class="h-12 rounded-2xl border-border/80 bg-background/70 px-4 shadow-none"
-                                    />
-                                    <InputError :message="errors.password" />
-                                </div>
+                                            <span
+                                                class="text-sm font-medium text-foreground/90"
+                                            >
+                                                {{ t('auth.login.password') }}
+                                            </span>
+                                            <TextLink
+                                                :href="request()"
+                                                class="text-sm text-primary"
+                                                :tabindex="5"
+                                            >
+                                                {{
+                                                    t(
+                                                        'auth.login.forgotPassword',
+                                                    )
+                                                }}
+                                            </TextLink>
+                                        </div>
+                                    </template>
+                                </FormInputField>
 
                                 <div
                                     class="flex items-center justify-between rounded-2xl border border-border/70 bg-muted/40 px-4 py-3"

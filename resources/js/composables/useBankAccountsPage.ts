@@ -1,17 +1,14 @@
 import { computed, ref } from 'vue';
 import { useBankAccounts } from '@/composables/useBankAccounts';
 import { useToast } from '@/composables/useToast';
+import { useValidationErrors } from '@/composables/useValidationErrors';
 import { t } from '@/lib/i18n';
+import { validateBankAccountForm } from '@/lib/validation/bankAccountValidation';
+import { validateTransferForm } from '@/lib/validation/transferValidation';
 import type { AccountTransfer, BankAccount } from '@/types/models';
+import type { BankAccountFormValues } from '@/lib/validation/bankAccountValidation';
 
-export type BankAccountFormState = {
-    name: string;
-    bank_name: string;
-    account_number: string;
-    currency: string;
-    color: string;
-    initial_balance: string;
-};
+export type BankAccountFormState = BankAccountFormValues;
 
 export type TransferFormState = {
     from_account_id: string;
@@ -63,6 +60,20 @@ export function useBankAccountsPage(
     const transferSubmitting = ref(false);
     const accountForm = ref<BankAccountFormState>(createEmptyForm());
     const transferForm = ref<TransferFormState>(createEmptyTransferForm());
+    const {
+        errors: formErrors,
+        clearAllErrors,
+        clearErrors,
+        setErrors,
+        setServerErrors,
+    } = useValidationErrors<keyof BankAccountFormState>();
+    const {
+        errors: transferErrors,
+        clearAllErrors: clearAllTransferErrors,
+        clearErrors: clearTransferErrors,
+        setErrors: setTransferErrors,
+        setServerErrors: setTransferServerErrors,
+    } = useValidationErrors<keyof TransferFormState>();
 
     const activeAccounts = computed(() =>
         accounts.value.filter((account) => !account.is_archived),
@@ -97,6 +108,7 @@ export function useBankAccountsPage(
     function openCreate() {
         editingAccount.value = null;
         accountForm.value = createEmptyForm();
+        clearAllErrors();
         showForm.value = true;
     }
 
@@ -110,7 +122,26 @@ export function useBankAccountsPage(
             color: account.color ?? '#3b82f6',
             initial_balance: String(account.initial_balance),
         };
+        clearAllErrors();
         showForm.value = true;
+    }
+
+    function setAccountForm(value: BankAccountFormState) {
+        const previous = accountForm.value;
+        accountForm.value = value;
+
+        const changedFields = (
+            Object.keys(value) as (keyof BankAccountFormState)[]
+        ).filter((field) => previous[field] !== value[field]);
+
+        if (changedFields.length > 0) {
+            clearErrors(...changedFields);
+        }
+    }
+
+    function closeForm() {
+        showForm.value = false;
+        clearAllErrors();
     }
 
     function applyPresetColor(color: string) {
@@ -119,13 +150,42 @@ export function useBankAccountsPage(
 
     function openTransfer() {
         transferForm.value = createEmptyTransferForm();
+        clearAllTransferErrors();
         showTransfer.value = true;
+    }
+
+    function setTransferForm(value: TransferFormState) {
+        const previous = transferForm.value;
+        transferForm.value = value;
+
+        const changedFields = (
+            Object.keys(value) as (keyof TransferFormState)[]
+        ).filter((field) => previous[field] !== value[field]);
+
+        if (changedFields.length > 0) {
+            clearTransferErrors(...changedFields);
+        }
+    }
+
+    function closeTransfer() {
+        showTransfer.value = false;
+        clearAllTransferErrors();
     }
 
     async function submitForm() {
         formSubmitting.value = true;
 
         try {
+            clearAllErrors();
+
+            const frontErrors = validateBankAccountForm(accountForm.value);
+
+            if (Object.keys(frontErrors).length > 0) {
+                setErrors(frontErrors);
+
+                return;
+            }
+
             const payload = {
                 ...accountForm.value,
                 initial_balance: parseFloat(accountForm.value.initial_balance),
@@ -151,9 +211,13 @@ export function useBankAccountsPage(
                 success(t('finance.bankAccounts.created'));
             }
 
-            showForm.value = false;
-        } catch {
-            showError(t('finance.bankAccounts.saveError'));
+            closeForm();
+        } catch (e: any) {
+            if (e.response?.status === 422) {
+                setServerErrors(e.response?.data?.errors);
+            } else {
+                showError(t('finance.bankAccounts.saveError'));
+            }
         } finally {
             formSubmitting.value = false;
         }
@@ -202,6 +266,19 @@ export function useBankAccountsPage(
         transferSubmitting.value = true;
 
         try {
+            clearAllTransferErrors();
+
+            const frontErrors = validateTransferForm(
+                transferForm.value,
+                activeAccounts.value,
+            );
+
+            if (Object.keys(frontErrors).length > 0) {
+                setTransferErrors(frontErrors);
+
+                return;
+            }
+
             const createdTransfer = await transferFunds({
                 from_account_id: parseInt(transferForm.value.from_account_id),
                 to_account_id: parseInt(transferForm.value.to_account_id),
@@ -217,9 +294,13 @@ export function useBankAccountsPage(
             transfers.value.unshift(createdTransfer);
 
             success(t('finance.bankAccounts.transferSuccess'));
-            showTransfer.value = false;
-        } catch {
-            showError(t('finance.bankAccounts.transferError'));
+            closeTransfer();
+        } catch (e: any) {
+            if (e.response?.status === 422) {
+                setTransferServerErrors(e.response?.data?.errors);
+            } else {
+                showError(t('finance.bankAccounts.transferError'));
+            }
         } finally {
             transferSubmitting.value = false;
         }
@@ -237,14 +318,20 @@ export function useBankAccountsPage(
         editingAccount,
         formSubmitting,
         accountForm,
+        formErrors,
         archiveConfirm,
         showTransfer,
         transferSubmitting,
         transferForm,
+        transferErrors,
         openCreate,
         openEdit,
+        setAccountForm,
+        closeForm,
         applyPresetColor,
         openTransfer,
+        setTransferForm,
+        closeTransfer,
         submitForm,
         handleArchive,
         handleRestore,

@@ -2,8 +2,10 @@
 import { Download, Eye, ShieldCheck, Upload, X } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
 import CategoryBadge from '@/components/categories/CategoryBadge.vue';
+import FormField from '@/components/forms/FormField.vue';
 import PaymentMethodBadge from '@/components/transactions/PaymentMethodBadge.vue';
 import { Button } from '@/components/ui/button';
+import { useValidationErrors } from '@/composables/useValidationErrors';
 import {
     Dialog,
     DialogContent,
@@ -24,6 +26,11 @@ import {
 import { useToast } from '@/composables/useToast';
 import { useTransactions } from '@/composables/useTransactions';
 import { t } from '@/lib/i18n';
+import {
+    transactionValidationMessages,
+    validateTransactionForm,
+    type TransactionFormValues,
+} from '@/lib/validation/transactionValidation';
 
 import type { Category, Debt, Transaction } from '@/types/models';
 
@@ -63,7 +70,14 @@ const form = ref({
 const receiptFile = ref<File | null>(null);
 const receiptPreview = ref<string | null>(null);
 const submitting = ref(false);
-const errors = ref<Record<string, string>>({});
+const {
+    errors,
+    clearErrors,
+    clearAllErrors,
+    fieldErrorClass,
+    setErrors,
+    setServerErrors,
+} = useValidationErrors<keyof TransactionFormValues>();
 
 const resolvedType = computed<'income' | 'expense'>(() => {
     return props.transaction?.type ?? props.defaultType ?? 'expense';
@@ -140,7 +154,7 @@ watch(
                     category_id: '',
                     bank_account_id: '',
                     debt_id: '',
-                    payment_method: 'cash',
+                    payment_method: 'bank_account',
                     notes: '',
                     is_warranty: false,
                 };
@@ -148,7 +162,7 @@ watch(
 
             receiptFile.value = null;
             receiptPreview.value = null;
-            errors.value = {};
+            clearAllErrors();
         }
     },
 );
@@ -166,8 +180,8 @@ const selectedCategory = computed(() => {
 
 const warrantyExpiresDate = computed(() => {
     if (!form.value.is_warranty || !form.value.date) {
-return null;
-}
+        return null;
+    }
 
     const date = new Date(form.value.date);
     date.setFullYear(date.getFullYear() + 2);
@@ -186,9 +200,16 @@ function onFileChange(event: Event) {
     const file = input.files?.[0] ?? null;
 
     if (file && file.size > MAX_FILE_SIZE) {
-        errors.value.receipt = t(
-            'components.transactionForm.warrantyFileTooLarge',
-        );
+        errors.value.receipt = transactionValidationMessages.receiptMax;
+        receiptFile.value = null;
+        receiptPreview.value = null;
+        input.value = '';
+
+        return;
+    }
+
+    if (file && !file.type.startsWith('image/')) {
+        errors.value.receipt = transactionValidationMessages.receiptImage;
         receiptFile.value = null;
         receiptPreview.value = null;
         input.value = '';
@@ -225,11 +246,72 @@ function getReceiptPreviewUrl(receiptUrl: string): string {
     return `${receiptUrl}${receiptUrl.includes('?') ? '&' : '?'}preview=1`;
 }
 
+watch(
+    () => form.value.type,
+    () => clearErrors('type', 'payment_method', 'bank_account_id'),
+);
+
+watch(
+    () => form.value.amount,
+    () => clearErrors('amount'),
+);
+watch(
+    () => form.value.date,
+    () => clearErrors('date'),
+);
+watch(
+    () => form.value.description,
+    () => clearErrors('description'),
+);
+watch(
+    () => form.value.category_id,
+    () => clearErrors('category_id'),
+);
+watch(
+    () => form.value.payment_method,
+    () => clearErrors('payment_method', 'bank_account_id'),
+);
+watch(
+    () => form.value.bank_account_id,
+    () => clearErrors('bank_account_id'),
+);
+watch(
+    () => form.value.notes,
+    () => clearErrors('notes'),
+);
+watch(
+    () => form.value.debt_id,
+    () => clearErrors('debt_id'),
+);
+watch(
+    () => form.value.is_warranty,
+    () => clearErrors('is_warranty', 'receipt'),
+);
+watch(receiptFile, () => clearErrors('receipt'));
+
 async function onSubmit() {
     submitting.value = true;
-    errors.value = {};
+    clearAllErrors();
 
     try {
+        const frontErrors = validateTransactionForm(
+            {
+                ...form.value,
+                receipt: receiptFile.value,
+            },
+            {
+                categoryIds: props.categories.map((category) => category.id),
+                bankAccountIds: props.accounts.map((account) => account.id),
+                debts: availableDebts.value,
+            },
+        );
+
+        if (Object.keys(frontErrors).length > 0) {
+            setErrors(frontErrors);
+
+            return;
+        }
+
         const payload: Record<string, unknown> = {
             type: form.value.type,
             amount: parseFloat(form.value.amount),
@@ -282,11 +364,7 @@ async function onSubmit() {
         emit('saved');
     } catch (e: any) {
         if (e.response?.status === 422) {
-            const validationErrors = e.response.data.errors;
-
-            for (const key in validationErrors) {
-                errors.value[key] = validationErrors[key][0];
-            }
+            setServerErrors(e.response?.data?.errors);
         } else {
             showError(t('components.transactionForm.saveError'));
         }
@@ -340,350 +418,354 @@ async function onSubmit() {
 
             <form class="space-y-6 px-6 py-6" @submit.prevent="onSubmit">
                 <div class="grid gap-4 md:grid-cols-2">
-                    <div class="grid gap-2">
-                        <Label
-                            for="amount"
-                            class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                            >{{ t('common.labels.amount') }}</Label
-                        >
-                        <Input
-                            id="amount"
-                            v-model="form.amount"
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            placeholder="0.00"
-                            class="h-11 rounded-2xl border-border/60 bg-background"
-                            required
-                        />
-                        <p
-                            v-if="errors.amount"
-                            class="text-xs text-destructive"
-                        >
-                            {{ errors.amount }}
-                        </p>
-                    </div>
-                    <div class="grid gap-2">
-                        <Label
-                            for="date"
-                            class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                            >{{ t('common.labels.date') }}</Label
-                        >
-                        <Input
-                            id="date"
-                            v-model="form.date"
-                            type="date"
-                            class="h-11 rounded-2xl border-border/60 bg-background"
-                            required
-                        />
-                        <p v-if="errors.date" class="text-xs text-destructive">
-                            {{ errors.date }}
-                        </p>
-                    </div>
+                    <FormField
+                        :label="t('common.labels.amount')"
+                        field-id="amount"
+                        :error="errors.amount"
+                    >
+                        <template #default>
+                            <Input
+                                id="amount"
+                                v-model="form.amount"
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                placeholder="0.00"
+                                :class="[
+                                    'h-11 rounded-2xl border-border/60 bg-background',
+                                    fieldErrorClass('amount'),
+                                ]"
+                            />
+                        </template>
+                    </FormField>
+                    <FormField
+                        :label="t('common.labels.date')"
+                        field-id="date"
+                        :error="errors.date"
+                    >
+                        <template #default>
+                            <Input
+                                id="date"
+                                v-model="form.date"
+                                type="date"
+                                :class="[
+                                    'h-11 rounded-2xl border-border/60 bg-background',
+                                    fieldErrorClass('date'),
+                                ]"
+                            />
+                        </template>
+                    </FormField>
                 </div>
 
-                <div class="grid gap-2">
-                    <Label
-                        for="description"
-                        class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                        >{{ t('common.labels.description') }}</Label
-                    >
-                    <Input
-                        id="description"
-                        v-model="form.description"
-                        :placeholder="
-                            t(
-                                'components.transactionForm.descriptionPlaceholder',
-                            )
-                        "
-                        class="h-11 rounded-2xl border-border/60 bg-background"
-                        required
-                    />
-                    <p
-                        v-if="errors.description"
-                        class="text-xs text-destructive"
-                    >
-                        {{ errors.description }}
-                    </p>
-                </div>
+                <FormField
+                    :label="t('common.labels.description')"
+                    field-id="description"
+                    :error="errors.description"
+                >
+                    <template #default>
+                        <Input
+                            id="description"
+                            v-model="form.description"
+                            :placeholder="
+                                t(
+                                    'components.transactionForm.descriptionPlaceholder',
+                                )
+                            "
+                            :class="[
+                                'h-11 rounded-2xl border-border/60 bg-background',
+                                fieldErrorClass('description'),
+                            ]"
+                        />
+                    </template>
+                </FormField>
 
                 <div class="grid gap-4 md:grid-cols-2">
-                    <div class="grid gap-2">
-                        <Label
-                            class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                            >{{ t('common.labels.category') }}</Label
-                        >
-                        <Select v-model="form.category_id">
+                    <FormField
+                        :label="t('common.labels.category')"
+                        :error="errors.category_id"
+                    >
+                        <template #default>
+                            <Select v-model="form.category_id">
+                                <SelectTrigger
+                                    :class="[
+                                        'h-11 w-full rounded-2xl border-border/60 bg-background',
+                                        fieldErrorClass('category_id'),
+                                    ]"
+                                >
+                                    <SelectValue
+                                        :placeholder="
+                                            t(
+                                                'components.transactionForm.selectCategory',
+                                            )
+                                        "
+                                    >
+                                        <CategoryBadge
+                                            v-if="selectedCategory"
+                                            :category="selectedCategory"
+                                            compact
+                                            class="max-w-full"
+                                        />
+                                    </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem
+                                        v-for="cat in filteredCategories()"
+                                        :key="cat.id"
+                                        :value="String(cat.id)"
+                                    >
+                                        <CategoryBadge
+                                            :category="cat"
+                                            compact
+                                            class="max-w-full"
+                                        />
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </template>
+                    </FormField>
+
+                    <FormField
+                        :label="t('common.labels.paymentMethod')"
+                        :error="errors.payment_method"
+                    >
+                        <template #default>
+                            <Select v-model="form.payment_method">
+                                <SelectTrigger
+                                    :class="[
+                                        'h-11 w-full rounded-2xl border-border/60 bg-background',
+                                        fieldErrorClass('payment_method'),
+                                    ]"
+                                >
+                                    <SelectValue>
+                                        <PaymentMethodBadge
+                                            :payment-method="
+                                                form.payment_method
+                                            "
+                                            compact
+                                            class="max-w-full"
+                                        />
+                                    </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="cash">
+                                        <PaymentMethodBadge
+                                            payment-method="cash"
+                                            compact
+                                        />
+                                    </SelectItem>
+                                    <SelectItem value="bank_account">
+                                        <PaymentMethodBadge
+                                            payment-method="bank_account"
+                                            compact
+                                        />
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </template>
+                    </FormField>
+                </div>
+
+                <FormField
+                    v-if="usesBankAccount"
+                    :label="t('common.labels.bankAccount')"
+                    :error="errors.bank_account_id"
+                >
+                    <template #default>
+                        <Select v-model="bankAccountSelectValue">
                             <SelectTrigger
-                                class="h-11 w-full rounded-2xl border-border/60 bg-background"
+                                :class="[
+                                    'h-11 w-full rounded-2xl border-border/60 bg-background',
+                                    fieldErrorClass('bank_account_id'),
+                                ]"
                             >
                                 <SelectValue
                                     :placeholder="
                                         t(
-                                            'components.transactionForm.selectCategory',
+                                            'components.transactionForm.selectAccountOptional',
                                         )
                                     "
-                                >
-                                    <CategoryBadge
-                                        v-if="selectedCategory"
-                                        :category="selectedCategory"
-                                        compact
-                                        class="max-w-full"
-                                    />
-                                </SelectValue>
+                                />
                             </SelectTrigger>
                             <SelectContent>
+                                <SelectItem :value="NO_BANK_ACCOUNT_VALUE">{{
+                                    t('common.states.none')
+                                }}</SelectItem>
                                 <SelectItem
-                                    v-for="cat in filteredCategories()"
-                                    :key="cat.id"
-                                    :value="String(cat.id)"
+                                    v-for="account in accounts"
+                                    :key="account.id"
+                                    :value="String(account.id)"
                                 >
-                                    <CategoryBadge
-                                        :category="cat"
-                                        compact
-                                        class="max-w-full"
-                                    />
+                                    {{ account.name }}
                                 </SelectItem>
                             </SelectContent>
                         </Select>
-                    </div>
+                    </template>
+                </FormField>
 
-                    <div class="grid gap-2">
-                        <Label
-                            class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                            >{{ t('common.labels.paymentMethod') }}</Label
-                        >
-                        <Select v-model="form.payment_method">
+                <FormField
+                    :label="t('common.labels.notes')"
+                    field-id="notes"
+                    :error="errors.notes"
+                >
+                    <template #default>
+                        <Input
+                            id="notes"
+                            v-model="form.notes"
+                            :placeholder="
+                                t('components.transactionForm.notesPlaceholder')
+                            "
+                            :class="[
+                                'h-11 rounded-2xl border-border/60 bg-background',
+                                fieldErrorClass('notes'),
+                            ]"
+                        />
+                    </template>
+                </FormField>
+
+                <FormField
+                    v-if="availableDebts.length > 0"
+                    :label="t('components.transactionForm.linkedDebt')"
+                    :error="errors.debt_id"
+                >
+                    <template #default>
+                        <Select v-model="debtSelectValue">
                             <SelectTrigger
-                                class="h-11 w-full rounded-2xl border-border/60 bg-background"
+                                :class="[
+                                    'h-11 w-full rounded-2xl border-border/60 bg-background',
+                                    fieldErrorClass('debt_id'),
+                                ]"
                             >
-                                <SelectValue>
-                                    <PaymentMethodBadge
-                                        :payment-method="form.payment_method"
-                                        compact
-                                        class="max-w-full"
-                                    />
-                                </SelectValue>
+                                <SelectValue
+                                    :placeholder="
+                                        t(
+                                            'components.transactionForm.selectDebtOptional',
+                                        )
+                                    "
+                                />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="cash">
-                                    <PaymentMethodBadge
-                                        payment-method="cash"
-                                        compact
-                                    />
-                                </SelectItem>
-                                <SelectItem value="bank_account">
-                                    <PaymentMethodBadge
-                                        payment-method="bank_account"
-                                        compact
-                                    />
+                                <SelectItem :value="NO_DEBT_VALUE">{{
+                                    t('common.states.none')
+                                }}</SelectItem>
+                                <SelectItem
+                                    v-for="debt in availableDebts"
+                                    :key="debt.id"
+                                    :value="String(debt.id)"
+                                >
+                                    <span class="flex items-center gap-2">
+                                        <span
+                                            class="inline-flex shrink-0 rounded-md px-1.5 py-0.5 text-[10px] leading-none font-semibold uppercase"
+                                            :class="
+                                                debt.type === 'i_owe'
+                                                    ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400'
+                                                    : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
+                                            "
+                                        >
+                                            {{
+                                                debt.type === 'i_owe'
+                                                    ? t('debts.iOweLabel')
+                                                    : t('debts.owedToMeLabel')
+                                            }}
+                                        </span>
+                                        <span>{{ debt.person_name }}</span>
+                                        <span class="text-muted-foreground">
+                                            {{
+                                                debt.remaining_amount.toLocaleString(
+                                                    'sr-RS',
+                                                )
+                                            }}
+                                            RSD
+                                        </span>
+                                    </span>
                                 </SelectItem>
                             </SelectContent>
                         </Select>
-                    </div>
-                </div>
-
-                <div v-if="usesBankAccount" class="grid gap-2">
-                    <Label
-                        class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                        >{{ t('common.labels.bankAccount') }}</Label
-                    >
-                    <Select v-model="bankAccountSelectValue">
-                        <SelectTrigger
-                            class="h-11 w-full rounded-2xl border-border/60 bg-background"
-                        >
-                            <SelectValue
-                                :placeholder="
-                                    t(
-                                        'components.transactionForm.selectAccountOptional',
-                                    )
-                                "
-                            />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem :value="NO_BANK_ACCOUNT_VALUE">{{
-                                t('common.states.none')
-                            }}</SelectItem>
-                            <SelectItem
-                                v-for="account in accounts"
-                                :key="account.id"
-                                :value="String(account.id)"
-                            >
-                                {{ account.name }}
-                            </SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                <div v-if="availableDebts.length > 0" class="grid gap-2">
-                    <Label
-                        class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                        >{{ t('components.transactionForm.linkedDebt') }}</Label
-                    >
-                    <Select v-model="debtSelectValue">
-                        <SelectTrigger
-                            class="h-11 w-full rounded-2xl border-border/60 bg-background"
-                        >
-                            <SelectValue
-                                :placeholder="
-                                    t(
-                                        'components.transactionForm.selectDebtOptional',
-                                    )
-                                "
-                            />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem :value="NO_DEBT_VALUE">{{
-                                t('common.states.none')
-                            }}</SelectItem>
-                            <SelectItem
-                                v-for="debt in availableDebts"
-                                :key="debt.id"
-                                :value="String(debt.id)"
-                            >
-                                <span class="flex items-center gap-2">
-                                    <span
-                                        class="inline-flex shrink-0 rounded-md px-1.5 py-0.5 text-[10px] leading-none font-semibold uppercase"
-                                        :class="
-                                            debt.type === 'i_owe'
-                                                ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400'
-                                                : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
-                                        "
-                                    >
-                                        {{
-                                            debt.type === 'i_owe'
-                                                ? t('debts.iOweLabel')
-                                                : t('debts.owedToMeLabel')
-                                        }}
-                                    </span>
-                                    <span>{{ debt.person_name }}</span>
-                                    <span class="text-muted-foreground">
-                                        {{
-                                            debt.remaining_amount.toLocaleString(
-                                                'sr-RS',
-                                            )
-                                        }}
-                                        RSD
-                                    </span>
-                                </span>
-                            </SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                <div class="grid gap-2">
-                    <Label
-                        for="notes"
-                        class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                        >{{ t('common.labels.notes') }}</Label
-                    >
-                    <Input
-                        id="notes"
-                        v-model="form.notes"
-                        :placeholder="
-                            t('components.transactionForm.notesPlaceholder')
-                        "
-                        class="h-11 rounded-2xl border-border/60 bg-background"
-                    />
-                </div>
+                    </template>
+                </FormField>
 
                 <!-- Warranty section (expense only) -->
                 <div
                     v-if="form.type === 'expense'"
                     class="space-y-4 rounded-3xl border border-border/60 bg-muted/20 p-4"
                 >
-                    <Label
-                        for="is_warranty"
-                        class="flex cursor-pointer items-center gap-3"
-                    >
-                        <input
-                            id="is_warranty"
-                            v-model="form.is_warranty"
-                            type="checkbox"
-                            class="h-4 w-4 rounded border-border text-primary focus:ring-primary"
-                            @change="handleWarrantyChange"
-                        />
-                        <span
-                            class="flex items-center gap-2 text-sm font-medium"
-                        >
-                            <ShieldCheck class="h-4 w-4 text-primary" />
-                            {{
-                                t('components.transactionForm.warrantyCheckbox')
-                            }}
-                        </span>
-                    </Label>
+                    <FormField :error="errors.is_warranty">
+                        <template #default>
+                            <Label
+                                for="is_warranty"
+                                class="flex cursor-pointer items-center gap-3"
+                            >
+                                <input
+                                    id="is_warranty"
+                                    v-model="form.is_warranty"
+                                    type="checkbox"
+                                    class="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                                    @change="handleWarrantyChange"
+                                />
+                                <span
+                                    class="flex items-center gap-2 text-sm font-medium"
+                                >
+                                    <ShieldCheck class="h-4 w-4 text-primary" />
+                                    {{
+                                        t(
+                                            'components.transactionForm.warrantyCheckbox',
+                                        )
+                                    }}
+                                </span>
+                            </Label>
+                        </template>
+                    </FormField>
 
                     <template v-if="form.is_warranty">
-                        <div class="grid gap-2">
-                            <Label
-                                class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                            >
-                                {{
-                                    t(
-                                        'components.transactionForm.warrantyReceipt',
-                                    )
-                                }}
-                            </Label>
-                            <div
-                                v-if="
-                                    !receiptPreview &&
-                                    !props.transaction?.receipt_url
-                                "
-                                class="relative"
-                            >
-                                <label
-                                    class="flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-border/60 bg-background p-6 transition-colors hover:border-primary/40 hover:bg-primary/5"
-                                >
-                                    <Upload
-                                        class="h-6 w-6 text-muted-foreground"
-                                    />
-                                    <span class="text-sm text-muted-foreground">
-                                        {{
-                                            t(
-                                                'components.transactionForm.warrantyReceiptHint',
-                                            )
-                                        }}
-                                    </span>
-                                    <input
-                                        type="file"
-                                        accept="image/jpeg,image/png,image/webp"
-                                        class="sr-only"
-                                        @change="onFileChange"
-                                    />
-                                </label>
-                            </div>
-                            <div v-else class="relative">
-                                <img
-                                    v-if="receiptPreview"
-                                    :src="receiptPreview"
-                                    alt="Receipt preview"
-                                    class="max-h-48 rounded-2xl border border-border/60 object-contain"
-                                />
+                        <FormField
+                            :label="
+                                t('components.transactionForm.warrantyReceipt')
+                            "
+                            :error="errors.receipt"
+                        >
+                            <template #default>
                                 <div
-                                    v-else-if="props.transaction?.receipt_url"
-                                    class="space-y-3 rounded-2xl border border-border/60 bg-background p-3"
+                                    v-if="
+                                        !receiptPreview &&
+                                        !props.transaction?.receipt_url
+                                    "
+                                    class="relative"
                                 >
-                                    <a
-                                        :href="
-                                            getReceiptPreviewUrl(
-                                                props.transaction.receipt_url,
-                                            )
-                                        "
-                                        target="_blank"
-                                        class="block overflow-hidden rounded-2xl border border-border/60 bg-muted/20"
+                                    <label
+                                        class="flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-border/60 bg-background p-6 transition-colors hover:border-primary/40 hover:bg-primary/5"
                                     >
-                                        <img
-                                            :src="
-                                                getReceiptPreviewUrl(
-                                                    props.transaction
-                                                        .receipt_url,
-                                                )
-                                            "
-                                            alt="Existing receipt preview"
-                                            class="max-h-48 w-full object-contain"
+                                        <Upload
+                                            class="h-6 w-6 text-muted-foreground"
                                         />
-                                    </a>
-                                    <div class="flex flex-wrap gap-2">
+                                        <span
+                                            class="text-sm text-muted-foreground"
+                                        >
+                                            {{
+                                                t(
+                                                    'components.transactionForm.warrantyReceiptHint',
+                                                )
+                                            }}
+                                        </span>
+                                        <input
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/webp"
+                                            class="sr-only"
+                                            @change="onFileChange"
+                                        />
+                                    </label>
+                                </div>
+                                <div v-else class="relative">
+                                    <img
+                                        v-if="receiptPreview"
+                                        :src="receiptPreview"
+                                        alt="Receipt preview"
+                                        class="max-h-48 rounded-2xl border border-border/60 object-contain"
+                                    />
+                                    <div
+                                        v-else-if="
+                                            props.transaction?.receipt_url
+                                        "
+                                        class="space-y-3 rounded-2xl border border-border/60 bg-background p-3"
+                                    >
                                         <a
                                             :href="
                                                 getReceiptPreviewUrl(
@@ -692,65 +774,83 @@ async function onSubmit() {
                                                 )
                                             "
                                             target="_blank"
-                                            class="inline-flex items-center gap-2 rounded-2xl border border-border/60 px-3 py-2 text-sm transition-colors hover:bg-muted"
+                                            class="block overflow-hidden rounded-2xl border border-border/60 bg-muted/20"
                                         >
-                                            <Eye class="h-4 w-4" />
-                                            {{
-                                                t(
-                                                    'finance.warranties.viewReceipt',
-                                                )
-                                            }}
-                                        </a>
-                                        <a
-                                            :href="
-                                                props.transaction.receipt_url
-                                            "
-                                            target="_blank"
-                                            class="inline-flex items-center gap-2 rounded-2xl border border-border/60 px-3 py-2 text-sm transition-colors hover:bg-muted"
-                                        >
-                                            <Download class="h-4 w-4" />
-                                            {{
-                                                t(
-                                                    'finance.warranties.downloadReceipt',
-                                                )
-                                            }}
-                                        </a>
-                                        <label
-                                            class="inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-border/60 px-3 py-2 text-sm transition-colors hover:bg-muted"
-                                        >
-                                            <Upload class="h-4 w-4" />
-                                            {{
-                                                t(
-                                                    'components.transactionForm.replaceReceipt',
-                                                )
-                                            }}
-                                            <input
-                                                type="file"
-                                                accept="image/jpeg,image/png,image/webp"
-                                                class="sr-only"
-                                                @change="onFileChange"
+                                            <img
+                                                :src="
+                                                    getReceiptPreviewUrl(
+                                                        props.transaction
+                                                            .receipt_url,
+                                                    )
+                                                "
+                                                alt="Existing receipt preview"
+                                                class="max-h-48 w-full object-contain"
                                             />
-                                        </label>
+                                        </a>
+                                        <div class="flex flex-wrap gap-2">
+                                            <a
+                                                :href="
+                                                    getReceiptPreviewUrl(
+                                                        props.transaction
+                                                            .receipt_url,
+                                                    )
+                                                "
+                                                target="_blank"
+                                                class="inline-flex items-center gap-2 rounded-2xl border border-border/60 px-3 py-2 text-sm transition-colors hover:bg-muted"
+                                            >
+                                                <Eye class="h-4 w-4" />
+                                                {{
+                                                    t(
+                                                        'finance.warranties.viewReceipt',
+                                                    )
+                                                }}
+                                            </a>
+                                            <a
+                                                :href="
+                                                    props.transaction
+                                                        .receipt_url
+                                                "
+                                                target="_blank"
+                                                class="inline-flex items-center gap-2 rounded-2xl border border-border/60 px-3 py-2 text-sm transition-colors hover:bg-muted"
+                                            >
+                                                <Download class="h-4 w-4" />
+                                                {{
+                                                    t(
+                                                        'finance.warranties.downloadReceipt',
+                                                    )
+                                                }}
+                                            </a>
+                                            <label
+                                                class="inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-border/60 px-3 py-2 text-sm transition-colors hover:bg-muted"
+                                            >
+                                                <Upload class="h-4 w-4" />
+                                                {{
+                                                    t(
+                                                        'components.transactionForm.replaceReceipt',
+                                                    )
+                                                }}
+                                                <input
+                                                    type="file"
+                                                    accept="image/jpeg,image/png,image/webp"
+                                                    class="sr-only"
+                                                    @change="onFileChange"
+                                                />
+                                            </label>
+                                        </div>
                                     </div>
+                                    <Button
+                                        v-if="receiptPreview"
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        class="absolute -top-2 -right-2 h-7 w-7 rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20"
+                                        @click="removeReceipt"
+                                    >
+                                        <X class="h-3.5 w-3.5" />
+                                    </Button>
                                 </div>
-                                <Button
-                                    v-if="receiptPreview"
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    class="absolute -top-2 -right-2 h-7 w-7 rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20"
-                                    @click="removeReceipt"
-                                >
-                                    <X class="h-3.5 w-3.5" />
-                                </Button>
-                            </div>
-                            <p
-                                v-if="errors.receipt"
-                                class="text-xs text-destructive"
-                            >
-                                {{ errors.receipt }}
-                            </p>
-                        </div>
+                            </template>
+                        </FormField>
 
                         <div
                             v-if="warrantyExpiresDate"

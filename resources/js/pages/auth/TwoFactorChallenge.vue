@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import InputError from '@/components/InputError.vue';
+import FormField from '@/components/forms/FormField.vue';
+import FormInputField from '@/components/forms/FormInputField.vue';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
     InputOTP,
     InputOTPGroup,
@@ -11,8 +11,8 @@ import {
 } from '@/components/ui/input-otp';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import { t } from '@/lib/i18n';
-import type { TwoFactorConfigContent } from '@/types';
 import { store } from '@/routes/two-factor/login';
+import type { TwoFactorConfigContent } from '@/types';
 
 const authConfigContent = computed<TwoFactorConfigContent>(() => {
     if (showRecoveryInput.value) {
@@ -67,28 +67,32 @@ const code = ref<string>('');
                     #default="{ errors, processing, clearErrors }"
                 >
                     <input type="hidden" name="code" :value="code" />
-                    <div
-                        class="flex flex-col items-center justify-center space-y-4 rounded-3xl border border-border/70 bg-muted/25 px-4 py-5 text-center"
+                    <FormField
+                        :error="errors.code"
+                        wrapper-class="flex flex-col items-center justify-center space-y-4 rounded-3xl border border-border/70 bg-muted/25 px-4 py-5 text-center"
                     >
-                        <div class="flex w-full items-center justify-center">
-                            <InputOTP
-                                id="otp"
-                                v-model="code"
-                                :maxlength="6"
-                                :disabled="processing"
-                                autofocus
+                        <template #default>
+                            <div
+                                class="flex w-full items-center justify-center"
                             >
-                                <InputOTPGroup>
-                                    <InputOTPSlot
-                                        v-for="index in 6"
-                                        :key="index"
-                                        :index="index - 1"
-                                    />
-                                </InputOTPGroup>
-                            </InputOTP>
-                        </div>
-                        <InputError :message="errors.code" />
-                    </div>
+                                <InputOTP
+                                    id="otp"
+                                    v-model="code"
+                                    :maxlength="6"
+                                    :disabled="processing"
+                                    autofocus
+                                >
+                                    <InputOTPGroup>
+                                        <InputOTPSlot
+                                            v-for="index in 6"
+                                            :key="index"
+                                            :index="index - 1"
+                                        />
+                                    </InputOTPGroup>
+                                </InputOTP>
+                            </div>
+                        </template>
+                    </FormField>
                     <Button
                         type="submit"
                         class="h-12 w-full rounded-2xl text-sm font-semibold shadow-[0_18px_40px_rgba(13,148,136,0.25)]"
@@ -117,15 +121,15 @@ const code = ref<string>('');
                     reset-on-error
                     #default="{ errors, processing, clearErrors }"
                 >
-                    <Input
+                    <FormInputField
+                        field-id="recovery_code"
                         name="recovery_code"
                         type="text"
                         :placeholder="t('auth.twoFactor.recoveryPlaceholder')"
                         :autofocus="showRecoveryInput"
                         required
-                        class="h-12 rounded-2xl border-border/80 bg-background/70 px-4 shadow-none"
+                        :error="errors.recovery_code"
                     />
-                    <InputError :message="errors.recovery_code" />
                     <Button
                         type="submit"
                         class="h-12 w-full rounded-2xl text-sm font-semibold shadow-[0_18px_40px_rgba(13,148,136,0.25)]"

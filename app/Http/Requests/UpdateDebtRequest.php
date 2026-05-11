@@ -2,12 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Concerns\DebtValidationMessages;
 use App\Enums\DebtType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateDebtRequest extends FormRequest
 {
+    use DebtValidationMessages;
+
     public function authorize(): bool
     {
         return true;
@@ -25,5 +28,10 @@ class UpdateDebtRequest extends FormRequest
             'status' => ['sometimes', Rule::in(['active', 'settled'])],
             'notes' => ['nullable', 'string'],
         ];
+    }
+
+    public function messages(): array
+    {
+        return $this->debtValidationMessages();
     }
 }

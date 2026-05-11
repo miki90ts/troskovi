@@ -32,11 +32,14 @@ const {
     editingDebt,
     formSubmitting,
     debtForm,
+    formErrors,
     deleteTarget,
     searchQuery,
     statusFilter,
     openCreate,
     openEdit,
+    setDebtForm,
+    closeForm,
     submitForm,
     handleDelete,
     handleSettle,
@@ -74,10 +77,11 @@ const {
             :editing-debt="editingDebt"
             :form-submitting="formSubmitting"
             :form="debtForm"
+            :errors="formErrors"
             @update:open="(value) => (showForm = value)"
-            @update:form="(value) => (debtForm = value)"
+            @update:form="setDebtForm"
             @submit="submitForm"
-            @close="showForm = false"
+            @close="closeForm"
         />
 
         <ConfirmDialog

@@ -2,10 +2,13 @@
 
 namespace App\Http\Requests;
 
+use App\Concerns\BankAccountValidationMessages;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateBankAccountRequest extends FormRequest
 {
+    use BankAccountValidationMessages;
+
     public function authorize(): bool
     {
         return true;
@@ -22,5 +25,10 @@ class UpdateBankAccountRequest extends FormRequest
             'icon' => ['nullable', 'string', 'max:50'],
             'initial_balance' => ['sometimes', 'numeric', 'min:0'],
         ];
+    }
+
+    public function messages(): array
+    {
+        return $this->bankAccountValidationMessages();
     }
 }

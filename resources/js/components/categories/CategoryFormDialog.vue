@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Check } from 'lucide-vue-next';
 import { computed } from 'vue';
+import FormField from '@/components/forms/FormField.vue';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -11,7 +12,6 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -20,6 +20,10 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { t } from '@/lib/i18n';
+import type {
+    CategoryFormErrors,
+    CategoryFormValues,
+} from '@/lib/validation/categoryValidation';
 import type { Category } from '@/types';
 
 const props = defineProps<{
@@ -27,41 +31,29 @@ const props = defineProps<{
     editingCategory: Category | null;
     formSubmitting: boolean;
     colorPresets: string[];
-    form: {
-        name: string;
-        type: 'expense' | 'income';
-        icon: string;
-        color: string;
-    };
+    form: CategoryFormValues;
+    errors: CategoryFormErrors;
 }>();
 
 const emit = defineEmits<{
     'update:open': [value: boolean];
-    'update:form': [
-        value: {
-            name: string;
-            type: 'expense' | 'income';
-            icon: string;
-            color: string;
-        },
-    ];
+    'update:form': [value: CategoryFormValues];
     submit: [];
     close: [];
     applyPresetColor: [color: string];
 }>();
 
-function updateForm(
-    patch: Partial<{
-        name: string;
-        type: 'expense' | 'income';
-        icon: string;
-        color: string;
-    }>,
-) {
+function updateForm(patch: Partial<CategoryFormValues>) {
     emit('update:form', {
         ...props.form,
         ...patch,
     });
+}
+
+function fieldErrorClass(field: keyof CategoryFormValues): string {
+    return props.errors[field]
+        ? 'border-destructive focus-visible:ring-destructive/20'
+        : '';
 }
 
 const nameModel = computed({
@@ -128,63 +120,77 @@ const colorModel = computed({
             </DialogHeader>
 
             <form class="space-y-6 px-6 py-6" @submit.prevent="emit('submit')">
-                <div class="grid gap-2">
-                    <Label
-                        for="cat_name"
-                        class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                    >
-                        {{ t('finance.categories.name') }}
-                    </Label>
-                    <Input
-                        id="cat_name"
-                        v-model="nameModel"
-                        :placeholder="t('finance.categories.namePlaceholder')"
-                        class="h-11 rounded-2xl border-border/60 bg-background"
-                        required
-                    />
-                </div>
+                <FormField
+                    :label="t('finance.categories.name')"
+                    field-id="cat_name"
+                    :error="props.errors.name"
+                >
+                    <template #default>
+                        <Input
+                            id="cat_name"
+                            v-model="nameModel"
+                            :placeholder="
+                                t('finance.categories.namePlaceholder')
+                            "
+                            :class="[
+                                'h-11 rounded-2xl border-border/60 bg-background',
+                                fieldErrorClass('name'),
+                            ]"
+                        />
+                    </template>
+                </FormField>
 
                 <div class="grid gap-4 md:grid-cols-2">
-                    <div class="grid gap-2">
-                        <Label
-                            class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                        >
-                            {{ t('common.labels.type') }}
-                        </Label>
-                        <Select
-                            v-model="typeModel"
-                            :disabled="!!props.editingCategory"
-                        >
-                            <SelectTrigger
-                                class="h-11 rounded-2xl border-border/60 bg-background"
+                    <FormField
+                        :label="t('common.labels.type')"
+                        :error="props.errors.type"
+                    >
+                        <template #default>
+                            <Select
+                                v-model="typeModel"
+                                :disabled="!!props.editingCategory"
                             >
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="expense">
-                                    {{ t('finance.categories.expenseLabel') }}
-                                </SelectItem>
-                                <SelectItem value="income">
-                                    {{ t('finance.categories.incomeLabel') }}
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+                                <SelectTrigger
+                                    :class="[
+                                        'h-11 rounded-2xl border-border/60 bg-background',
+                                        fieldErrorClass('type'),
+                                    ]"
+                                >
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="expense">
+                                        {{
+                                            t('finance.categories.expenseLabel')
+                                        }}
+                                    </SelectItem>
+                                    <SelectItem value="income">
+                                        {{
+                                            t('finance.categories.incomeLabel')
+                                        }}
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </template>
+                    </FormField>
 
-                    <div class="grid gap-2">
-                        <Label
-                            for="cat_icon"
-                            class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                        >
-                            {{ t('finance.categories.icon') }}
-                        </Label>
-                        <Input
-                            id="cat_icon"
-                            v-model="iconModel"
-                            placeholder="🛒"
-                            class="h-11 rounded-2xl border-border/60 bg-background"
-                        />
-                    </div>
+                    <FormField
+                        :label="t('finance.categories.icon')"
+                        field-id="cat_icon"
+                        :error="props.errors.icon"
+                    >
+                        <template #default>
+                            <Input
+                                id="cat_icon"
+                                v-model="iconModel"
+                                placeholder="🛒"
+                                :class="[
+                                    'h-11 rounded-2xl border-border/60 bg-background',
+                                    fieldErrorClass('icon'),
+                                ]"
+                            />
+                        </template>
+                    </FormField>
                 </div>
 
                 <div class="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
@@ -243,20 +249,23 @@ const colorModel = computed({
                             </div>
                         </div>
                     </div>
-                    <div class="grid gap-2">
-                        <Label
-                            for="cat_color"
-                            class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                        >
-                            {{ t('finance.categories.chooseColor') }}
-                        </Label>
-                        <Input
-                            id="cat_color"
-                            v-model="colorModel"
-                            type="color"
-                            class="h-14 w-full rounded-2xl border-border/60 bg-background p-2 md:w-24"
-                        />
-                    </div>
+                    <FormField
+                        :label="t('finance.categories.chooseColor')"
+                        field-id="cat_color"
+                        :error="props.errors.color"
+                    >
+                        <template #default>
+                            <Input
+                                id="cat_color"
+                                v-model="colorModel"
+                                type="color"
+                                :class="[
+                                    'h-14 w-full rounded-2xl border-border/60 bg-background p-2 md:w-24',
+                                    fieldErrorClass('color'),
+                                ]"
+                            />
+                        </template>
+                    </FormField>
                 </div>
 
                 <div class="grid gap-2">

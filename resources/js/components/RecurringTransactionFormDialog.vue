@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ArrowDownCircle, ArrowUpCircle, CalendarClock } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
+import FormField from '@/components/forms/FormField.vue';
 import CategoryBadge from '@/components/categories/CategoryBadge.vue';
 import PaymentMethodBadge from '@/components/transactions/PaymentMethodBadge.vue';
 import { Button } from '@/components/ui/button';
@@ -21,9 +22,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { useValidationErrors } from '@/composables/useValidationErrors';
 import { useRecurringTransactions } from '@/composables/useRecurringTransactions';
 import { useToast } from '@/composables/useToast';
 import { t } from '@/lib/i18n';
+import { validateRecurringTransactionForm } from '@/lib/validation/recurringTransactionValidation';
 
 import type { Category, Debt, RecurringTransaction } from '@/types/models';
 
@@ -61,6 +64,24 @@ const form = ref({
 });
 
 const submitting = ref(false);
+const {
+    errors,
+    clearErrors,
+    clearAllErrors,
+    fieldErrorClass,
+    setErrors,
+    setServerErrors,
+} = useValidationErrors<
+    | 'type'
+    | 'amount'
+    | 'description'
+    | 'frequency'
+    | 'next_due_date'
+    | 'category_id'
+    | 'bank_account_id'
+    | 'debt_id'
+    | 'payment_method'
+>();
 
 const categorySelectValue = computed({
     get: () => form.value.category_id || NO_CATEGORY_VALUE,
@@ -166,6 +187,8 @@ watch(
                     payment_method: 'cash',
                 };
             }
+
+            clearAllErrors();
         }
     },
 );
@@ -181,10 +204,60 @@ const selectedCategory = computed(() => {
     );
 });
 
+watch(
+    () => form.value.type,
+    () =>
+        clearErrors('type', 'payment_method', 'bank_account_id', 'category_id'),
+);
+watch(
+    () => form.value.amount,
+    () => clearErrors('amount'),
+);
+watch(
+    () => form.value.description,
+    () => clearErrors('description'),
+);
+watch(
+    () => form.value.frequency,
+    () => clearErrors('frequency'),
+);
+watch(
+    () => form.value.next_due_date,
+    () => clearErrors('next_due_date'),
+);
+watch(
+    () => form.value.category_id,
+    () => clearErrors('category_id'),
+);
+watch(
+    () => form.value.payment_method,
+    () => clearErrors('payment_method', 'bank_account_id'),
+);
+watch(
+    () => form.value.bank_account_id,
+    () => clearErrors('bank_account_id'),
+);
+watch(
+    () => form.value.debt_id,
+    () => clearErrors('debt_id'),
+);
+
 async function onSubmit() {
     submitting.value = true;
 
     try {
+        const frontErrors = validateRecurringTransactionForm(form.value, {
+            categoryIds: props.categories.map((category) => category.id),
+            bankAccountIds: props.accounts.map((account) => account.id),
+            debts: availableDebts.value,
+        });
+
+        if (Object.keys(frontErrors).length > 0) {
+            setErrors(frontErrors);
+
+            return;
+        }
+
         const payload = {
             type: form.value.type,
             amount: parseFloat(form.value.amount),
@@ -211,8 +284,12 @@ async function onSubmit() {
         }
 
         emit('saved');
-    } catch {
-        showError(t('components.recurringForm.saveError'));
+    } catch (e: any) {
+        if (e.response?.status === 422) {
+            setServerErrors(e.response?.data?.errors);
+        } else {
+            showError(t('components.recurringForm.saveError'));
+        }
     } finally {
         submitting.value = false;
     }
@@ -262,302 +339,359 @@ async function onSubmit() {
             </DialogHeader>
 
             <form class="space-y-6 px-6 py-6" @submit.prevent="onSubmit">
-                <div class="grid gap-2">
-                    <Label
-                        class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                        >{{ t('common.labels.type') }}</Label
-                    >
-                    <div class="grid gap-3 sm:grid-cols-2">
-                        <Button
-                            type="button"
-                            class="h-auto justify-start rounded-2xl border px-4 py-4"
-                            :variant="
-                                form.type === 'expense' ? 'default' : 'outline'
-                            "
-                            @click="form.type = 'expense'"
-                        >
-                            <ArrowDownCircle class="mr-3 h-5 w-5" />
-                            <span class="flex flex-col items-start">
-                                <span class="font-medium">{{
-                                    t('components.transactionForm.expenseTitle')
-                                }}</span>
-                                <span class="text-xs opacity-80">{{
-                                    t(
-                                        'components.recurringForm.expenseSubtitle',
-                                    )
-                                }}</span>
-                            </span>
-                        </Button>
-                        <Button
-                            type="button"
-                            class="h-auto justify-start rounded-2xl border px-4 py-4"
-                            :variant="
-                                form.type === 'income' ? 'default' : 'outline'
-                            "
-                            @click="form.type = 'income'"
-                        >
-                            <ArrowUpCircle class="mr-3 h-5 w-5" />
-                            <span class="flex flex-col items-start">
-                                <span class="font-medium">{{
-                                    t('components.transactionForm.incomeTitle')
-                                }}</span>
-                                <span class="text-xs opacity-80">{{
-                                    t('components.recurringForm.incomeSubtitle')
-                                }}</span>
-                            </span>
-                        </Button>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="grid gap-2">
-                        <Label
-                            for="amount"
-                            class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                            >{{ t('common.labels.amount') }}</Label
-                        >
-                        <Input
-                            id="amount"
-                            v-model="form.amount"
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            class="h-11 rounded-2xl border-border/60 bg-background"
-                            required
-                        />
-                    </div>
-                    <div class="grid gap-2">
-                        <Label
-                            class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                            >{{ t('common.labels.frequency') }}</Label
-                        >
-                        <Select v-model="form.frequency">
-                            <SelectTrigger
-                                class="h-11 w-full rounded-2xl border-border/60 bg-background"
+                <FormField
+                    :label="t('common.labels.type')"
+                    :error="errors.type"
+                >
+                    <template #default="{ errorClass }">
+                        <div class="grid gap-3 sm:grid-cols-2">
+                            <Button
+                                type="button"
+                                :class="[
+                                    'h-auto justify-start rounded-2xl border px-4 py-4',
+                                    errorClass,
+                                ]"
+                                :variant="
+                                    form.type === 'expense'
+                                        ? 'default'
+                                        : 'outline'
+                                "
+                                @click="form.type = 'expense'"
                             >
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="daily">{{
-                                    t('common.recurringFrequencies.daily')
-                                }}</SelectItem>
-                                <SelectItem value="weekly">{{
-                                    t('common.recurringFrequencies.weekly')
-                                }}</SelectItem>
-                                <SelectItem value="monthly">{{
-                                    t('common.recurringFrequencies.monthly')
-                                }}</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </div>
-
-                <div class="grid gap-2">
-                    <Label
-                        for="description"
-                        class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                        >{{ t('common.labels.description') }}</Label
-                    >
-                    <Input
-                        id="description"
-                        v-model="form.description"
-                        :placeholder="
-                            t('components.recurringForm.descriptionPlaceholder')
-                        "
-                        class="h-11 rounded-2xl border-border/60 bg-background"
-                        required
-                    />
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="grid gap-2">
-                        <Label
-                            for="next_due_date"
-                            class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                            >{{
-                                t('components.recurringForm.executionDateLabel')
-                            }}</Label
-                        >
-                        <Input
-                            id="next_due_date"
-                            v-model="form.next_due_date"
-                            type="date"
-                            class="h-11 rounded-2xl border-border/60 bg-background"
-                            required
-                        />
-                    </div>
-                    <div class="grid gap-2">
-                        <Label
-                            class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                            >{{ t('common.labels.category') }}</Label
-                        >
-                        <Select v-model="categorySelectValue">
-                            <SelectTrigger
-                                class="h-11 w-full rounded-2xl border-border/60 bg-background"
-                            >
-                                <SelectValue
-                                    :placeholder="
+                                <ArrowDownCircle class="mr-3 h-5 w-5" />
+                                <span class="flex flex-col items-start">
+                                    <span class="font-medium">{{
                                         t(
-                                            'components.recurringForm.selectCategory',
+                                            'components.transactionForm.expenseTitle',
                                         )
-                                    "
+                                    }}</span>
+                                    <span class="text-xs opacity-80">{{
+                                        t(
+                                            'components.recurringForm.expenseSubtitle',
+                                        )
+                                    }}</span>
+                                </span>
+                            </Button>
+                            <Button
+                                type="button"
+                                :class="[
+                                    'h-auto justify-start rounded-2xl border px-4 py-4',
+                                    errorClass,
+                                ]"
+                                :variant="
+                                    form.type === 'income'
+                                        ? 'default'
+                                        : 'outline'
+                                "
+                                @click="form.type = 'income'"
+                            >
+                                <ArrowUpCircle class="mr-3 h-5 w-5" />
+                                <span class="flex flex-col items-start">
+                                    <span class="font-medium">{{
+                                        t(
+                                            'components.transactionForm.incomeTitle',
+                                        )
+                                    }}</span>
+                                    <span class="text-xs opacity-80">{{
+                                        t(
+                                            'components.recurringForm.incomeSubtitle',
+                                        )
+                                    }}</span>
+                                </span>
+                            </Button>
+                        </div>
+                    </template>
+                </FormField>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <FormField
+                        :label="t('common.labels.amount')"
+                        field-id="amount"
+                        :error="errors.amount"
+                    >
+                        <template #default>
+                            <Input
+                                id="amount"
+                                v-model="form.amount"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                :class="[
+                                    'h-11 rounded-2xl border-border/60 bg-background',
+                                    fieldErrorClass('amount'),
+                                ]"
+                            />
+                        </template>
+                    </FormField>
+                    <FormField
+                        :label="t('common.labels.frequency')"
+                        :error="errors.frequency"
+                    >
+                        <template #default>
+                            <Select v-model="form.frequency">
+                                <SelectTrigger
+                                    :class="[
+                                        'h-11 w-full rounded-2xl border-border/60 bg-background',
+                                        fieldErrorClass('frequency'),
+                                    ]"
                                 >
-                                    <CategoryBadge
-                                        v-if="selectedCategory"
-                                        :category="selectedCategory"
-                                        compact
-                                        class="max-w-full"
-                                    />
-                                </SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem :value="NO_CATEGORY_VALUE">{{
-                                    t('common.states.noneFeminine')
-                                }}</SelectItem>
-                                <SelectItem
-                                    v-for="category in filteredCategories()"
-                                    :key="category.id"
-                                    :value="String(category.id)"
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="daily">{{
+                                        t('common.recurringFrequencies.daily')
+                                    }}</SelectItem>
+                                    <SelectItem value="weekly">{{
+                                        t('common.recurringFrequencies.weekly')
+                                    }}</SelectItem>
+                                    <SelectItem value="monthly">{{
+                                        t('common.recurringFrequencies.monthly')
+                                    }}</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </template>
+                    </FormField>
+                </div>
+
+                <FormField
+                    :label="t('common.labels.description')"
+                    field-id="description"
+                    :error="errors.description"
+                >
+                    <template #default>
+                        <Input
+                            id="description"
+                            v-model="form.description"
+                            :placeholder="
+                                t(
+                                    'components.recurringForm.descriptionPlaceholder',
+                                )
+                            "
+                            :class="[
+                                'h-11 rounded-2xl border-border/60 bg-background',
+                                fieldErrorClass('description'),
+                            ]"
+                        />
+                    </template>
+                </FormField>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <FormField
+                        :label="
+                            t('components.recurringForm.executionDateLabel')
+                        "
+                        field-id="next_due_date"
+                        :error="errors.next_due_date"
+                    >
+                        <template #default>
+                            <Input
+                                id="next_due_date"
+                                v-model="form.next_due_date"
+                                type="date"
+                                :class="[
+                                    'h-11 rounded-2xl border-border/60 bg-background',
+                                    fieldErrorClass('next_due_date'),
+                                ]"
+                            />
+                        </template>
+                    </FormField>
+                    <FormField
+                        :label="t('common.labels.category')"
+                        :error="errors.category_id"
+                    >
+                        <template #default>
+                            <Select v-model="categorySelectValue">
+                                <SelectTrigger
+                                    :class="[
+                                        'h-11 w-full rounded-2xl border-border/60 bg-background',
+                                        fieldErrorClass('category_id'),
+                                    ]"
                                 >
-                                    <CategoryBadge
-                                        :category="category"
-                                        compact
-                                        class="max-w-full"
-                                    />
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+                                    <SelectValue
+                                        :placeholder="
+                                            t(
+                                                'components.recurringForm.selectCategory',
+                                            )
+                                        "
+                                    >
+                                        <CategoryBadge
+                                            v-if="selectedCategory"
+                                            :category="selectedCategory"
+                                            compact
+                                            class="max-w-full"
+                                        />
+                                    </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem :value="NO_CATEGORY_VALUE">{{
+                                        t('common.states.noneFeminine')
+                                    }}</SelectItem>
+                                    <SelectItem
+                                        v-for="category in filteredCategories()"
+                                        :key="category.id"
+                                        :value="String(category.id)"
+                                    >
+                                        <CategoryBadge
+                                            :category="category"
+                                            compact
+                                            class="max-w-full"
+                                        />
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </template>
+                    </FormField>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2">
-                    <div class="grid gap-2">
-                        <Label
-                            class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                            >{{ t('common.labels.paymentMethod') }}</Label
-                        >
-                        <Select v-model="form.payment_method">
+                    <FormField
+                        :label="t('common.labels.paymentMethod')"
+                        :error="errors.payment_method"
+                    >
+                        <template #default>
+                            <Select v-model="form.payment_method">
+                                <SelectTrigger
+                                    :class="[
+                                        'h-11 w-full rounded-2xl border-border/60 bg-background',
+                                        fieldErrorClass('payment_method'),
+                                    ]"
+                                >
+                                    <SelectValue>
+                                        <PaymentMethodBadge
+                                            :payment-method="
+                                                form.payment_method
+                                            "
+                                            compact
+                                            class="max-w-full"
+                                        />
+                                    </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="cash">
+                                        <PaymentMethodBadge
+                                            payment-method="cash"
+                                            compact
+                                        />
+                                    </SelectItem>
+                                    <SelectItem value="bank_account">
+                                        <PaymentMethodBadge
+                                            payment-method="bank_account"
+                                            compact
+                                        />
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </template>
+                    </FormField>
+                    <FormField
+                        v-if="usesBankAccount"
+                        :label="t('common.labels.bankAccount')"
+                        :error="errors.bank_account_id"
+                    >
+                        <template #default>
+                            <Select v-model="bankAccountSelectValue">
+                                <SelectTrigger
+                                    :class="[
+                                        'h-11 w-full rounded-2xl border-border/60 bg-background',
+                                        fieldErrorClass('bank_account_id'),
+                                    ]"
+                                >
+                                    <SelectValue
+                                        :placeholder="
+                                            t(
+                                                'components.recurringForm.selectAccount',
+                                            )
+                                        "
+                                    />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem
+                                        :value="NO_BANK_ACCOUNT_VALUE"
+                                        >{{
+                                            t('common.states.none')
+                                        }}</SelectItem
+                                    >
+                                    <SelectItem
+                                        v-for="account in accounts"
+                                        :key="account.id"
+                                        :value="String(account.id)"
+                                    >
+                                        {{ account.name }}
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </template>
+                    </FormField>
+                </div>
+
+                <FormField
+                    v-if="availableDebts.length > 0"
+                    :label="t('components.transactionForm.linkedDebt')"
+                    :error="errors.debt_id"
+                >
+                    <template #default>
+                        <Select v-model="debtSelectValue">
                             <SelectTrigger
-                                class="h-11 w-full rounded-2xl border-border/60 bg-background"
-                            >
-                                <SelectValue>
-                                    <PaymentMethodBadge
-                                        :payment-method="form.payment_method"
-                                        compact
-                                        class="max-w-full"
-                                    />
-                                </SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="cash">
-                                    <PaymentMethodBadge
-                                        payment-method="cash"
-                                        compact
-                                    />
-                                </SelectItem>
-                                <SelectItem value="bank_account">
-                                    <PaymentMethodBadge
-                                        payment-method="bank_account"
-                                        compact
-                                    />
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div v-if="usesBankAccount" class="grid gap-2">
-                        <Label
-                            class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                            >{{ t('common.labels.bankAccount') }}</Label
-                        >
-                        <Select v-model="bankAccountSelectValue">
-                            <SelectTrigger
-                                class="h-11 w-full rounded-2xl border-border/60 bg-background"
+                                :class="[
+                                    'h-11 w-full rounded-2xl border-border/60 bg-background',
+                                    fieldErrorClass('debt_id'),
+                                ]"
                             >
                                 <SelectValue
                                     :placeholder="
                                         t(
-                                            'components.recurringForm.selectAccount',
+                                            'components.transactionForm.selectDebtOptional',
                                         )
                                     "
                                 />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem :value="NO_BANK_ACCOUNT_VALUE">{{
+                                <SelectItem :value="NO_DEBT_VALUE">{{
                                     t('common.states.none')
                                 }}</SelectItem>
                                 <SelectItem
-                                    v-for="account in accounts"
-                                    :key="account.id"
-                                    :value="String(account.id)"
+                                    v-for="debt in availableDebts"
+                                    :key="debt.id"
+                                    :value="String(debt.id)"
                                 >
-                                    {{ account.name }}
+                                    <span class="flex items-center gap-2">
+                                        <span
+                                            class="inline-flex shrink-0 rounded-md px-1.5 py-0.5 text-[10px] leading-none font-semibold uppercase"
+                                            :class="
+                                                debt.type === 'i_owe'
+                                                    ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400'
+                                                    : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
+                                            "
+                                        >
+                                            {{
+                                                debt.type === 'i_owe'
+                                                    ? t('debts.iOweLabel')
+                                                    : t('debts.owedToMeLabel')
+                                            }}
+                                        </span>
+                                        <span>{{ debt.person_name }}</span>
+                                        <span class="text-muted-foreground">
+                                            {{
+                                                debt.remaining_amount.toLocaleString(
+                                                    'sr-RS',
+                                                )
+                                            }}
+                                            RSD
+                                        </span>
+                                    </span>
                                 </SelectItem>
                             </SelectContent>
                         </Select>
-                    </div>
-                </div>
-
-                <div v-if="availableDebts.length > 0" class="grid gap-2">
-                    <Label
-                        class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                        >{{ t('components.transactionForm.linkedDebt') }}</Label
-                    >
-                    <Select v-model="debtSelectValue">
-                        <SelectTrigger
-                            class="h-11 w-full rounded-2xl border-border/60 bg-background"
+                    </template>
+                    <template #hint>
+                        <p
+                            v-if="debtImpactPreview"
+                            class="text-xs leading-5 text-muted-foreground"
                         >
-                            <SelectValue
-                                :placeholder="
-                                    t(
-                                        'components.transactionForm.selectDebtOptional',
-                                    )
-                                "
-                            />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem :value="NO_DEBT_VALUE">{{
-                                t('common.states.none')
-                            }}</SelectItem>
-                            <SelectItem
-                                v-for="debt in availableDebts"
-                                :key="debt.id"
-                                :value="String(debt.id)"
-                            >
-                                <span class="flex items-center gap-2">
-                                    <span
-                                        class="inline-flex shrink-0 rounded-md px-1.5 py-0.5 text-[10px] leading-none font-semibold uppercase"
-                                        :class="
-                                            debt.type === 'i_owe'
-                                                ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400'
-                                                : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
-                                        "
-                                    >
-                                        {{
-                                            debt.type === 'i_owe'
-                                                ? t('debts.iOweLabel')
-                                                : t('debts.owedToMeLabel')
-                                        }}
-                                    </span>
-                                    <span>{{ debt.person_name }}</span>
-                                    <span class="text-muted-foreground">
-                                        {{
-                                            debt.remaining_amount.toLocaleString(
-                                                'sr-RS',
-                                            )
-                                        }}
-                                        RSD
-                                    </span>
-                                </span>
-                            </SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <p
-                        v-if="debtImpactPreview"
-                        class="text-xs leading-5 text-muted-foreground"
-                    >
-                        {{ debtImpactPreview }}
-                    </p>
-                </div>
+                            {{ debtImpactPreview }}
+                        </p>
+                    </template>
+                </FormField>
 
                 <div
                     class="rounded-3xl border border-dashed border-border/70 bg-muted/20 p-4"

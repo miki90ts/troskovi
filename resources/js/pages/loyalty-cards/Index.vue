@@ -34,11 +34,14 @@ const {
     fullscreenCard,
     searchQuery,
     cardForm,
+    formErrors,
     filteredCards,
     colorPresets,
     openCreate,
     openEdit,
     openFullscreen,
+    setCardForm,
+    closeForm,
     applyPresetColor,
     submitForm,
     handleDelete,
@@ -138,10 +141,11 @@ const {
             :form-submitting="formSubmitting"
             :color-presets="colorPresets"
             :form="cardForm"
+            :errors="formErrors"
             @update:open="(value) => (showForm = value)"
-            @update:form="(value) => (cardForm = value)"
+            @update:form="setCardForm"
             @submit="submitForm"
-            @close="showForm = false"
+            @close="closeForm"
             @apply-preset-color="applyPresetColor"
         />
 

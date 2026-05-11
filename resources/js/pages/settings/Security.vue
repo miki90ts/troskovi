@@ -3,20 +3,19 @@ import { Form, Head } from '@inertiajs/vue3';
 import { ShieldCheck } from 'lucide-vue-next';
 import { onUnmounted, ref } from 'vue';
 import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
+import FormInputField from '@/components/forms/FormInputField.vue';
 import Heading from '@/components/Heading.vue';
-import InputError from '@/components/InputError.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import TwoFactorRecoveryCodes from '@/components/TwoFactorRecoveryCodes.vue';
 import TwoFactorSetupModal from '@/components/TwoFactorSetupModal.vue';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { useTwoFactorAuth } from '@/composables/useTwoFactorAuth';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { t } from '@/lib/i18n';
-import type { BreadcrumbItem } from '@/types';
 import { edit } from '@/routes/security';
 import { disable, enable } from '@/routes/two-factor';
+import type { BreadcrumbItem } from '@/types';
 
 type Props = {
     canManageTwoFactor?: boolean;
@@ -73,51 +72,35 @@ onUnmounted(() => clearTwoFactorAuthData());
                     class="space-y-6"
                     v-slot="{ errors, processing, recentlySuccessful }"
                 >
-                    <div class="grid gap-2.5">
-                        <Label for="current_password">{{
-                            t('settings.security.currentPassword')
-                        }}</Label>
-                        <PasswordInput
-                            id="current_password"
-                            name="current_password"
-                            class="h-12 rounded-2xl border-border/80 bg-background/70 px-4 shadow-none"
-                            autocomplete="current-password"
-                            :placeholder="
-                                t('settings.security.currentPassword')
-                            "
-                        />
-                        <InputError :message="errors.current_password" />
-                    </div>
+                    <FormInputField
+                        :component="PasswordInput"
+                        :label="t('settings.security.currentPassword')"
+                        field-id="current_password"
+                        name="current_password"
+                        autocomplete="current-password"
+                        :placeholder="t('settings.security.currentPassword')"
+                        :error="errors.current_password"
+                    />
 
-                    <div class="grid gap-2.5">
-                        <Label for="password">{{
-                            t('settings.security.newPassword')
-                        }}</Label>
-                        <PasswordInput
-                            id="password"
-                            name="password"
-                            class="h-12 rounded-2xl border-border/80 bg-background/70 px-4 shadow-none"
-                            autocomplete="new-password"
-                            :placeholder="t('settings.security.newPassword')"
-                        />
-                        <InputError :message="errors.password" />
-                    </div>
+                    <FormInputField
+                        :component="PasswordInput"
+                        :label="t('settings.security.newPassword')"
+                        field-id="password"
+                        name="password"
+                        autocomplete="new-password"
+                        :placeholder="t('settings.security.newPassword')"
+                        :error="errors.password"
+                    />
 
-                    <div class="grid gap-2.5">
-                        <Label for="password_confirmation">{{
-                            t('settings.security.confirmPassword')
-                        }}</Label>
-                        <PasswordInput
-                            id="password_confirmation"
-                            name="password_confirmation"
-                            class="h-12 rounded-2xl border-border/80 bg-background/70 px-4 shadow-none"
-                            autocomplete="new-password"
-                            :placeholder="
-                                t('settings.security.confirmPassword')
-                            "
-                        />
-                        <InputError :message="errors.password_confirmation" />
-                    </div>
+                    <FormInputField
+                        :component="PasswordInput"
+                        :label="t('settings.security.confirmPassword')"
+                        field-id="password_confirmation"
+                        name="password_confirmation"
+                        autocomplete="new-password"
+                        :placeholder="t('settings.security.confirmPassword')"
+                        :error="errors.password_confirmation"
+                    />
 
                     <div class="flex items-center gap-4">
                         <Button

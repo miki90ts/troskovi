@@ -34,14 +34,20 @@ const {
     editingAccount,
     formSubmitting,
     accountForm,
+    formErrors,
     archiveConfirm,
     showTransfer,
     transferSubmitting,
     transferForm,
+    transferErrors,
     openCreate,
     openEdit,
+    setAccountForm,
+    closeForm,
     applyPresetColor,
     openTransfer,
+    setTransferForm,
+    closeTransfer,
     submitForm,
     handleArchive,
     handleRestore,
@@ -83,10 +89,11 @@ const {
             :form-submitting="formSubmitting"
             :color-presets="colorPresets"
             :form="accountForm"
+            :errors="formErrors"
             @update:open="(value) => (showForm = value)"
-            @update:form="(value) => (accountForm = value)"
+            @update:form="setAccountForm"
             @submit="submitForm"
-            @close="showForm = false"
+            @close="closeForm"
             @apply-preset-color="applyPresetColor"
         />
 
@@ -95,10 +102,11 @@ const {
             :submitting="transferSubmitting"
             :active-accounts="activeAccounts"
             :form="transferForm"
+            :errors="transferErrors"
             @update:open="(value) => (showTransfer = value)"
-            @update:form="(value) => (transferForm = value)"
+            @update:form="setTransferForm"
             @submit="submitTransfer"
-            @close="showTransfer = false"
+            @close="closeTransfer"
         />
 
         <ConfirmDialog

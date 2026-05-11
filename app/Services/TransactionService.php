@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Storage;
 class TransactionService
 {
     public function __construct(private DebtService $debtService) {}
+
     public function list(User $user, array $filters = []): LengthAwarePaginator
     {
         $query = $user->transactions()->with(['category', 'bankAccount', 'debt']);
@@ -30,8 +31,10 @@ class TransactionService
             $query->where('date', '<=', $filters['date_to']);
         }
 
-        if (! empty($filters['category_id'])) {
-            $query->where('category_id', $filters['category_id']);
+        $categoryIds = $this->extractCategoryIds($filters);
+
+        if ($categoryIds !== []) {
+            $query->whereIn('category_id', $categoryIds);
         }
 
         if (! empty($filters['bank_account_id'])) {
@@ -164,8 +167,10 @@ class TransactionService
             $query->where('date', '<=', $filters['date_to']);
         }
 
-        if (! empty($filters['category_id'])) {
-            $query->where('category_id', $filters['category_id']);
+        $categoryIds = $this->extractCategoryIds($filters);
+
+        if ($categoryIds !== []) {
+            $query->whereIn('category_id', $categoryIds);
         }
 
         if (! empty($filters['bank_account_id'])) {
@@ -242,5 +247,21 @@ class TransactionService
 
         imagejpeg($image, $absolutePath, 70);
         imagedestroy($image);
+    }
+
+    private function extractCategoryIds(array $filters): array
+    {
+        $categoryIds = [];
+
+        if (! empty($filters['category_ids']) && is_string($filters['category_ids'])) {
+            $categoryIds = explode(',', $filters['category_ids']);
+        } elseif (! empty($filters['category_id'])) {
+            $categoryIds = [(string) $filters['category_id']];
+        }
+
+        return array_values(array_filter(
+            array_map(static fn($value) => trim((string) $value), $categoryIds),
+            static fn($value) => $value !== '',
+        ));
     }
 }

@@ -2,20 +2,15 @@ import { computed, ref } from 'vue';
 import { useDebts } from '@/composables/useDebts';
 import { useToast } from '@/composables/useToast';
 import { t } from '@/lib/i18n';
+import { validateDebtForm } from '@/lib/validation/debtValidation';
+import { useValidationErrors } from '@/composables/useValidationErrors';
 import type { DebtPayload } from '@/types/api';
 import type { Debt, DebtSummary } from '@/types/models';
+import type { DebtFormValues } from '@/lib/validation/debtValidation';
 
 export type DebtTab = 'i_owe' | 'owed_to_me';
 
-export type DebtFormState = {
-    type: DebtTab;
-    person_name: string;
-    description: string;
-    amount: string;
-    date: string;
-    due_date: string;
-    notes: string;
-};
+export type DebtFormState = DebtFormValues;
 
 function createEmptyForm(type: DebtTab = 'i_owe'): DebtFormState {
     return {
@@ -46,6 +41,13 @@ export function useDebtsPage(
     const searchQuery = ref('');
     const statusFilter = ref<'all' | 'active' | 'settled' | 'overdue'>('all');
     const debtForm = ref<DebtFormState>(createEmptyForm());
+    const {
+        errors: formErrors,
+        clearAllErrors,
+        clearErrors,
+        setErrors,
+        setServerErrors,
+    } = useValidationErrors<keyof DebtFormState>();
 
     const iOweDebts = computed(() =>
         debts.value.filter((d) => d.type === 'i_owe'),
@@ -82,6 +84,7 @@ export function useDebtsPage(
     function openCreate() {
         editingDebt.value = null;
         debtForm.value = createEmptyForm(activeTab.value);
+        clearAllErrors();
         showForm.value = true;
     }
 
@@ -96,7 +99,26 @@ export function useDebtsPage(
             due_date: debt.due_date ?? '',
             notes: debt.notes ?? '',
         };
+        clearAllErrors();
         showForm.value = true;
+    }
+
+    function setDebtForm(value: DebtFormState) {
+        const previous = debtForm.value;
+        debtForm.value = value;
+
+        const changedFields = (
+            Object.keys(value) as (keyof DebtFormState)[]
+        ).filter((field) => previous[field] !== value[field]);
+
+        if (changedFields.length > 0) {
+            clearErrors(...changedFields);
+        }
+    }
+
+    function closeForm() {
+        showForm.value = false;
+        clearAllErrors();
     }
 
     function recalculateSummary() {
@@ -124,6 +146,16 @@ export function useDebtsPage(
         formSubmitting.value = true;
 
         try {
+            clearAllErrors();
+
+            const frontErrors = validateDebtForm(debtForm.value);
+
+            if (Object.keys(frontErrors).length > 0) {
+                setErrors(frontErrors);
+
+                return;
+            }
+
             const payload: DebtPayload = {
                 type: debtForm.value.type,
                 person_name: debtForm.value.person_name,
@@ -152,9 +184,13 @@ export function useDebtsPage(
             }
 
             recalculateSummary();
-            showForm.value = false;
-        } catch {
-            showError(t('debts.saveError'));
+            closeForm();
+        } catch (e: any) {
+            if (e.response?.status === 422) {
+                setServerErrors(e.response?.data?.errors);
+            } else {
+                showError(t('debts.saveError'));
+            }
         } finally {
             formSubmitting.value = false;
         }
@@ -205,11 +241,14 @@ export function useDebtsPage(
         editingDebt,
         formSubmitting,
         debtForm,
+        formErrors,
         deleteTarget,
         searchQuery,
         statusFilter,
         openCreate,
         openEdit,
+        setDebtForm,
+        closeForm,
         submitForm,
         handleDelete,
         handleSettle,

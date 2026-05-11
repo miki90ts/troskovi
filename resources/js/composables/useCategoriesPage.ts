@@ -2,16 +2,16 @@ import { computed, ref } from 'vue';
 import { useCategories } from '@/composables/useCategories';
 import { useToast } from '@/composables/useToast';
 import { t } from '@/lib/i18n';
+import {
+    validateCategoryForm,
+    type CategoryFormValues,
+} from '@/lib/validation/categoryValidation';
+import { useValidationErrors } from '@/composables/useValidationErrors';
 import type { Category } from '@/types';
 
 type CategoryTab = 'expense' | 'income';
 
-type CategoryFormState = {
-    name: string;
-    type: CategoryTab;
-    icon: string;
-    color: string;
-};
+type CategoryFormState = CategoryFormValues;
 
 function createEmptyForm(type: CategoryTab = 'expense'): CategoryFormState {
     return {
@@ -33,6 +33,13 @@ export function useCategoriesPage(initialCategories: Category[]) {
     const formSubmitting = ref(false);
     const deleteTarget = ref<Category | null>(null);
     const categoryForm = ref<CategoryFormState>(createEmptyForm());
+    const {
+        errors: formErrors,
+        clearAllErrors,
+        clearErrors,
+        setErrors,
+        setServerErrors,
+    } = useValidationErrors<keyof CategoryFormState>();
 
     const expenseCategories = computed(() =>
         categories.value.filter((category) => category.type === 'expense'),
@@ -73,6 +80,7 @@ export function useCategoriesPage(initialCategories: Category[]) {
     function openCreate() {
         editingCategory.value = null;
         categoryForm.value = createEmptyForm(activeTab.value);
+        clearAllErrors();
         showForm.value = true;
     }
 
@@ -84,7 +92,26 @@ export function useCategoriesPage(initialCategories: Category[]) {
             icon: category.icon ?? '',
             color: category.color ?? '#3b82f6',
         };
+        clearAllErrors();
         showForm.value = true;
+    }
+
+    function setCategoryForm(value: CategoryFormState) {
+        const previous = categoryForm.value;
+        categoryForm.value = value;
+
+        const changedFields = (
+            Object.keys(value) as (keyof CategoryFormState)[]
+        ).filter((field) => previous[field] !== value[field]);
+
+        if (changedFields.length > 0) {
+            clearErrors(...changedFields);
+        }
+    }
+
+    function closeForm() {
+        showForm.value = false;
+        clearAllErrors();
     }
 
     function applyPresetColor(color: string) {
@@ -95,6 +122,16 @@ export function useCategoriesPage(initialCategories: Category[]) {
         formSubmitting.value = true;
 
         try {
+            clearAllErrors();
+
+            const frontErrors = validateCategoryForm(categoryForm.value);
+
+            if (Object.keys(frontErrors).length > 0) {
+                setErrors(frontErrors);
+
+                return;
+            }
+
             const payload = {
                 name: categoryForm.value.name,
                 type: categoryForm.value.type,
@@ -122,9 +159,13 @@ export function useCategoriesPage(initialCategories: Category[]) {
                 success(t('finance.categories.created'));
             }
 
-            showForm.value = false;
-        } catch {
-            showError(t('finance.categories.saveError'));
+            closeForm();
+        } catch (e: any) {
+            if (e.response?.status === 422) {
+                setServerErrors(e.response?.data?.errors);
+            } else {
+                showError(t('finance.categories.saveError'));
+            }
         } finally {
             formSubmitting.value = false;
         }
@@ -160,9 +201,12 @@ export function useCategoriesPage(initialCategories: Category[]) {
         editingCategory,
         formSubmitting,
         categoryForm,
+        formErrors,
         deleteTarget,
         openCreate,
         openEdit,
+        setCategoryForm,
+        closeForm,
         applyPresetColor,
         submitForm,
         handleDelete,

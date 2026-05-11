@@ -2,12 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Concerns\DebtValidationMessages;
 use App\Enums\DebtType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class StoreDebtRequest extends FormRequest
 {
+    use DebtValidationMessages;
+
     public function authorize(): bool
     {
         return true;
@@ -24,5 +27,10 @@ class StoreDebtRequest extends FormRequest
             'due_date' => ['nullable', 'date', 'after_or_equal:date'],
             'notes' => ['nullable', 'string'],
         ];
+    }
+
+    public function messages(): array
+    {
+        return $this->debtValidationMessages();
     }
 }

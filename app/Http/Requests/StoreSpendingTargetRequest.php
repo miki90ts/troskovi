@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Concerns\SpendingTargetValidationMessages;
 use App\Enums\RecurringFrequency;
 use App\Enums\TransactionType;
 use App\Models\SpendingTarget;
@@ -10,6 +11,8 @@ use Illuminate\Validation\Rule;
 
 class StoreSpendingTargetRequest extends FormRequest
 {
+    use SpendingTargetValidationMessages;
+
     public function authorize(): bool
     {
         return true;
@@ -33,6 +36,11 @@ class StoreSpendingTargetRequest extends FormRequest
             ],
             'is_active' => ['sometimes', 'boolean'],
         ];
+    }
+
+    public function messages(): array
+    {
+        return $this->spendingTargetValidationMessages();
     }
 
     public function withValidator($validator): void

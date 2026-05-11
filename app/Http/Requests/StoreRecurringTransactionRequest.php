@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Concerns\RecurringTransactionValidationMessages;
 use App\Enums\PaymentMethod;
 use App\Enums\RecurringFrequency;
 use App\Enums\TransactionType;
@@ -11,6 +12,8 @@ use Illuminate\Validation\Rule;
 
 class StoreRecurringTransactionRequest extends FormRequest
 {
+    use RecurringTransactionValidationMessages;
+
     public function authorize(): bool
     {
         return true;
@@ -52,6 +55,11 @@ class StoreRecurringTransactionRequest extends FormRequest
             'payment_method' => ['required_if:type,expense', Rule::enum(PaymentMethod::class)],
             'is_active' => ['sometimes', 'boolean'],
         ];
+    }
+
+    public function messages(): array
+    {
+        return $this->recurringTransactionValidationMessages();
     }
 
     public function withValidator($validator): void

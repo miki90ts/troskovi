@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
-import InputError from '@/components/InputError.vue';
+import FormInputField from '@/components/forms/FormInputField.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import { t } from '@/lib/i18n';
@@ -36,23 +35,16 @@ import { store } from '@/routes/password/confirm';
             class="flex flex-col gap-7"
         >
             <div class="space-y-6">
-                <div class="grid gap-2.5">
-                    <Label
-                        for="password"
-                        class="text-sm font-medium text-foreground/90"
-                        >{{ t('auth.confirmPassword.password') }}</Label
-                    >
-                    <PasswordInput
-                        id="password"
-                        name="password"
-                        class="h-12 rounded-2xl border-border/80 bg-background/70 px-4 shadow-none"
-                        required
-                        autocomplete="current-password"
-                        autofocus
-                    />
-
-                    <InputError :message="errors.password" />
-                </div>
+                <FormInputField
+                    :component="PasswordInput"
+                    :label="t('auth.confirmPassword.password')"
+                    field-id="password"
+                    name="password"
+                    required
+                    autocomplete="current-password"
+                    autofocus
+                    :error="errors.password"
+                />
 
                 <div class="flex items-center">
                     <Button

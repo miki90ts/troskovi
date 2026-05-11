@@ -31,6 +31,7 @@ const {
     statusFilter,
     activePeriodTab,
     form,
+    formErrors,
     totalCount,
     activeCount,
     categoryCount,
@@ -94,6 +95,7 @@ const {
             :categories="categories"
             :period-options="periodOptions"
             :form="form"
+            :errors="formErrors"
             :overall-sentinel="OVERALL_SENTINEL"
             @update:open="showForm = $event"
             @update:form="updateForm"

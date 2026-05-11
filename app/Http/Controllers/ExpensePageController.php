@@ -40,7 +40,7 @@ class ExpensePageController extends Controller
             'categories' => CategoryResource::collection($categories),
             'accounts' => $accounts,
             'debts' => $debts,
-            'filters' => $request->only(['date_from', 'date_to', 'category_id', 'payment_method', 'bank_account_id', 'search']),
+            'filters' => $request->only(['date_from', 'date_to', 'category_id', 'category_ids', 'payment_method', 'bank_account_id', 'search']),
         ]);
     }
 }

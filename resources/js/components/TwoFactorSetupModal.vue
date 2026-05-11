@@ -4,7 +4,7 @@ import { useClipboard } from '@vueuse/core';
 import { Check, Copy, ScanLine } from 'lucide-vue-next';
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue';
 import AlertError from '@/components/AlertError.vue';
-import InputError from '@/components/InputError.vue';
+import FormField from '@/components/forms/FormField.vue';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -22,8 +22,8 @@ import { Spinner } from '@/components/ui/spinner';
 import { useAppearance } from '@/composables/useAppearance';
 import { useTwoFactorAuth } from '@/composables/useTwoFactorAuth';
 import { t } from '@/lib/i18n';
-import type { TwoFactorConfigContent } from '@/types';
 import { confirm } from '@/routes/two-factor';
+import type { TwoFactorConfigContent } from '@/types';
 
 type Props = {
     requiresConfirmation: boolean;
@@ -249,25 +249,27 @@ watch(
                             ref="pinInputContainerRef"
                             class="relative w-full space-y-3"
                         >
-                            <div
-                                class="flex w-full flex-col items-center justify-center space-y-3 py-2"
+                            <FormField
+                                :error="errors?.code"
+                                wrapper-class="flex w-full flex-col items-center justify-center space-y-3 py-2"
                             >
-                                <InputOTP
-                                    id="otp"
-                                    v-model="code"
-                                    :maxlength="6"
-                                    :disabled="processing"
-                                >
-                                    <InputOTPGroup>
-                                        <InputOTPSlot
-                                            v-for="index in 6"
-                                            :key="index"
-                                            :index="index - 1"
-                                        />
-                                    </InputOTPGroup>
-                                </InputOTP>
-                                <InputError :message="errors?.code" />
-                            </div>
+                                <template #default>
+                                    <InputOTP
+                                        id="otp"
+                                        v-model="code"
+                                        :maxlength="6"
+                                        :disabled="processing"
+                                    >
+                                        <InputOTPGroup>
+                                            <InputOTPSlot
+                                                v-for="index in 6"
+                                                :key="index"
+                                                :index="index - 1"
+                                            />
+                                        </InputOTPGroup>
+                                    </InputOTP>
+                                </template>
+                            </FormField>
 
                             <div class="flex w-full items-center space-x-5">
                                 <Button

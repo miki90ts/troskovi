@@ -2,8 +2,8 @@
 import { Form } from '@inertiajs/vue3';
 import { useTemplateRef } from 'vue';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
+import FormInputField from '@/components/forms/FormInputField.vue';
 import Heading from '@/components/Heading.vue';
-import InputError from '@/components/InputError.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,7 +16,6 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { t } from '@/lib/i18n';
 
 const passwordInput = useTemplateRef('passwordInput');
@@ -73,21 +72,20 @@ const passwordInput = useTemplateRef('passwordInput');
                             </DialogDescription>
                         </DialogHeader>
 
-                        <div class="grid gap-2.5">
-                            <Label for="password" class="sr-only">{{
-                                t('settings.deleteAccount.password')
-                            }}</Label>
-                            <PasswordInput
-                                id="password"
-                                name="password"
-                                ref="passwordInput"
-                                :placeholder="
-                                    t('settings.deleteAccount.password')
-                                "
-                                class="h-12 rounded-2xl border-border/80 bg-background/70 px-4 shadow-none"
-                            />
-                            <InputError :message="errors.password" />
-                        </div>
+                        <FormInputField
+                            :component="PasswordInput"
+                            field-id="password"
+                            name="password"
+                            ref="passwordInput"
+                            :placeholder="t('settings.deleteAccount.password')"
+                            :error="errors.password"
+                        >
+                            <template #label>
+                                <span class="sr-only">
+                                    {{ t('settings.deleteAccount.password') }}
+                                </span>
+                            </template>
+                        </FormInputField>
 
                         <DialogFooter class="gap-2">
                             <DialogClose as-child>

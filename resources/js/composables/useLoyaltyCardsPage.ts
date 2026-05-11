@@ -2,14 +2,14 @@ import { computed, ref } from 'vue';
 import { useLoyaltyCards } from '@/composables/useLoyaltyCards';
 import { useToast } from '@/composables/useToast';
 import { t } from '@/lib/i18n';
+import {
+    validateLoyaltyCardForm,
+    type LoyaltyCardFormValues,
+} from '@/lib/validation/loyaltyCardValidation';
+import { useValidationErrors } from '@/composables/useValidationErrors';
 import type { LoyaltyCard } from '@/types/models';
 
-export type LoyaltyCardFormState = {
-    name: string;
-    card_number: string;
-    notes: string;
-    color: string;
-};
+export type LoyaltyCardFormState = LoyaltyCardFormValues;
 
 function createEmptyForm(): LoyaltyCardFormState {
     return {
@@ -32,6 +32,13 @@ export function useLoyaltyCardsPage(initialCards: LoyaltyCard[]) {
     const fullscreenCard = ref<LoyaltyCard | null>(null);
     const searchQuery = ref('');
     const cardForm = ref<LoyaltyCardFormState>(createEmptyForm());
+    const {
+        errors: formErrors,
+        clearAllErrors,
+        clearErrors,
+        setErrors,
+        setServerErrors,
+    } = useValidationErrors<keyof LoyaltyCardFormState>();
 
     const filteredCards = computed(() => {
         if (!searchQuery.value.trim()) {
@@ -59,6 +66,7 @@ export function useLoyaltyCardsPage(initialCards: LoyaltyCard[]) {
     function openCreate() {
         editingCard.value = null;
         cardForm.value = createEmptyForm();
+        clearAllErrors();
         showForm.value = true;
     }
 
@@ -70,7 +78,26 @@ export function useLoyaltyCardsPage(initialCards: LoyaltyCard[]) {
             notes: card.notes ?? '',
             color: card.color ?? '#14b8a6',
         };
+        clearAllErrors();
         showForm.value = true;
+    }
+
+    function setCardForm(value: LoyaltyCardFormState) {
+        const previous = cardForm.value;
+        cardForm.value = value;
+
+        const changedFields = (
+            Object.keys(value) as (keyof LoyaltyCardFormState)[]
+        ).filter((field) => previous[field] !== value[field]);
+
+        if (changedFields.length > 0) {
+            clearErrors(...changedFields);
+        }
+    }
+
+    function closeForm() {
+        showForm.value = false;
+        clearAllErrors();
     }
 
     function openFullscreen(card: LoyaltyCard) {
@@ -85,6 +112,16 @@ export function useLoyaltyCardsPage(initialCards: LoyaltyCard[]) {
         formSubmitting.value = true;
 
         try {
+            clearAllErrors();
+
+            const frontErrors = validateLoyaltyCardForm(cardForm.value);
+
+            if (Object.keys(frontErrors).length > 0) {
+                setErrors(frontErrors);
+
+                return;
+            }
+
             const payload = {
                 name: cardForm.value.name,
                 card_number: cardForm.value.card_number,
@@ -109,9 +146,13 @@ export function useLoyaltyCardsPage(initialCards: LoyaltyCard[]) {
                 success(t('loyaltyCards.created'));
             }
 
-            showForm.value = false;
-        } catch {
-            showError(t('loyaltyCards.saveError'));
+            closeForm();
+        } catch (e: any) {
+            if (e.response?.status === 422) {
+                setServerErrors(e.response?.data?.errors);
+            } else {
+                showError(t('loyaltyCards.saveError'));
+            }
         } finally {
             formSubmitting.value = false;
         }
@@ -142,11 +183,14 @@ export function useLoyaltyCardsPage(initialCards: LoyaltyCard[]) {
         fullscreenCard,
         searchQuery,
         cardForm,
+        formErrors,
         filteredCards,
         colorPresets,
         openCreate,
         openEdit,
         openFullscreen,
+        setCardForm,
+        closeForm,
         applyPresetColor,
         submitForm,
         handleDelete,

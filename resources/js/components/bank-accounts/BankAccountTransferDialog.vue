@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import FormField from '@/components/forms/FormField.vue';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -10,7 +11,6 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -19,46 +19,38 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { t } from '@/lib/i18n';
+import type {
+    TransferFormErrors,
+    TransferFormValues,
+} from '@/lib/validation/transferValidation';
 import type { BankAccount } from '@/types/models';
 
 const props = defineProps<{
     open: boolean;
     submitting: boolean;
     activeAccounts: BankAccount[];
-    form: {
-        from_account_id: string;
-        to_account_id: string;
-        amount: string;
-        description: string;
-    };
+    form: TransferFormValues;
+    errors: TransferFormErrors;
 }>();
 
 const emit = defineEmits<{
     'update:open': [value: boolean];
-    'update:form': [
-        value: {
-            from_account_id: string;
-            to_account_id: string;
-            amount: string;
-            description: string;
-        },
-    ];
+    'update:form': [value: TransferFormValues];
     submit: [];
     close: [];
 }>();
 
-function updateForm(
-    patch: Partial<{
-        from_account_id: string;
-        to_account_id: string;
-        amount: string;
-        description: string;
-    }>,
-) {
+function updateForm(patch: Partial<TransferFormValues>) {
     emit('update:form', {
         ...props.form,
         ...patch,
     });
+}
+
+function fieldErrorClass(field: keyof TransferFormValues): string {
+    return props.errors[field]
+        ? 'border-destructive focus-visible:ring-destructive/20'
+        : '';
 }
 
 const fromAccountModel = computed({
@@ -123,98 +115,109 @@ const availableToAccounts = computed(() =>
             </DialogHeader>
 
             <form class="space-y-6 px-6 py-6" @submit.prevent="emit('submit')">
-                <div class="grid gap-2">
-                    <Label
-                        class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                    >
-                        {{ t('finance.bankAccounts.fromAccount') }}
-                    </Label>
-                    <Select v-model="fromAccountModel">
-                        <SelectTrigger
-                            class="h-11 rounded-2xl border-border/60 bg-background"
-                        >
-                            <SelectValue
-                                :placeholder="
-                                    t('finance.bankAccounts.selectAccount')
-                                "
-                            />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem
-                                v-for="a in activeAccounts"
-                                :key="a.id"
-                                :value="String(a.id)"
+                <FormField
+                    :label="t('finance.bankAccounts.fromAccount')"
+                    :error="props.errors.from_account_id"
+                >
+                    <template #default>
+                        <Select v-model="fromAccountModel">
+                            <SelectTrigger
+                                :class="[
+                                    'h-11 rounded-2xl border-border/60 bg-background',
+                                    fieldErrorClass('from_account_id'),
+                                ]"
                             >
-                                {{ a.name }} ({{ a.currency }})
-                            </SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
+                                <SelectValue
+                                    :placeholder="
+                                        t('finance.bankAccounts.selectAccount')
+                                    "
+                                />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem
+                                    v-for="a in activeAccounts"
+                                    :key="a.id"
+                                    :value="String(a.id)"
+                                >
+                                    {{ a.name }} ({{ a.currency }})
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </template>
+                </FormField>
 
-                <div class="grid gap-2">
-                    <Label
-                        class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                    >
-                        {{ t('finance.bankAccounts.toAccount') }}
-                    </Label>
-                    <Select v-model="toAccountModel">
-                        <SelectTrigger
-                            class="h-11 rounded-2xl border-border/60 bg-background"
-                        >
-                            <SelectValue
-                                :placeholder="
-                                    t('finance.bankAccounts.selectAccount')
-                                "
-                            />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem
-                                v-for="a in availableToAccounts"
-                                :key="a.id"
-                                :value="String(a.id)"
+                <FormField
+                    :label="t('finance.bankAccounts.toAccount')"
+                    :error="props.errors.to_account_id"
+                >
+                    <template #default>
+                        <Select v-model="toAccountModel">
+                            <SelectTrigger
+                                :class="[
+                                    'h-11 rounded-2xl border-border/60 bg-background',
+                                    fieldErrorClass('to_account_id'),
+                                ]"
                             >
-                                {{ a.name }} ({{ a.currency }})
-                            </SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
+                                <SelectValue
+                                    :placeholder="
+                                        t('finance.bankAccounts.selectAccount')
+                                    "
+                                />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem
+                                    v-for="a in availableToAccounts"
+                                    :key="a.id"
+                                    :value="String(a.id)"
+                                >
+                                    {{ a.name }} ({{ a.currency }})
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </template>
+                </FormField>
 
-                <div class="grid gap-2">
-                    <Label
-                        for="transfer_amount"
-                        class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                    >
-                        {{ t('common.labels.amount') }}
-                    </Label>
-                    <Input
-                        id="transfer_amount"
-                        v-model="amountModel"
-                        type="number"
-                        step="0.01"
-                        min="0.01"
-                        class="h-11 rounded-2xl border-border/60 bg-background"
-                        required
-                    />
-                </div>
+                <FormField
+                    :label="t('common.labels.amount')"
+                    field-id="transfer_amount"
+                    :error="props.errors.amount"
+                >
+                    <template #default>
+                        <Input
+                            id="transfer_amount"
+                            v-model="amountModel"
+                            type="number"
+                            step="0.01"
+                            min="0.01"
+                            :class="[
+                                'h-11 rounded-2xl border-border/60 bg-background',
+                                fieldErrorClass('amount'),
+                            ]"
+                        />
+                    </template>
+                </FormField>
 
-                <div class="grid gap-2">
-                    <Label
-                        for="transfer_desc"
-                        class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                    >
-                        {{ t('finance.bankAccounts.transferDescriptionLabel') }}
-                    </Label>
-                    <Input
-                        id="transfer_desc"
-                        v-model="descriptionModel"
-                        :placeholder="
-                            t(
-                                'finance.bankAccounts.transferDescriptionPlaceholder',
-                            )
-                        "
-                        class="h-11 rounded-2xl border-border/60 bg-background"
-                    />
-                </div>
+                <FormField
+                    :label="t('finance.bankAccounts.transferDescriptionLabel')"
+                    field-id="transfer_desc"
+                    :error="props.errors.description"
+                >
+                    <template #default>
+                        <Input
+                            id="transfer_desc"
+                            v-model="descriptionModel"
+                            :placeholder="
+                                t(
+                                    'finance.bankAccounts.transferDescriptionPlaceholder',
+                                )
+                            "
+                            :class="[
+                                'h-11 rounded-2xl border-border/60 bg-background',
+                                fieldErrorClass('description'),
+                            ]"
+                        />
+                    </template>
+                </FormField>
 
                 <DialogFooter class="border-t border-border/60 pt-2">
                     <Button

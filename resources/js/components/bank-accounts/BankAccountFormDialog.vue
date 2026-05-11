@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import FormField from '@/components/forms/FormField.vue';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -10,8 +11,11 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { t } from '@/lib/i18n';
+import type {
+    BankAccountFormErrors,
+    BankAccountFormValues,
+} from '@/lib/validation/bankAccountValidation';
 import type { BankAccount } from '@/types/models';
 
 const props = defineProps<{
@@ -19,47 +23,29 @@ const props = defineProps<{
     editingAccount: BankAccount | null;
     formSubmitting: boolean;
     colorPresets: string[];
-    form: {
-        name: string;
-        bank_name: string;
-        account_number: string;
-        currency: string;
-        color: string;
-        initial_balance: string;
-    };
+    form: BankAccountFormValues;
+    errors: BankAccountFormErrors;
 }>();
 
 const emit = defineEmits<{
     'update:open': [value: boolean];
-    'update:form': [
-        value: {
-            name: string;
-            bank_name: string;
-            account_number: string;
-            currency: string;
-            color: string;
-            initial_balance: string;
-        },
-    ];
+    'update:form': [value: BankAccountFormValues];
     submit: [];
     close: [];
     applyPresetColor: [color: string];
 }>();
 
-function updateForm(
-    patch: Partial<{
-        name: string;
-        bank_name: string;
-        account_number: string;
-        currency: string;
-        color: string;
-        initial_balance: string;
-    }>,
-) {
+function updateForm(patch: Partial<BankAccountFormValues>) {
     emit('update:form', {
         ...props.form,
         ...patch,
     });
+}
+
+function fieldErrorClass(field: keyof BankAccountFormValues): string {
+    return props.errors[field]
+        ? 'border-destructive focus-visible:ring-destructive/20'
+        : '';
 }
 
 const nameModel = computed({
@@ -136,126 +122,139 @@ const colorModel = computed({
             </DialogHeader>
 
             <form class="space-y-6 px-6 py-6" @submit.prevent="emit('submit')">
-                <div class="grid gap-2">
-                    <Label
-                        for="ba_name"
-                        class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                    >
-                        {{ t('finance.bankAccounts.accountName') }}
-                    </Label>
-                    <Input
-                        id="ba_name"
-                        v-model="nameModel"
-                        :placeholder="
-                            t('finance.bankAccounts.accountNamePlaceholder')
-                        "
-                        class="h-11 rounded-2xl border-border/60 bg-background"
-                        required
-                    />
-                </div>
+                <FormField
+                    :label="t('finance.bankAccounts.accountName')"
+                    field-id="ba_name"
+                    :error="props.errors.name"
+                >
+                    <template #default>
+                        <Input
+                            id="ba_name"
+                            v-model="nameModel"
+                            :placeholder="
+                                t('finance.bankAccounts.accountNamePlaceholder')
+                            "
+                            :class="[
+                                'h-11 rounded-2xl border-border/60 bg-background',
+                                fieldErrorClass('name'),
+                            ]"
+                        />
+                    </template>
+                </FormField>
 
-                <div class="grid gap-2">
-                    <Label
-                        for="ba_bank_name"
-                        class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                    >
-                        {{ t('finance.bankAccounts.bankName') }}
-                    </Label>
-                    <Input
-                        id="ba_bank_name"
-                        v-model="bankNameModel"
-                        :placeholder="
-                            t('finance.bankAccounts.bankNamePlaceholder')
-                        "
-                        class="h-11 rounded-2xl border-border/60 bg-background"
-                        required
-                    />
-                </div>
+                <FormField
+                    :label="t('finance.bankAccounts.bankName')"
+                    field-id="ba_bank_name"
+                    :error="props.errors.bank_name"
+                >
+                    <template #default>
+                        <Input
+                            id="ba_bank_name"
+                            v-model="bankNameModel"
+                            :placeholder="
+                                t('finance.bankAccounts.bankNamePlaceholder')
+                            "
+                            :class="[
+                                'h-11 rounded-2xl border-border/60 bg-background',
+                                fieldErrorClass('bank_name'),
+                            ]"
+                        />
+                    </template>
+                </FormField>
 
                 <div class="grid grid-cols-2 gap-4">
-                    <div class="grid gap-2">
-                        <Label
-                            for="ba_account_number"
-                            class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                        >
-                            {{ t('finance.bankAccounts.accountNumber') }}
-                        </Label>
-                        <Input
-                            id="ba_account_number"
-                            v-model="accountNumberModel"
-                            :placeholder="t('finance.bankAccounts.optional')"
-                            class="h-11 rounded-2xl border-border/60 bg-background"
-                        />
-                    </div>
-                    <div class="grid gap-2">
-                        <Label
-                            for="ba_currency"
-                            class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                        >
-                            {{ t('finance.bankAccounts.currency') }}
-                        </Label>
-                        <Input
-                            id="ba_currency"
-                            v-model="currencyModel"
-                            placeholder="RSD"
-                            class="h-11 rounded-2xl border-border/60 bg-background"
-                            required
-                        />
-                    </div>
+                    <FormField
+                        :label="t('finance.bankAccounts.accountNumber')"
+                        field-id="ba_account_number"
+                        :error="props.errors.account_number"
+                    >
+                        <template #default>
+                            <Input
+                                id="ba_account_number"
+                                v-model="accountNumberModel"
+                                :placeholder="
+                                    t('finance.bankAccounts.optional')
+                                "
+                                :class="[
+                                    'h-11 rounded-2xl border-border/60 bg-background',
+                                    fieldErrorClass('account_number'),
+                                ]"
+                            />
+                        </template>
+                    </FormField>
+                    <FormField
+                        :label="t('finance.bankAccounts.currency')"
+                        field-id="ba_currency"
+                        :error="props.errors.currency"
+                    >
+                        <template #default>
+                            <Input
+                                id="ba_currency"
+                                v-model="currencyModel"
+                                placeholder="RSD"
+                                :class="[
+                                    'h-11 rounded-2xl border-border/60 bg-background',
+                                    fieldErrorClass('currency'),
+                                ]"
+                            />
+                        </template>
+                    </FormField>
                 </div>
 
                 <div class="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
-                    <div class="grid gap-2">
-                        <Label
-                            for="ba_initial_balance"
-                            class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                        >
-                            {{ t('finance.bankAccounts.initialBalance') }}
-                        </Label>
-                        <Input
-                            id="ba_initial_balance"
-                            v-model="initialBalanceModel"
-                            type="number"
-                            step="0.01"
-                            class="h-11 rounded-2xl border-border/60 bg-background"
-                            required
-                        />
-                    </div>
-                    <div class="grid gap-2">
-                        <Label
-                            for="ba_color"
-                            class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                        >
-                            {{ t('finance.bankAccounts.chooseColor') }}
-                        </Label>
-                        <Input
-                            id="ba_color"
-                            v-model="colorModel"
-                            type="color"
-                            class="h-14 w-full rounded-2xl border-border/60 bg-background p-2 md:w-24"
-                        />
-                    </div>
+                    <FormField
+                        :label="t('finance.bankAccounts.initialBalance')"
+                        field-id="ba_initial_balance"
+                        :error="props.errors.initial_balance"
+                    >
+                        <template #default>
+                            <Input
+                                id="ba_initial_balance"
+                                v-model="initialBalanceModel"
+                                type="number"
+                                step="0.01"
+                                :class="[
+                                    'h-11 rounded-2xl border-border/60 bg-background',
+                                    fieldErrorClass('initial_balance'),
+                                ]"
+                            />
+                        </template>
+                    </FormField>
+                    <FormField
+                        :label="t('finance.bankAccounts.chooseColor')"
+                        field-id="ba_color"
+                        :error="props.errors.color"
+                    >
+                        <template #default>
+                            <Input
+                                id="ba_color"
+                                v-model="colorModel"
+                                type="color"
+                                :class="[
+                                    'h-14 w-full rounded-2xl border-border/60 bg-background p-2 md:w-24',
+                                    fieldErrorClass('color'),
+                                ]"
+                            />
+                        </template>
+                    </FormField>
                 </div>
 
-                <div class="grid gap-2">
-                    <Label
-                        class="text-xs tracking-[0.18em] text-muted-foreground uppercase"
-                    >
-                        {{ t('finance.bankAccounts.quickChoices') }}
-                    </Label>
-                    <div
-                        class="flex flex-wrap gap-2 rounded-3xl border border-dashed border-border/70 bg-muted/20 p-3"
-                    >
-                        <button
-                            v-for="preset in props.colorPresets"
-                            :key="preset"
-                            type="button"
-                            class="h-10 w-10 rounded-2xl border border-white/40 shadow-sm transition hover:scale-105"
-                            :style="{ backgroundColor: preset }"
-                            @click="emit('applyPresetColor', preset)"
-                        />
-                    </div>
-                </div>
+                <FormField :label="t('finance.bankAccounts.quickChoices')">
+                    <template #default>
+                        <div
+                            class="flex flex-wrap gap-2 rounded-3xl border border-dashed border-border/70 bg-muted/20 p-3"
+                        >
+                            <button
+                                v-for="preset in props.colorPresets"
+                                :key="preset"
+                                type="button"
+                                class="h-10 w-10 rounded-2xl border border-white/40 shadow-sm transition hover:scale-105"
+                                :style="{ backgroundColor: preset }"
+                                @click="emit('applyPresetColor', preset)"
+                            />
+                        </div>
+                    </template>
+                </FormField>
 
                 <DialogFooter class="border-t border-border/60 pt-2">
                     <Button

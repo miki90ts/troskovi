@@ -32,9 +32,12 @@ const {
     editingCategory,
     formSubmitting,
     categoryForm,
+    formErrors,
     deleteTarget,
     openCreate,
     openEdit,
+    setCategoryForm,
+    closeForm,
     applyPresetColor,
     submitForm,
     handleDelete,
@@ -73,10 +76,11 @@ const {
             :form-submitting="formSubmitting"
             :color-presets="colorPresets"
             :form="categoryForm"
+            :errors="formErrors"
             @update:open="(value) => (showForm = value)"
-            @update:form="(value) => (categoryForm = value)"
+            @update:form="setCategoryForm"
             @submit="submitForm"
-            @close="showForm = false"
+            @close="closeForm"
             @apply-preset-color="applyPresetColor"
         />
 

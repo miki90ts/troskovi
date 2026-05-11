@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Concerns\TransferValidationMessages;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -9,6 +10,8 @@ use Illuminate\Validation\Validator;
 
 class TransferRequest extends FormRequest
 {
+    use TransferValidationMessages;
+
     public function authorize(): bool
     {
         return true;
@@ -42,6 +45,11 @@ class TransferRequest extends FormRequest
             'description' => ['nullable', 'string', 'max:255'],
             'date' => ['required', 'date'],
         ];
+    }
+
+    public function messages(): array
+    {
+        return $this->transferValidationMessages();
     }
 
     public function withValidator(Validator $validator): void

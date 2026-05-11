@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { CircleDollarSign } from 'lucide-vue-next';
 import { computed } from 'vue';
+import FormField from '@/components/forms/FormField.vue';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -12,7 +13,6 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -21,6 +21,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { t } from '@/lib/i18n';
+import type { BudgetFormErrors } from '@/lib/validation/spendingTargetValidation';
 import type {
     BudgetFormState,
     Category,
@@ -35,6 +36,7 @@ const props = defineProps<{
     categories: Category[];
     periodOptions: SpendingTargetPeriod[];
     form: BudgetFormState;
+    errors: BudgetFormErrors;
     overallSentinel: string;
 }>();
 
@@ -66,6 +68,12 @@ function updateForm(patch: Partial<BudgetFormState>) {
         ...patch,
     });
 }
+
+function fieldErrorClass(field: keyof BudgetFormState): string {
+    return props.errors[field]
+        ? 'border-destructive focus-visible:ring-destructive/20'
+        : '';
+}
 </script>
 
 <template>
@@ -81,90 +89,113 @@ function updateForm(patch: Partial<BudgetFormState>) {
             </DialogHeader>
 
             <div class="grid gap-5 py-2">
-                <div class="grid gap-2">
-                    <Label for="budget-period">{{
-                        t('settings.budgets.period')
-                    }}</Label>
-                    <Select
-                        :model-value="form.period"
-                        @update:model-value="
-                            updateForm({
-                                period: $event as SpendingTargetPeriod,
-                            })
-                        "
-                    >
-                        <SelectTrigger
-                            id="budget-period"
-                            class="h-11 rounded-2xl"
+                <FormField
+                    :label="t('settings.budgets.period')"
+                    field-id="budget-period"
+                    :error="props.errors.period"
+                    label-class="text-sm font-medium"
+                >
+                    <template #default>
+                        <Select
+                            :model-value="form.period"
+                            @update:model-value="
+                                updateForm({
+                                    period: $event as SpendingTargetPeriod,
+                                })
+                            "
                         >
-                            <SelectValue
-                                :placeholder="t('settings.budgets.period')"
-                            />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem
-                                v-for="period in periodOptions"
-                                :key="period"
-                                :value="period"
+                            <SelectTrigger
+                                id="budget-period"
+                                :class="[
+                                    'h-11 rounded-2xl',
+                                    fieldErrorClass('period'),
+                                ]"
                             >
-                                {{ labelForPeriod(period) }}
-                            </SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
+                                <SelectValue
+                                    :placeholder="t('settings.budgets.period')"
+                                />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem
+                                    v-for="period in periodOptions"
+                                    :key="period"
+                                    :value="period"
+                                >
+                                    {{ labelForPeriod(period) }}
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </template>
+                </FormField>
 
-                <div class="grid gap-2">
-                    <Label for="budget-category">{{
-                        t('settings.budgets.scope')
-                    }}</Label>
-                    <Select
-                        :model-value="form.categoryValue"
-                        @update:model-value="
-                            updateForm({ categoryValue: String($event) })
-                        "
-                    >
-                        <SelectTrigger
-                            id="budget-category"
-                            class="h-11 rounded-2xl"
+                <FormField
+                    :label="t('settings.budgets.scope')"
+                    field-id="budget-category"
+                    :error="props.errors.categoryValue"
+                    label-class="text-sm font-medium"
+                >
+                    <template #default>
+                        <Select
+                            :model-value="form.categoryValue"
+                            @update:model-value="
+                                updateForm({ categoryValue: String($event) })
+                            "
                         >
-                            <SelectValue
-                                :placeholder="t('settings.budgets.scope')"
-                            />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem :value="overallSentinel">
-                                {{ t('settings.budgets.overallOption') }}
-                            </SelectItem>
-                            <SelectItem
-                                v-for="category in categories"
-                                :key="category.id"
-                                :value="String(category.id)"
+                            <SelectTrigger
+                                id="budget-category"
+                                :class="[
+                                    'h-11 rounded-2xl',
+                                    fieldErrorClass('categoryValue'),
+                                ]"
                             >
-                                {{ category.name }}
-                            </SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <p class="text-sm text-muted-foreground">
-                        {{ t('settings.budgets.scopeHint') }}
-                    </p>
-                </div>
+                                <SelectValue
+                                    :placeholder="t('settings.budgets.scope')"
+                                />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem :value="overallSentinel">
+                                    {{ t('settings.budgets.overallOption') }}
+                                </SelectItem>
+                                <SelectItem
+                                    v-for="category in categories"
+                                    :key="category.id"
+                                    :value="String(category.id)"
+                                >
+                                    {{ category.name }}
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </template>
+                    <template #hint>
+                        <p class="text-sm text-muted-foreground">
+                            {{ t('settings.budgets.scopeHint') }}
+                        </p>
+                    </template>
+                </FormField>
 
-                <div class="grid gap-2">
-                    <Label for="budget-amount">{{
-                        t('settings.budgets.targetAmount')
-                    }}</Label>
-                    <Input
-                        id="budget-amount"
-                        :model-value="form.targetAmount"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        class="h-11 rounded-2xl"
-                        @update:model-value="
-                            updateForm({ targetAmount: String($event) })
-                        "
-                    />
-                </div>
+                <FormField
+                    :label="t('settings.budgets.targetAmount')"
+                    field-id="budget-amount"
+                    :error="props.errors.targetAmount"
+                    label-class="text-sm font-medium"
+                >
+                    <template #default>
+                        <Input
+                            id="budget-amount"
+                            :model-value="form.targetAmount"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            :class="[
+                                'h-11 rounded-2xl',
+                                fieldErrorClass('targetAmount'),
+                            ]"
+                            @update:model-value="
+                                updateForm({ targetAmount: String($event) })
+                            "
+                        />
+                    </template>
+                </FormField>
 
                 <Label
                     class="flex items-center gap-3 rounded-2xl border border-border/60 bg-muted/30 px-4 py-3"

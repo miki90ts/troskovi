@@ -1,6 +1,6 @@
 import { router } from '@inertiajs/vue3';
-import { computed, nextTick, onBeforeUnmount, ref, watch  } from 'vue';
-import type {Ref} from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import type { Ref } from 'vue';
 import { useToast } from '@/composables/useToast';
 import { useTransactions } from '@/composables/useTransactions';
 import type { PaginationMeta } from '@/types/api';
@@ -70,9 +70,9 @@ export function useTransactionListingPage(options: {
     );
 
     const categoryFilterSelectValue = computed({
-        get: () => categoryFilter.value || ALL_CATEGORIES_VALUE,
+        get: () => categoryFilter.value,
         set: (value: string) => {
-            categoryFilter.value = value === ALL_CATEGORIES_VALUE ? '' : value;
+            categoryFilter.value = value;
         },
     });
 
@@ -93,7 +93,8 @@ export function useTransactionListingPage(options: {
         }
 
         search.value = nextFilters.search ?? '';
-        categoryFilter.value = nextFilters.category_id ?? '';
+        categoryFilter.value =
+            nextFilters.category_ids ?? nextFilters.category_id ?? '';
         paymentMethodFilter.value = nextFilters.payment_method ?? '';
         dateFrom.value = nextFilters.date_from ?? '';
         dateTo.value = nextFilters.date_to ?? '';
@@ -111,7 +112,7 @@ export function useTransactionListingPage(options: {
         }
 
         if (categoryFilter.value) {
-            query.category_id = categoryFilter.value;
+            query.category_ids = categoryFilter.value;
         }
 
         if (paymentMethodFilter.value) {

@@ -3,17 +3,15 @@ import { Form, Head, Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/DeleteUser.vue';
+import FormInputField from '@/components/forms/FormInputField.vue';
 import Heading from '@/components/Heading.vue';
-import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { t } from '@/lib/i18n';
-import type { BreadcrumbItem } from '@/types';
 import { edit } from '@/routes/profile';
 import { send } from '@/routes/verification';
+import type { BreadcrumbItem } from '@/types';
 
 type Props = {
     mustVerifyEmail: boolean;
@@ -54,40 +52,28 @@ const user = computed(() => page.props.auth.user);
                     class="space-y-6"
                     v-slot="{ errors, processing, recentlySuccessful }"
                 >
-                    <div class="grid gap-2.5">
-                        <Label for="name">{{
-                            t('settings.profile.name')
-                        }}</Label>
-                        <Input
-                            id="name"
-                            class="h-12 rounded-2xl border-border/80 bg-background/70 px-4 shadow-none"
-                            name="name"
-                            :default-value="user.name"
-                            required
-                            autocomplete="name"
-                            :placeholder="t('settings.profile.fullName')"
-                        />
-                        <InputError :message="errors.name" />
-                    </div>
+                    <FormInputField
+                        :label="t('settings.profile.name')"
+                        field-id="name"
+                        name="name"
+                        :default-value="user.name"
+                        required
+                        autocomplete="name"
+                        :placeholder="t('settings.profile.fullName')"
+                        :error="errors.name"
+                    />
 
-                    <div class="grid gap-2.5">
-                        <Label for="email">{{
-                            t('settings.profile.email')
-                        }}</Label>
-                        <Input
-                            id="email"
-                            type="email"
-                            class="h-12 rounded-2xl border-border/80 bg-background/70 px-4 shadow-none"
-                            name="email"
-                            :default-value="user.email"
-                            required
-                            autocomplete="username"
-                            :placeholder="
-                                t('settings.profile.emailPlaceholder')
-                            "
-                        />
-                        <InputError :message="errors.email" />
-                    </div>
+                    <FormInputField
+                        :label="t('settings.profile.email')"
+                        field-id="email"
+                        type="email"
+                        name="email"
+                        :default-value="user.email"
+                        required
+                        autocomplete="username"
+                        :placeholder="t('settings.profile.emailPlaceholder')"
+                        :error="errors.email"
+                    />
 
                     <div v-if="mustVerifyEmail && !user.email_verified_at">
                         <p

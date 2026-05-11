@@ -2,6 +2,7 @@
 import { Filter } from 'lucide-vue-next';
 import { computed } from 'vue';
 import CategoryBadge from '@/components/categories/CategoryBadge.vue';
+import CategoryMultiSelect from '@/components/categories/CategoryMultiSelect.vue';
 import PaymentMethodBadge from '@/components/transactions/PaymentMethodBadge.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +14,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { t } from '@/lib/i18n';
-import type { Category } from '@/types/models';
+import type { Category, Transaction } from '@/types/models';
 
 const props = defineProps<{
     categories: Category[];
@@ -54,16 +55,18 @@ const dateToModel = computed({
     set: (value: string) => emit('update:dateTo', value),
 });
 
-const selectedCategory = computed(
-    () =>
-        props.categories.find(
-            (category) => String(category.id) === props.categoryFilterValue,
-        ) ?? null,
-);
+const isPaymentMethod = (
+    value: string,
+): value is Transaction['payment_method'] => {
+    return value === 'cash' || value === 'bank_account';
+};
 
-const selectedPaymentMethod = computed(() => {
-    return props.paymentMethodFilterValue || null;
-});
+const selectedPaymentMethod = computed<Transaction['payment_method'] | null>(
+    () =>
+        isPaymentMethod(props.paymentMethodFilterValue)
+            ? props.paymentMethodFilterValue
+            : null,
+);
 
 const allLabel = computed(() =>
     t('common.actions.view').replace('Prikazi', 'Sve'),
@@ -80,41 +83,17 @@ const allLabel = computed(() =>
             >
                 {{ t('common.labels.category') }}
             </label>
-            <Select
-                v-model="categoryFilterModel"
-                @update:model-value="emit('applyFilters')"
-            >
-                <SelectTrigger
-                    class="h-11 rounded-2xl border-border/60 bg-background"
-                >
-                    <SelectValue
-                        :placeholder="t('finance.incomes.allCategories')"
-                    >
-                        <CategoryBadge
-                            v-if="selectedCategory"
-                            :category="selectedCategory"
-                            compact
-                            class="max-w-full"
-                        />
-                    </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem :value="allCategoriesValue">
-                        {{ allLabel }}
-                    </SelectItem>
-                    <SelectItem
-                        v-for="cat in categories"
-                        :key="cat.id"
-                        :value="String(cat.id)"
-                    >
-                        <CategoryBadge
-                            :category="cat"
-                            compact
-                            class="max-w-full"
-                        />
-                    </SelectItem>
-                </SelectContent>
-            </Select>
+            <CategoryMultiSelect
+                :model-value="categoryFilterModel"
+                :categories="categories"
+                :placeholder="t('finance.incomes.allCategories')"
+                :all-label="allLabel"
+                trigger-class="h-11 rounded-2xl border-border/60 bg-background"
+                @update:model-value="
+                    categoryFilterModel = $event;
+                    emit('applyFilters');
+                "
+            />
         </div>
         <div class="grid gap-2">
             <label

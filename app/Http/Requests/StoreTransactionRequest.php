@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Concerns\TransactionValidationMessages;
 use App\Enums\PaymentMethod;
 use App\Enums\TransactionType;
 use App\Models\Transaction;
@@ -10,6 +11,8 @@ use Illuminate\Validation\Rule;
 
 class StoreTransactionRequest extends FormRequest
 {
+    use TransactionValidationMessages;
+
     public function authorize(): bool
     {
         return true;
@@ -50,6 +53,11 @@ class StoreTransactionRequest extends FormRequest
                 ),
             ],
         ];
+    }
+
+    public function messages(): array
+    {
+        return $this->transactionValidationMessages();
     }
 
     public function withValidator($validator): void

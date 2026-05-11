@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
-import InputError from '@/components/InputError.vue';
+import FormInputField from '@/components/forms/FormInputField.vue';
 import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import { t } from '@/lib/i18n';
@@ -45,23 +43,16 @@ defineProps<{
                 v-slot="{ errors, processing }"
                 class="space-y-6"
             >
-                <div class="grid gap-2.5">
-                    <Label
-                        for="email"
-                        class="text-sm font-medium text-foreground/90"
-                        >{{ t('auth.forgotPassword.email') }}</Label
-                    >
-                    <Input
-                        id="email"
-                        type="email"
-                        name="email"
-                        autocomplete="off"
-                        autofocus
-                        placeholder="email@example.com"
-                        class="h-12 rounded-2xl border-border/80 bg-background/70 px-4 shadow-none"
-                    />
-                    <InputError :message="errors.email" />
-                </div>
+                <FormInputField
+                    :label="t('auth.forgotPassword.email')"
+                    field-id="email"
+                    type="email"
+                    name="email"
+                    autocomplete="off"
+                    autofocus
+                    placeholder="email@example.com"
+                    :error="errors.email"
+                />
 
                 <div class="flex items-center justify-start">
                     <Button

@@ -2,7 +2,9 @@ import { computed, onMounted, ref } from 'vue';
 import { useCategories } from '@/composables/useCategories';
 import { useSpendingTargets } from '@/composables/useSpendingTargets';
 import { useToast } from '@/composables/useToast';
+import { useValidationErrors } from '@/composables/useValidationErrors';
 import { t } from '@/lib/i18n';
+import { validateSpendingTargetForm } from '@/lib/validation/spendingTargetValidation';
 import type {
     BudgetFormState,
     BudgetPeriodSection,
@@ -59,6 +61,12 @@ export function useBudgetsPage() {
     const statusFilter = ref<StatusFilter>('all');
     const activePeriodTab = ref<SpendingTargetPeriod>('monthly');
     const form = ref<BudgetFormState>(createEmptyForm());
+    const {
+        errors: formErrors,
+        clearAllErrors,
+        clearErrors,
+        setErrors,
+    } = useValidationErrors<keyof BudgetFormState>();
 
     const totalCount = computed(() => targets.value.length);
     const activeCount = computed(
@@ -174,6 +182,7 @@ export function useBudgetsPage() {
     function openCreate(period: SpendingTargetPeriod = 'monthly') {
         editingTarget.value = null;
         form.value = createEmptyForm(period);
+        clearAllErrors();
         showForm.value = true;
     }
 
@@ -187,7 +196,52 @@ export function useBudgetsPage() {
             targetAmount: String(target.target_amount),
             isActive: target.is_active,
         };
+        clearAllErrors();
         showForm.value = true;
+    }
+
+    function closeForm() {
+        showForm.value = false;
+        clearAllErrors();
+    }
+
+    function updateForm(nextForm: BudgetFormState) {
+        const previous = form.value;
+        form.value = nextForm;
+
+        const changedFields = (
+            Object.keys(nextForm) as (keyof BudgetFormState)[]
+        ).filter((field) => previous[field] !== nextForm[field]);
+
+        if (changedFields.length > 0) {
+            clearErrors(...changedFields);
+        }
+    }
+
+    function setBudgetServerErrors(
+        validationErrors: Record<string, string[] | string> | undefined,
+    ) {
+        if (!validationErrors) {
+            setErrors({});
+
+            return;
+        }
+
+        const mappedErrors: Partial<Record<keyof BudgetFormState, string>> = {};
+
+        for (const [key, value] of Object.entries(validationErrors)) {
+            const message = Array.isArray(value) ? value[0] : value;
+
+            if (key === 'target_amount') {
+                mappedErrors.targetAmount = message;
+            } else if (key === 'category_id') {
+                mappedErrors.categoryValue = message;
+            } else if (key === 'period') {
+                mappedErrors.period = message;
+            }
+        }
+
+        setErrors(mappedErrors);
     }
 
     async function loadData() {
@@ -220,6 +274,19 @@ export function useBudgetsPage() {
         formSubmitting.value = true;
 
         try {
+            clearAllErrors();
+
+            const frontErrors = validateSpendingTargetForm(
+                form.value,
+                categories.value,
+            );
+
+            if (Object.keys(frontErrors).length > 0) {
+                setErrors(frontErrors);
+
+                return;
+            }
+
             const payload = {
                 period: form.value.period,
                 target_amount: Number(form.value.targetAmount),
@@ -238,10 +305,14 @@ export function useBudgetsPage() {
                 success(t('settings.budgets.created'));
             }
 
-            showForm.value = false;
+            closeForm();
             await loadData();
-        } catch {
-            showError(t('settings.budgets.saveError'));
+        } catch (e: any) {
+            if (e.response?.status === 422) {
+                setBudgetServerErrors(e.response?.data?.errors);
+            } else {
+                showError(t('settings.budgets.saveError'));
+            }
         } finally {
             formSubmitting.value = false;
         }
@@ -278,10 +349,6 @@ export function useBudgetsPage() {
         }
     }
 
-    function updateForm(nextForm: BudgetFormState) {
-        form.value = nextForm;
-    }
-
     onMounted(loadData);
 
     return {
@@ -296,6 +363,7 @@ export function useBudgetsPage() {
         statusFilter,
         activePeriodTab,
         form,
+        formErrors,
         totalCount,
         activeCount,
         categoryCount,
@@ -306,6 +374,7 @@ export function useBudgetsPage() {
         periodSections,
         openCreate,
         openEdit,
+        closeForm,
         submitForm,
         toggleTarget,
         confirmDelete,

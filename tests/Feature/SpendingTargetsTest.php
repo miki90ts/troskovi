@@ -87,7 +87,28 @@ class SpendingTargetsTest extends TestCase
             'is_active' => true,
         ])
             ->assertStatus(422)
-            ->assertJsonValidationErrors('category_id');
+            ->assertJsonValidationErrors('category_id')
+            ->assertJsonPath(
+                'errors.category_id.0',
+                'Budzet za izabrani opseg i period vec postoji.',
+            );
+    }
+
+    public function test_store_returns_custom_validation_messages_for_spending_targets(): void
+    {
+        $user = User::factory()->create();
+
+        Sanctum::actingAs($user);
+
+        $this->postJson('/api/v1/spending-targets', [
+            'period' => 'yearly',
+            'target_amount' => 0,
+            'category_id' => 'abc',
+        ])
+            ->assertStatus(422)
+            ->assertJsonPath('errors.period.0', 'Izabrani period budžeta nije ispravan.')
+            ->assertJsonPath('errors.target_amount.0', 'Ciljni iznos mora biti veći od 0.')
+            ->assertJsonPath('errors.category_id.0', 'Kategorija mora biti broj.');
     }
 
     public function test_users_cannot_manage_spending_targets_that_belong_to_another_user(): void
