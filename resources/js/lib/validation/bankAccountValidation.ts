@@ -30,8 +30,8 @@ export const bankAccountValidationMessages = {
     initialBalanceMin: 'Početno stanje ne sme biti negativno.',
 } as const;
 
-function isBlank(value: string): boolean {
-    return value.trim().length === 0;
+function isBlank(value: unknown): boolean {
+    return value == null || (typeof value === 'string' && value.trim().length === 0);
 }
 
 export function validateBankAccountForm(

@@ -57,7 +57,7 @@ const allowedPaymentMethods = new Set(['cash', 'bank_account']);
 const maxReceiptSizeInBytes = 1024 * 1024;
 
 function isBlank(value: string): boolean {
-    return value.trim().length === 0;
+    return value == null || (typeof value === 'string' && value.trim().length === 0);
 }
 
 function parseOptionalInteger(value: string): number | null {

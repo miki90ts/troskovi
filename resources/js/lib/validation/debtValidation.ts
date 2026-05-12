@@ -33,7 +33,7 @@ export const debtValidationMessages = {
 const allowedDebtTypes = new Set(['i_owe', 'owed_to_me']);
 
 function isBlank(value: string): boolean {
-    return value.trim().length === 0;
+    return value == null || (typeof value === 'string' && value.trim().length === 0);
 }
 
 export function validateDebtForm(values: DebtFormValues): DebtFormErrors {

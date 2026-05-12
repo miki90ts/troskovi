@@ -70,7 +70,8 @@ const currencyModel = computed({
 
 const initialBalanceModel = computed({
     get: () => props.form.initial_balance,
-    set: (value: string) => updateForm({ initial_balance: value }),
+    set: (value: string | number) =>
+        updateForm({ initial_balance: String(value) }),
 });
 
 const colorModel = computed({

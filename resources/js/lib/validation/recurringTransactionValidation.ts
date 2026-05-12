@@ -53,7 +53,7 @@ const allowedFrequencies = new Set(['daily', 'weekly', 'monthly']);
 const allowedPaymentMethods = new Set(['cash', 'bank_account']);
 
 function isBlank(value: string): boolean {
-    return value.trim().length === 0;
+    return value == null || (typeof value === 'string' && value.trim().length === 0);
 }
 
 function parseOptionalInteger(value: string): number | null {
