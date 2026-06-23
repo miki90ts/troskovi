@@ -43,6 +43,7 @@ const {
     paymentMethodFilterSelectValue,
     dateFrom,
     dateTo,
+    perPage,
     showForm,
     editingTransaction,
     deleteTarget,
@@ -54,6 +55,7 @@ const {
     onSaved,
     handleDelete,
     goToPage,
+    setPerPage,
     exportPdf,
 } = useExpensesPage({
     transactionsPage: toRef(props, 'transactions'),
@@ -85,6 +87,7 @@ const {
                 :payment-method-filter-value="paymentMethodFilterSelectValue"
                 :date-from="dateFrom"
                 :date-to="dateTo"
+                :per-page="perPage"
                 :all-categories-value="ALL_CATEGORIES_VALUE"
                 :all-payment-methods-value="ALL_PAYMENT_METHODS_VALUE"
                 :exporting-pdf="exportingPdf"
@@ -105,6 +108,7 @@ const {
                 @edit="openEdit"
                 @delete="deleteTarget = $event"
                 @page-change="goToPage"
+                @per-page-change="setPerPage"
             />
         </div>
 

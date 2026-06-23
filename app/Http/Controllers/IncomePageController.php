@@ -35,12 +35,8 @@ class IncomePageController extends Controller
             ->orderBy('person_name')
             ->get(['id', 'type', 'person_name', 'remaining_amount', 'status']);
 
-        return Inertia::render('incomes/Index', [
-            'transactions' => TransactionResource::collection($transactions),
-            'categories' => CategoryResource::collection($categories),
-            'accounts' => $accounts,
-            'debts' => $debts,
-            'filters' => $request->only([
+        $filters = array_merge(
+            $request->only([
                 'date_from',
                 'date_to',
                 'category_id',
@@ -49,6 +45,15 @@ class IncomePageController extends Controller
                 'bank_account_id',
                 'search',
             ]),
+            ['per_page' => (string) $transactions->perPage()],
+        );
+
+        return Inertia::render('incomes/Index', [
+            'transactions' => TransactionResource::collection($transactions),
+            'categories' => CategoryResource::collection($categories),
+            'accounts' => $accounts,
+            'debts' => $debts,
+            'filters' => $filters,
         ]);
     }
 }

@@ -35,12 +35,17 @@ class ExpensePageController extends Controller
             ->orderBy('person_name')
             ->get(['id', 'type', 'person_name', 'remaining_amount', 'status']);
 
+        $filters = array_merge(
+            $request->only(['date_from', 'date_to', 'category_id', 'category_ids', 'payment_method', 'bank_account_id', 'search']),
+            ['per_page' => (string) $transactions->perPage()],
+        );
+
         return Inertia::render('expenses/Index', [
             'transactions' => TransactionResource::collection($transactions),
             'categories' => CategoryResource::collection($categories),
             'accounts' => $accounts,
             'debts' => $debts,
-            'filters' => $request->only(['date_from', 'date_to', 'category_id', 'category_ids', 'payment_method', 'bank_account_id', 'search']),
+            'filters' => $filters,
         ]);
     }
 }

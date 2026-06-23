@@ -2,6 +2,7 @@
 import { Download, Eye, ShieldCheck, Upload, X } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
 import CategoryBadge from '@/components/categories/CategoryBadge.vue';
+import CategorySingleSelect from '@/components/categories/CategorySingleSelect.vue';
 import FormField from '@/components/forms/FormField.vue';
 import PaymentMethodBadge from '@/components/transactions/PaymentMethodBadge.vue';
 import { Button } from '@/components/ui/button';
@@ -169,14 +170,6 @@ watch(
 
 const filteredCategories = () =>
     props.categories.filter((c) => c.type === form.value.type);
-
-const selectedCategory = computed(() => {
-    return (
-        filteredCategories().find(
-            (category) => String(category.id) === form.value.category_id,
-        ) ?? null
-    );
-});
 
 const warrantyExpiresDate = computed(() => {
     if (!form.value.is_warranty || !form.value.date) {
@@ -485,42 +478,27 @@ async function onSubmit() {
                         :error="errors.category_id"
                     >
                         <template #default>
-                            <Select v-model="form.category_id">
-                                <SelectTrigger
-                                    :class="[
-                                        'h-11 w-full rounded-2xl border-border/60 bg-background',
-                                        fieldErrorClass('category_id'),
-                                    ]"
-                                >
-                                    <SelectValue
-                                        :placeholder="
-                                            t(
-                                                'components.transactionForm.selectCategory',
-                                            )
-                                        "
-                                    >
-                                        <CategoryBadge
-                                            v-if="selectedCategory"
-                                            :category="selectedCategory"
-                                            compact
-                                            class="max-w-full"
-                                        />
-                                    </SelectValue>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem
-                                        v-for="cat in filteredCategories()"
-                                        :key="cat.id"
-                                        :value="String(cat.id)"
-                                    >
-                                        <CategoryBadge
-                                            :category="cat"
-                                            compact
-                                            class="max-w-full"
-                                        />
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <CategorySingleSelect
+                                v-model="form.category_id"
+                                :categories="filteredCategories()"
+                                :placeholder="
+                                    t(
+                                        'components.transactionForm.selectCategory',
+                                    )
+                                "
+                                :search-placeholder="
+                                    t(
+                                        'components.transactionForm.searchCategoryPlaceholder',
+                                    )
+                                "
+                                :empty-results-label="
+                                    t(
+                                        'components.transactionForm.noCategoryResults',
+                                    )
+                                "
+                                :clear-label="t('common.states.noneFeminine')"
+                                :trigger-class="fieldErrorClass('category_id')"
+                            />
                         </template>
                     </FormField>
 

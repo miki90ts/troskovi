@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { AcceptableValue } from 'reka-ui';
 import {
     ArrowDownCircle,
     Pencil,
@@ -11,6 +12,13 @@ import CurrencyDisplay from '@/components/CurrencyDisplay.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import PaymentMethodBadge from '@/components/transactions/PaymentMethodBadge.vue';
 import { Button } from '@/components/ui/button';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import {
     Pagination,
     PaginationContent,
@@ -30,17 +38,21 @@ import { t } from '@/lib/i18n';
 import type { PaginationMeta } from '@/types/api';
 import type { Transaction } from '@/types/models';
 
-defineProps<{
+const props = defineProps<{
     transactions: Transaction[];
     pagination: PaginationMeta;
     accountsCount: number;
+    perPage: string;
 }>();
+
+const perPageOptions = ['15', '30', '50', '100'] as const;
 
 const emit = defineEmits<{
     create: [];
     edit: [transaction: Transaction];
     delete: [transaction: Transaction];
     pageChange: [page: number];
+    perPageChange: [value: string];
 }>();
 
 function formatDate(dateStr: string): string {
@@ -60,6 +72,12 @@ function accountLabel(transaction: Transaction): string {
         ? t('common.states.noLinkedAccount')
         : t('common.states.cashWallet');
 }
+
+function handlePerPageChange(value: AcceptableValue) {
+    if (value !== null && value !== undefined) {
+        emit('perPageChange', String(value));
+    }
+}
 </script>
 
 <template>
@@ -67,18 +85,45 @@ function accountLabel(transaction: Transaction): string {
         class="overflow-hidden rounded-3xl border border-border/60 bg-card shadow-sm"
     >
         <div
-            class="flex flex-col gap-4 border-b border-border/60 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+            class="flex flex-col gap-4 border-b border-border/60 px-5 py-4 sm:flex-row sm:items-end sm:justify-between"
         >
             <div>
-                <p
-                    class="text-xs font-medium tracking-[0.2em] text-muted-foreground uppercase"
-                >
-                    {{ t('common.labels.transactions') }}
-                </p>
-                <h2 class="mt-1 text-lg font-semibold">
-                    {{ t('finance.expenses.historyTitle') }}
-                </h2>
+                <div>
+                    <p
+                        class="text-xs font-medium tracking-[0.2em] text-muted-foreground uppercase"
+                    >
+                        {{ t('common.labels.transactions') }}
+                    </p>
+                    <h2 class="mt-1 text-lg font-semibold">
+                        {{ t('finance.expenses.historyTitle') }}
+                    </h2>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-sm text-muted-foreground">
+                        {{ t('common.labels.rowsPerPage') }}
+                    </span>
+                    <Select
+                        :model-value="props.perPage"
+                        @update:model-value="handlePerPageChange"
+                    >
+                        <SelectTrigger
+                            class="h-10 w-23 rounded-2xl border-border/60 bg-background"
+                        >
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem
+                                v-for="option in perPageOptions"
+                                :key="option"
+                                :value="option"
+                            >
+                                {{ option }}
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
+
             <div class="flex items-center gap-3 text-sm text-muted-foreground">
                 <span>{{
                     t('common.labels.resultsTotal', { count: pagination.total })
@@ -214,19 +259,22 @@ function accountLabel(transaction: Transaction): string {
         </Table>
 
         <div
-            v-if="pagination.last_page > 1"
-            class="flex flex-col gap-3 border-t border-border/60 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+            v-if="transactions.length > 0"
+            class="flex flex-col gap-3 border-t border-border/60 px-5 py-4 lg:flex-row lg:items-center lg:justify-between"
         >
-            <p class="text-sm text-muted-foreground">
-                {{
-                    t('common.labels.shownRange', {
-                        from: pagination.from ?? 0,
-                        to: pagination.to ?? 0,
-                        inTotal: pagination.total,
-                    })
-                }}
-            </p>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <p class="text-sm text-muted-foreground">
+                    {{
+                        t('common.labels.shownRange', {
+                            from: pagination.from ?? 0,
+                            to: pagination.to ?? 0,
+                            inTotal: pagination.total,
+                        })
+                    }}
+                </p>
+            </div>
             <Pagination
+                v-if="pagination.last_page > 1"
                 :items-per-page="pagination.per_page"
                 :total="pagination.total"
                 :page="pagination.current_page"

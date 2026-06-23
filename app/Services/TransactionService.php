@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Storage;
 
 class TransactionService
 {
+    private const ALLOWED_PER_PAGE = [15, 30, 50, 100];
+
     public function __construct(private DebtService $debtService) {}
 
     public function list(User $user, array $filters = []): LengthAwarePaginator
@@ -69,9 +71,10 @@ class TransactionService
 
         $sortBy = $filters['sort_by'] ?? 'date';
         $sortDir = $filters['sort_dir'] ?? 'desc';
+        $perPage = $this->resolvePerPage($filters['per_page'] ?? null);
 
         return $query->orderBy($sortBy, $sortDir)
-            ->paginate($filters['per_page'] ?? 15);
+            ->paginate($perPage);
     }
 
     public function create(User $user, array $data): Transaction
@@ -212,6 +215,17 @@ class TransactionService
         $this->compressImage(Storage::disk('local')->path($path));
 
         return $path;
+    }
+
+    private function resolvePerPage(mixed $perPage): int
+    {
+        $value = filter_var($perPage, FILTER_VALIDATE_INT);
+
+        if (! is_int($value) || ! in_array($value, self::ALLOWED_PER_PAGE, true)) {
+            return 15;
+        }
+
+        return $value;
     }
 
     private function compressImage(string $absolutePath): void

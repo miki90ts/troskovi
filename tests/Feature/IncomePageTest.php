@@ -84,3 +84,38 @@ test('income page preserves multiple category filters and narrows results', func
                 ->where('transactions.meta.total', 2),
         );
 });
+
+test('income page applies selected per page value and preserves it in inertia props', function () {
+    $user = User::factory()->create();
+
+    $category = $user->categories()->create([
+        'name' => 'Honorari',
+        'type' => TransactionType::Income,
+        'icon' => null,
+        'color' => '#2563eb',
+        'is_system' => false,
+    ]);
+
+    foreach (range(1, 35) as $index) {
+        $user->transactions()->create([
+            'type' => TransactionType::Income,
+            'amount' => 10000 + $index,
+            'date' => sprintf('2026-06-%02d', ($index % 28) + 1),
+            'description' => "Prihod {$index}",
+            'category_id' => $category->id,
+            'payment_method' => PaymentMethod::BankAccount,
+        ]);
+    }
+
+    $this->actingAs($user)
+        ->get(route('incomes.index', ['per_page' => '30']))
+        ->assertOk()
+        ->assertInertia(
+            fn(Assert $page) => $page
+                ->component('incomes/Index')
+                ->where('filters.per_page', '30')
+                ->where('transactions.meta.per_page', 30)
+                ->where('transactions.meta.total', 35)
+                ->has('transactions.data', 30),
+        );
+});

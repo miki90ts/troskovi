@@ -15,6 +15,8 @@ export type TransactionsPage = {
 
 export const ALL_CATEGORIES_VALUE = '__all_categories__';
 export const ALL_PAYMENT_METHODS_VALUE = '__all_payment_methods__';
+export const DEFAULT_PER_PAGE = '15';
+export const PER_PAGE_OPTIONS = ['15', '30', '50', '100'] as const;
 
 export function useTransactionListingPage(options: {
     transactionsPage: Ref<TransactionsPage>;
@@ -44,6 +46,7 @@ export function useTransactionListingPage(options: {
     const paymentMethodFilter = ref('');
     const dateFrom = ref('');
     const dateTo = ref('');
+    const perPage = ref(DEFAULT_PER_PAGE);
     const showFilters = ref(false);
     const showForm = ref(false);
     const editingTransaction = ref<Transaction | null>(null);
@@ -98,6 +101,9 @@ export function useTransactionListingPage(options: {
         paymentMethodFilter.value = nextFilters.payment_method ?? '';
         dateFrom.value = nextFilters.date_from ?? '';
         dateTo.value = nextFilters.date_to ?? '';
+        perPage.value =
+            nextFilters.per_page ??
+            String(transactionsPage.value.meta.per_page ?? DEFAULT_PER_PAGE);
 
         void nextTick(() => {
             isSyncingFilters = false;
@@ -127,6 +133,8 @@ export function useTransactionListingPage(options: {
             query.date_to = dateTo.value;
         }
 
+        query.per_page = perPage.value;
+
         return query;
     }
 
@@ -149,7 +157,11 @@ export function useTransactionListingPage(options: {
             searchTimeout = undefined;
         }
 
-        router.get(routePath, {}, { preserveState: true });
+        router.get(
+            routePath,
+            { per_page: perPage.value },
+            { preserveState: true },
+        );
     }
 
     watch(
@@ -216,6 +228,15 @@ export function useTransactionListingPage(options: {
         );
     }
 
+    function setPerPage(value: string) {
+        perPage.value = value;
+
+        router.get(routePath, buildQuery(), {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    }
+
     function exportPdf() {
         const params = new URLSearchParams();
         params.set('type', exportType);
@@ -260,6 +281,7 @@ export function useTransactionListingPage(options: {
         paymentMethodFilterSelectValue,
         dateFrom,
         dateTo,
+        perPage,
         showForm,
         editingTransaction,
         deleteTarget,
@@ -271,6 +293,7 @@ export function useTransactionListingPage(options: {
         onSaved,
         handleDelete,
         goToPage,
+        setPerPage,
         exportPdf,
     };
 }

@@ -19,6 +19,7 @@ const props = defineProps<{
     paymentMethodFilterValue: string;
     dateFrom: string;
     dateTo: string;
+    perPage: string;
     allCategoriesValue: string;
     allPaymentMethodsValue: string;
     exportingPdf: boolean;
@@ -38,6 +39,7 @@ const emit = defineEmits<{
     edit: [transaction: Transaction];
     delete: [transaction: Transaction];
     pageChange: [page: number];
+    perPageChange: [value: string];
 }>();
 </script>
 
@@ -89,10 +91,12 @@ const emit = defineEmits<{
                 :transactions="transactions"
                 :pagination="pagination"
                 :accounts-count="accountsCount"
+                :per-page="perPage"
                 @create="emit('create')"
                 @edit="emit('edit', $event)"
                 @delete="emit('delete', $event)"
                 @page-change="emit('pageChange', $event)"
+                @per-page-change="emit('perPageChange', $event)"
             />
         </template>
     </TransactionManagementShell>
