@@ -42,6 +42,14 @@ const {
     budgetBarClass,
     budgetBarWidth,
 } = useDashboardPage(props);
+
+function summaryCurrency() {
+    return props.summary.currency_code ?? 'RSD';
+}
+
+function budgetAmount(amount: number, currency?: { iso_code: string } | null) {
+    return formatCurrency(amount, currency?.iso_code ?? summaryCurrency());
+}
 </script>
 
 <template>
@@ -130,18 +138,27 @@ const {
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <KpiCard
                     :label="t('dashboard.kpis.totalIncome')"
-                    :value="formatCurrency(summary.total_income)"
+                    :value="
+                        formatCurrency(summary.total_income, summaryCurrency())
+                    "
                     :change="summary.income_change"
                     :subtitle="t('dashboard.kpis.thisMonth')"
                 />
                 <KpiCard
                     :label="t('dashboard.kpis.totalExpenses')"
-                    :value="formatCurrency(summary.total_expenses)"
+                    :value="
+                        formatCurrency(
+                            summary.total_expenses,
+                            summaryCurrency(),
+                        )
+                    "
                     :subtitle="t('dashboard.kpis.thisMonth')"
                 />
                 <KpiCard
                     :label="t('dashboard.kpis.netSavings')"
-                    :value="formatCurrency(summary.net_savings)"
+                    :value="
+                        formatCurrency(summary.net_savings, summaryCurrency())
+                    "
                     :subtitle="t('dashboard.kpis.thisMonth')"
                 />
                 <KpiCard
@@ -215,22 +232,28 @@ const {
                                 </p>
                                 <p class="mt-2 text-2xl font-semibold">
                                     {{
-                                        formatCurrency(
+                                        budgetAmount(
                                             budgetProgress.overall_target
                                                 .spent_amount,
+                                            budgetProgress.overall_target
+                                                .currency,
                                         )
                                     }}
                                 </p>
                                 <p class="mt-1 text-sm text-muted-foreground">
                                     {{
                                         t('dashboard.budgets.spentOfTarget', {
-                                            spent: formatCurrency(
+                                            spent: budgetAmount(
                                                 budgetProgress.overall_target
                                                     .spent_amount,
+                                                budgetProgress.overall_target
+                                                    .currency,
                                             ),
-                                            target: formatCurrency(
+                                            target: budgetAmount(
                                                 budgetProgress.overall_target
                                                     .target_amount,
+                                                budgetProgress.overall_target
+                                                    .currency,
                                             ),
                                         })
                                     }}
@@ -288,11 +311,13 @@ const {
                                 <p class="mt-1 text-sm text-muted-foreground">
                                     {{
                                         t('dashboard.budgets.spentOfTarget', {
-                                            spent: formatCurrency(
+                                            spent: budgetAmount(
                                                 secondaryBudgetTarget.spent_amount,
+                                                secondaryBudgetTarget.currency,
                                             ),
-                                            target: formatCurrency(
+                                            target: budgetAmount(
                                                 secondaryBudgetTarget.target_amount,
+                                                secondaryBudgetTarget.currency,
                                             ),
                                         })
                                     }}
@@ -420,6 +445,7 @@ const {
                                         ? tx.amount
                                         : -tx.amount
                                 "
+                                :currency="tx.currency?.iso_code"
                                 colored
                                 class="text-sm font-semibold"
                             />

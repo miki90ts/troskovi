@@ -21,6 +21,9 @@ class Transaction extends Model
         'debt_id',
         'type',
         'amount',
+        'currency_id',
+        'exchange_rate',
+        'base_amount',
         'date',
         'description',
         'notes',
@@ -35,6 +38,8 @@ class Transaction extends Model
         return [
             'type' => TransactionType::class,
             'amount' => 'decimal:2',
+            'exchange_rate' => 'decimal:6',
+            'base_amount' => 'decimal:2',
             'date' => 'date',
             'payment_method' => PaymentMethod::class,
             'is_warranty' => 'boolean',
@@ -52,6 +57,11 @@ class Transaction extends Model
     public function bankAccount(): BelongsTo
     {
         return $this->belongsTo(BankAccount::class);
+    }
+
+    public function currency(): BelongsTo
+    {
+        return $this->belongsTo(Currency::class);
     }
 
     public function category(): BelongsTo

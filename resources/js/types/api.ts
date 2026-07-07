@@ -42,7 +42,22 @@ export type ReportPeriod = 'weekly' | 'monthly' | 'yearly';
 export type SpendingTargetPayload = {
     period: 'daily' | 'weekly' | 'monthly';
     target_amount: number;
+    currency_id?: number | null;
     category_id?: number | null;
+    is_active?: boolean;
+};
+
+export type RecurringTransactionPayload = {
+    type: 'income' | 'expense';
+    amount: number;
+    currency_id?: number | null;
+    description: string;
+    frequency: 'daily' | 'weekly' | 'monthly';
+    next_due_date: string;
+    category_id?: number | null;
+    bank_account_id?: number | null;
+    debt_id?: number | null;
+    payment_method: 'cash' | 'bank_account';
     is_active?: boolean;
 };
 
@@ -50,12 +65,22 @@ export type ChartData = {
     labels: string[];
     values: number[];
     colors?: string[];
+    currency_code?: string;
+    currency_symbol?: string;
 };
 
 export type IncomeVsExpensesData = {
     labels: string[];
     income: number[];
     expenses: number[];
+    currency_code?: string;
+    currency_symbol?: string;
+};
+
+export type ExchangeRatePayload = {
+    currency_id: number;
+    date: string;
+    rate: number;
 };
 
 export type LoyaltyCardPayload = {
@@ -70,6 +95,7 @@ export type DebtPayload = {
     person_name: string;
     description: string;
     amount: number;
+    currency_id?: number | null;
     date: string;
     due_date?: string | null;
     notes?: string | null;

@@ -1,11 +1,19 @@
 <script setup lang="ts">
 import { Form, Head, Link, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/DeleteUser.vue';
+import FormField from '@/components/forms/FormField.vue';
 import FormInputField from '@/components/forms/FormInputField.vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { t } from '@/lib/i18n';
@@ -14,11 +22,17 @@ import { send } from '@/routes/verification';
 import type { BreadcrumbItem } from '@/types';
 
 type Props = {
+    currencies: Array<{
+        id: number;
+        iso_code: string;
+        name: string;
+        symbol: string;
+    }>;
     mustVerifyEmail: boolean;
     status?: string;
 };
 
-defineProps<Props>();
+const props = defineProps<Props>();
 
 const breadcrumbItems: BreadcrumbItem[] = [
     {
@@ -29,6 +43,9 @@ const breadcrumbItems: BreadcrumbItem[] = [
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
+const selectedCurrencyId = ref(
+    String(user.value.default_currency_id ?? props.currencies[0]?.id ?? ''),
+);
 </script>
 
 <template>
@@ -52,6 +69,12 @@ const user = computed(() => page.props.auth.user);
                     class="space-y-6"
                     v-slot="{ errors, processing, recentlySuccessful }"
                 >
+                    <input
+                        type="hidden"
+                        name="default_currency_id"
+                        :value="selectedCurrencyId"
+                    />
+
                     <FormInputField
                         :label="t('settings.profile.name')"
                         field-id="name"
@@ -74,6 +97,46 @@ const user = computed(() => page.props.auth.user);
                         :placeholder="t('settings.profile.emailPlaceholder')"
                         :error="errors.email"
                     />
+
+                    <FormField
+                        :label="t('settings.profile.defaultCurrency')"
+                        field-id="default_currency_id"
+                        :error="errors.default_currency_id"
+                        wrapper-class="grid gap-2.5"
+                        label-class="text-sm font-medium text-foreground/90"
+                    >
+                        <template #default>
+                            <Select v-model="selectedCurrencyId">
+                                <SelectTrigger
+                                    id="default_currency_id"
+                                    class="h-12 rounded-2xl border-border/80 bg-background/70 px-4"
+                                >
+                                    <SelectValue
+                                        :placeholder="
+                                            t(
+                                                'settings.profile.defaultCurrency',
+                                            )
+                                        "
+                                    />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem
+                                        v-for="currency in props.currencies"
+                                        :key="currency.id"
+                                        :value="String(currency.id)"
+                                    >
+                                        {{ currency.iso_code }} -
+                                        {{ currency.name }}
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </template>
+                        <template #hint>
+                            <p class="text-sm text-muted-foreground">
+                                {{ t('settings.profile.defaultCurrencyHelp') }}
+                            </p>
+                        </template>
+                    </FormField>
 
                     <div v-if="mustVerifyEmail && !user.email_verified_at">
                         <p

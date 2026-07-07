@@ -13,6 +13,12 @@ class RecurringTransactionResource extends JsonResource
             'id' => $this->id,
             'type' => $this->type->value,
             'amount' => (float) $this->amount,
+            'currency' => $this->whenLoaded('currency', fn() => $this->currency ? [
+                'id' => $this->currency->id,
+                'iso_code' => $this->currency->iso_code,
+                'name' => $this->currency->name,
+                'symbol' => $this->currency->symbol,
+            ] : null),
             'description' => $this->description,
             'frequency' => $this->frequency->value,
             'next_due_date' => $this->next_due_date->toDateString(),

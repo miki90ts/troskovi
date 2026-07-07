@@ -15,6 +15,13 @@ class BankAccountResource extends JsonResource
             'bank_name' => $this->bank_name,
             'masked_account_number' => $this->masked_account_number,
             'currency' => $this->currency,
+            'currency_id' => $this->currency_id,
+            'currency_details' => $this->whenLoaded('currencyRef', fn() => $this->currencyRef ? [
+                'id' => $this->currencyRef->id,
+                'iso_code' => $this->currencyRef->iso_code,
+                'name' => $this->currencyRef->name,
+                'symbol' => $this->currencyRef->symbol,
+            ] : null),
             'color' => $this->color,
             'icon' => $this->icon,
             'initial_balance' => (float) $this->initial_balance,

@@ -49,6 +49,10 @@ function budgetBarClass(status: SpendingTargetProgress['status']) {
 function budgetBarWidth(progressPercent: number) {
     return `${Math.min(progressPercent, 100)}%`;
 }
+
+function budgetCurrency(target: SpendingTargetProgress) {
+    return target.currency?.iso_code ?? 'RSD';
+}
 </script>
 
 <template>
@@ -204,6 +208,9 @@ function budgetBarWidth(progressPercent: number) {
                                         formatCurrency(
                                             budgetProgress.overall_target
                                                 .spent_amount,
+                                            budgetCurrency(
+                                                budgetProgress.overall_target,
+                                            ),
                                         )
                                     }}
                                 </p>
@@ -214,6 +221,9 @@ function budgetBarWidth(progressPercent: number) {
                                         formatCurrency(
                                             budgetProgress.overall_target
                                                 .target_amount,
+                                            budgetCurrency(
+                                                budgetProgress.overall_target,
+                                            ),
                                         )
                                     }}
                                 </p>
@@ -291,6 +301,9 @@ function budgetBarWidth(progressPercent: number) {
                                                 budgetProgress.overall_target
                                                     .remaining_amount,
                                             ),
+                                            budgetCurrency(
+                                                budgetProgress.overall_target,
+                                            ),
                                         )
                                     }}
                                 </p>
@@ -325,9 +338,19 @@ function budgetBarWidth(progressPercent: number) {
                                     }}
                                 </p>
                                 <p class="mt-1 text-sm text-muted-foreground">
-                                    {{ formatCurrency(target.spent_amount) }}
+                                    {{
+                                        formatCurrency(
+                                            target.spent_amount,
+                                            budgetCurrency(target),
+                                        )
+                                    }}
                                     /
-                                    {{ formatCurrency(target.target_amount) }}
+                                    {{
+                                        formatCurrency(
+                                            target.target_amount,
+                                            budgetCurrency(target),
+                                        )
+                                    }}
                                 </p>
                             </div>
                             <span
@@ -376,6 +399,7 @@ function budgetBarWidth(progressPercent: number) {
                                 {{
                                     formatCurrency(
                                         Math.abs(target.remaining_amount),
+                                        budgetCurrency(target),
                                     )
                                 }}
                             </span>

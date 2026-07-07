@@ -10,13 +10,25 @@ import { useRecurringTransactionsPage } from '@/composables/useRecurringTransact
 import AppLayout from '@/layouts/AppLayout.vue';
 import { t } from '@/lib/i18n';
 import type { BreadcrumbItem } from '@/types';
-import type { Category, Debt, RecurringTransaction } from '@/types/models';
+import type {
+    Category,
+    CurrencySummary,
+    Debt,
+    RecurringTransaction,
+} from '@/types/models';
 
 const props = defineProps<{
     recurringTransactions: { data: RecurringTransaction[] };
     categories: { data: Category[] };
-    accounts: { id: number; name: string }[];
+    accounts: {
+        id: number;
+        name: string;
+        currency: string;
+        currency_id: number | null;
+    }[];
     debts: Debt[];
+    currencies: CurrencySummary[];
+    defaultCurrencyId: number | null;
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -84,6 +96,8 @@ const {
             :categories="categories.data"
             :accounts="accounts"
             :debts="debts"
+            :currencies="currencies"
+            :default-currency-id="defaultCurrencyId"
             :default-type="activeTab"
             @close="closeForm"
             @saved="onSaved"

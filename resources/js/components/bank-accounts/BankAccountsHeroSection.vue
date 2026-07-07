@@ -12,6 +12,7 @@ defineProps<{
     activeCount: number;
     archivedCount: number;
     totalBalance: number;
+    displayCurrencyCode: string;
     connectedBanks: number;
 }>();
 
@@ -84,7 +85,12 @@ const emit = defineEmits<{
                             {{ t('finance.bankAccounts.totalNetworkBalance') }}
                         </p>
                         <p class="mt-2 text-2xl font-semibold text-foreground">
-                            {{ formatCurrency(totalBalance) }}
+                            {{
+                                formatCurrency(
+                                    totalBalance,
+                                    displayCurrencyCode,
+                                )
+                            }}
                         </p>
                     </div>
                 </div>

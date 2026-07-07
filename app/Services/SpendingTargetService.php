@@ -12,10 +12,12 @@ class SpendingTargetService
 {
     private const WARNING_THRESHOLD_PERCENT = 80;
 
+    public function __construct(private MoneyService $moneyService) {}
+
     public function list(User $user): Collection
     {
         return $user->spendingTargets()
-            ->with('category')
+            ->with(['category', 'currency'])
             ->orderByDesc('is_active')
             ->orderByRaw('category_id is null desc')
             ->orderBy('period')
@@ -25,18 +27,20 @@ class SpendingTargetService
     public function create(User $user, array $data): SpendingTarget
     {
         $target = $user->spendingTargets()->create([
-            ...$data,
+            ...$this->moneyService->applySpendingTargetSnapshot($user, $data),
             'is_active' => $data['is_active'] ?? true,
         ]);
 
-        return $target->load('category');
+        return $target->load(['category', 'currency']);
     }
 
     public function update(SpendingTarget $spendingTarget, array $data): SpendingTarget
     {
-        $spendingTarget->update($data);
+        $spendingTarget->update(
+            $this->moneyService->applySpendingTargetSnapshot($spendingTarget->user, $data, $spendingTarget)
+        );
 
-        return $spendingTarget->fresh('category');
+        return $spendingTarget->fresh(['category', 'currency']);
     }
 
     public function delete(SpendingTarget $spendingTarget): void
@@ -51,15 +55,15 @@ class SpendingTargetService
 
         $targets = $user->spendingTargets()
             ->active()
-            ->with('category')
+            ->with(['category', 'currency'])
             ->where('period', $frequency)
             ->get()
-            ->map(fn (SpendingTarget $target) => $this->buildProgressItem($user, $target, $start, $end));
+            ->map(fn(SpendingTarget $target) => $this->buildProgressItem($user, $target, $start, $end));
 
         $overallTarget = $targets->firstWhere('scope', 'overall');
 
         $topRiskTarget = $targets
-            ->sortByDesc(fn (array $target) => [$target['status_rank'], $target['progress_percent']])
+            ->sortByDesc(fn(array $target) => [$target['status_rank'], $target['progress_percent']])
             ->first();
 
         return [
@@ -84,14 +88,21 @@ class SpendingTargetService
         CarbonImmutable $start,
         CarbonImmutable $end,
     ): array {
+        $targetCurrency = $target->currency ?? $this->moneyService->resolveUserCurrency($user);
+
         $spentAmount = (float) $user->transactions()
             ->expense()
             ->whereBetween('date', [$start, $end])
             ->when(
                 $target->category_id,
-                fn ($query) => $query->where('category_id', $target->category_id)
+                fn($query) => $query->where('category_id', $target->category_id)
             )
-            ->sum('amount');
+            ->get()
+            ->sum(fn($transaction) => $this->moneyService->convertFromBase(
+                (float) ($transaction->base_amount ?? $transaction->amount),
+                $targetCurrency,
+                $transaction->date,
+            ));
 
         $targetAmount = (float) $target->target_amount;
         $progressPercent = $targetAmount > 0
@@ -115,6 +126,12 @@ class SpendingTargetService
             'status' => $status,
             'status_rank' => $this->getStatusRank($status),
             'is_active' => $target->is_active,
+            'currency' => [
+                'id' => $targetCurrency->id,
+                'iso_code' => $targetCurrency->iso_code,
+                'name' => $targetCurrency->name,
+                'symbol' => $targetCurrency->symbol,
+            ],
             'category' => $target->category ? [
                 'id' => $target->category->id,
                 'name' => $target->category->name,

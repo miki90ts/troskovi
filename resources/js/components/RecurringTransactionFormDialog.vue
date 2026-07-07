@@ -28,14 +28,26 @@ import { useToast } from '@/composables/useToast';
 import { t } from '@/lib/i18n';
 import { validateRecurringTransactionForm } from '@/lib/validation/recurringTransactionValidation';
 
-import type { Category, Debt, RecurringTransaction } from '@/types/models';
+import type {
+    Category,
+    CurrencySummary,
+    Debt,
+    RecurringTransaction,
+} from '@/types/models';
 
 const props = defineProps<{
     open: boolean;
     recurringTransaction?: RecurringTransaction | null;
     categories: Category[];
-    accounts: { id: number; name: string }[];
+    accounts: {
+        id: number;
+        name: string;
+        currency: string;
+        currency_id: number | null;
+    }[];
     debts?: Debt[];
+    currencies: CurrencySummary[];
+    defaultCurrencyId: number | null;
     defaultType?: 'income' | 'expense';
 }>();
 
@@ -54,6 +66,7 @@ const NO_DEBT_VALUE = '__none_debt__';
 const form = ref({
     type: 'expense' as 'income' | 'expense',
     amount: '',
+    currency_id: '',
     description: '',
     frequency: 'monthly' as 'daily' | 'weekly' | 'monthly',
     next_due_date: '',
@@ -74,6 +87,7 @@ const {
 } = useValidationErrors<
     | 'type'
     | 'amount'
+    | 'currency_id'
     | 'description'
     | 'frequency'
     | 'next_due_date'
@@ -109,6 +123,14 @@ const availableDebts = computed(() => props.debts ?? []);
 
 const usesBankAccount = computed(() => {
     return form.value.payment_method === 'bank_account';
+});
+
+const selectedBankAccount = computed(() => {
+    return (
+        props.accounts.find(
+            (account) => String(account.id) === form.value.bank_account_id,
+        ) ?? null
+    );
 });
 
 const selectedDebt = computed(() => {
@@ -160,6 +182,11 @@ watch(
                 form.value = {
                     type: props.recurringTransaction.type,
                     amount: String(props.recurringTransaction.amount),
+                    currency_id: props.recurringTransaction.currency
+                        ? String(props.recurringTransaction.currency.id)
+                        : props.defaultCurrencyId
+                          ? String(props.defaultCurrencyId)
+                          : '',
                     description: props.recurringTransaction.description,
                     frequency: props.recurringTransaction.frequency,
                     next_due_date: props.recurringTransaction.next_due_date,
@@ -178,6 +205,9 @@ watch(
                 form.value = {
                     type: props.defaultType ?? 'expense',
                     amount: '',
+                    currency_id: props.defaultCurrencyId
+                        ? String(props.defaultCurrencyId)
+                        : '',
                     description: '',
                     frequency: 'monthly',
                     next_due_date: '',
@@ -214,6 +244,10 @@ watch(
     () => clearErrors('amount'),
 );
 watch(
+    () => form.value.currency_id,
+    () => clearErrors('currency_id'),
+);
+watch(
     () => form.value.description,
     () => clearErrors('description'),
 );
@@ -236,6 +270,26 @@ watch(
 watch(
     () => form.value.bank_account_id,
     () => clearErrors('bank_account_id'),
+);
+watch(
+    [() => form.value.payment_method, () => form.value.bank_account_id],
+    () => {
+        if (
+            form.value.payment_method === 'bank_account' &&
+            selectedBankAccount.value?.currency_id
+        ) {
+            form.value.currency_id = String(
+                selectedBankAccount.value.currency_id,
+            );
+        } else if (
+            form.value.payment_method === 'cash' &&
+            !form.value.currency_id &&
+            props.defaultCurrencyId
+        ) {
+            form.value.currency_id = String(props.defaultCurrencyId);
+        }
+    },
+    { immediate: true },
 );
 watch(
     () => form.value.debt_id,
@@ -261,6 +315,9 @@ async function onSubmit() {
         const payload = {
             type: form.value.type,
             amount: parseFloat(form.value.amount),
+            currency_id: form.value.currency_id
+                ? parseInt(form.value.currency_id, 10)
+                : null,
             description: form.value.description,
             frequency: form.value.frequency,
             next_due_date: form.value.next_due_date,
@@ -423,6 +480,49 @@ async function onSubmit() {
                             />
                         </template>
                     </FormField>
+                    <FormField
+                        :label="t('common.labels.currency')"
+                        field-id="currency_id"
+                        :error="errors.currency_id"
+                    >
+                        <template #default>
+                            <Select
+                                :model-value="form.currency_id"
+                                :disabled="
+                                    usesBankAccount && !!selectedBankAccount
+                                "
+                                @update:model-value="
+                                    form.currency_id = String($event)
+                                "
+                            >
+                                <SelectTrigger
+                                    :class="[
+                                        'h-11 w-full rounded-2xl border-border/60 bg-background',
+                                        fieldErrorClass('currency_id'),
+                                    ]"
+                                >
+                                    <SelectValue
+                                        :placeholder="
+                                            t('common.labels.currency')
+                                        "
+                                    />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem
+                                        v-for="currency in props.currencies"
+                                        :key="currency.id"
+                                        :value="String(currency.id)"
+                                    >
+                                        {{ currency.iso_code }} -
+                                        {{ currency.name }}
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </template>
+                    </FormField>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
                     <FormField
                         :label="t('common.labels.frequency')"
                         :error="errors.frequency"
@@ -616,7 +716,9 @@ async function onSubmit() {
                                         :key="account.id"
                                         :value="String(account.id)"
                                     >
-                                        {{ account.name }}
+                                        {{ account.name }} ({{
+                                            account.currency
+                                        }})
                                     </SelectItem>
                                 </SelectContent>
                             </Select>

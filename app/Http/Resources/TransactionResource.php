@@ -13,6 +13,9 @@ class TransactionResource extends JsonResource
             'id' => $this->id,
             'type' => $this->type->value,
             'amount' => (float) $this->amount,
+            'original_amount' => (float) $this->amount,
+            'exchange_rate' => (float) ($this->exchange_rate ?? 1),
+            'base_amount' => (float) ($this->base_amount ?? $this->amount),
             'date' => $this->date->toDateString(),
             'description' => $this->description,
             'notes' => $this->notes,
@@ -32,6 +35,12 @@ class TransactionResource extends JsonResource
             'bank_account' => $this->whenLoaded('bankAccount', fn() => $this->bankAccount ? [
                 'id' => $this->bankAccount->id,
                 'name' => $this->bankAccount->name,
+            ] : null),
+            'currency' => $this->whenLoaded('currency', fn() => $this->currency ? [
+                'id' => $this->currency->id,
+                'iso_code' => $this->currency->iso_code,
+                'name' => $this->currency->name,
+                'symbol' => $this->currency->symbol,
             ] : null),
             'debt' => $this->whenLoaded('debt', fn() => $this->debt ? [
                 'id' => $this->debt->id,

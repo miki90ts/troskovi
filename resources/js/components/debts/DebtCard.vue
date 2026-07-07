@@ -48,16 +48,16 @@ function statusLabel(status: string) {
 
 function progressBarColor(debt: Debt) {
     if (debt.status === 'settled') {
-return 'bg-emerald-500';
-}
+        return 'bg-emerald-500';
+    }
 
     if (debt.progress_percent >= 80) {
-return 'bg-blue-500';
-}
+        return 'bg-blue-500';
+    }
 
     if (debt.progress_percent >= 50) {
-return 'bg-yellow-500';
-}
+        return 'bg-yellow-500';
+    }
 
     return 'bg-orange-500';
 }
@@ -114,8 +114,19 @@ return 'bg-yellow-500';
                     {{ t('debts.paid') }}
                 </span>
                 <span class="font-medium">
-                    {{ formatCurrency(debt.paid_amount) }} /
-                    {{ formatCurrency(debt.amount) }}
+                    {{
+                        formatCurrency(
+                            debt.paid_amount,
+                            debt.currency?.iso_code ?? 'RSD',
+                        )
+                    }}
+                    /
+                    {{
+                        formatCurrency(
+                            debt.amount,
+                            debt.currency?.iso_code ?? 'RSD',
+                        )
+                    }}
                 </span>
             </div>
             <div class="h-2 w-full overflow-hidden rounded-full bg-muted/40">
@@ -136,7 +147,12 @@ return 'bg-yellow-500';
                     class="text-muted-foreground"
                 >
                     {{ t('debts.remaining') }}:
-                    {{ formatCurrency(debt.remaining_amount) }}
+                    {{
+                        formatCurrency(
+                            debt.remaining_amount,
+                            debt.currency?.iso_code ?? 'RSD',
+                        )
+                    }}
                 </span>
             </div>
         </div>

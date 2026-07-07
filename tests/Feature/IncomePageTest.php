@@ -2,6 +2,7 @@
 
 use App\Enums\PaymentMethod;
 use App\Enums\TransactionType;
+use App\Models\Currency;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -117,5 +118,58 @@ test('income page applies selected per page value and preserves it in inertia pr
                 ->where('transactions.meta.per_page', 30)
                 ->where('transactions.meta.total', 35)
                 ->has('transactions.data', 30),
+        );
+});
+
+test('income page returns display amounts in the user default currency', function () {
+    $rsd = Currency::query()->firstOrCreate(
+        ['iso_code' => 'RSD'],
+        ['name' => 'Serbian Dinar', 'symbol' => 'RSD', 'active' => true],
+    );
+
+    $eur = Currency::query()->firstOrCreate(
+        ['iso_code' => 'EUR'],
+        ['name' => 'Euro', 'symbol' => 'EUR', 'active' => true],
+    );
+
+    $eur->exchangeRates()->updateOrCreate(
+        ['date' => '2026-06-14'],
+        ['rate' => 117],
+    );
+
+    $user = User::factory()->create([
+        'default_currency_id' => $eur->id,
+    ]);
+
+    $category = $user->categories()->create([
+        'name' => 'Konsalting',
+        'type' => TransactionType::Income,
+        'icon' => null,
+        'color' => '#22c55e',
+        'is_system' => false,
+    ]);
+
+    $user->transactions()->create([
+        'type' => TransactionType::Income,
+        'amount' => 234,
+        'base_amount' => 234,
+        'exchange_rate' => 1,
+        'currency_id' => $rsd->id,
+        'date' => '2026-06-14',
+        'description' => 'Faktura',
+        'category_id' => $category->id,
+        'payment_method' => PaymentMethod::Cash,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('incomes.index'))
+        ->assertOk()
+        ->assertInertia(
+            fn(Assert $page) => $page
+                ->component('incomes/Index')
+                ->where('defaultCurrency.iso_code', 'EUR')
+                ->where('latestExchangeRates.EUR', 117)
+                ->where('transactions.data.0.base_amount', 234)
+                ->where('transactions.data.0.currency.iso_code', 'RSD'),
         );
 });

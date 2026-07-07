@@ -43,6 +43,8 @@ const props = defineProps<{
     pagination: PaginationMeta;
     accountsCount: number;
     perPage: string;
+    defaultCurrencyCode: string;
+    latestExchangeRates: Record<string, number>;
 }>();
 
 const perPageOptions = ['15', '30', '50', '100'] as const;
@@ -77,6 +79,26 @@ function handlePerPageChange(value: AcceptableValue) {
     if (value !== null && value !== undefined) {
         emit('perPageChange', String(value));
     }
+}
+
+function resolveRate(currencyCode: string): number | null {
+    if (currencyCode === 'RSD') {
+        return 1;
+    }
+
+    const rate = props.latestExchangeRates[currencyCode];
+
+    return typeof rate === 'number' && rate > 0 ? rate : null;
+}
+
+function displayAmount(tx: Transaction): number {
+    const targetRate = resolveRate(props.defaultCurrencyCode);
+
+    if (!targetRate) {
+        return tx.amount;
+    }
+
+    return Number((tx.base_amount / targetRate).toFixed(2));
 }
 </script>
 
@@ -225,11 +247,25 @@ function handlePerPageChange(value: AcceptableValue) {
                     <TableCell class="text-right">
                         <div class="space-y-1">
                             <CurrencyDisplay
-                                :amount="-tx.amount"
+                                :amount="-displayAmount(tx)"
+                                :currency="props.defaultCurrencyCode"
                                 colored
                                 class="font-semibold"
                             />
-                            <p class="text-xs text-muted-foreground">
+                            <p
+                                v-if="
+                                    tx.currency?.iso_code &&
+                                    tx.currency.iso_code !==
+                                        props.defaultCurrencyCode
+                                "
+                                class="text-xs text-muted-foreground"
+                            >
+                                <CurrencyDisplay
+                                    :amount="-tx.amount"
+                                    :currency="tx.currency.iso_code"
+                                />
+                            </p>
+                            <p v-else class="text-xs text-muted-foreground">
                                 {{ t('finance.expenses.expenseLabel') }}
                             </p>
                         </div>

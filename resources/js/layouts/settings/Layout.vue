@@ -25,6 +25,10 @@ const sidebarNavItems: NavItem[] = [
         href: '/settings/budgets',
     },
     {
+        title: t('settings.nav.exchangeRates'),
+        href: '/settings/exchange-rates',
+    },
+    {
         title: t('settings.nav.appearance'),
         href: editAppearance(),
     },

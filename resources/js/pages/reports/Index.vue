@@ -17,7 +17,7 @@ import ToastContainer from '@/components/ToastContainer.vue';
 import { Button } from '@/components/ui/button';
 import { useReportsPage } from '@/composables/useReportsPage';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { t } from '@/lib/i18n';
+import { formatCurrency, t } from '@/lib/i18n';
 import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -73,30 +73,30 @@ const {
                     <KpiCard
                         :label="t('finance.reports.totalIncome')"
                         :value="
-                            summary.total_income.toLocaleString('sr-RS', {
-                                style: 'currency',
-                                currency: 'RSD',
-                            })
+                            formatCurrency(
+                                summary.total_income,
+                                summary.currency_code,
+                            )
                         "
                         :change="summary.income_change"
                     />
                     <KpiCard
                         :label="t('finance.reports.totalExpenses')"
                         :value="
-                            summary.total_expenses.toLocaleString('sr-RS', {
-                                style: 'currency',
-                                currency: 'RSD',
-                            })
+                            formatCurrency(
+                                summary.total_expenses,
+                                summary.currency_code,
+                            )
                         "
                         :subtitle="formattedPeriodRange"
                     />
                     <KpiCard
                         :label="t('finance.reports.netSavings')"
                         :value="
-                            summary.net_savings.toLocaleString('sr-RS', {
-                                style: 'currency',
-                                currency: 'RSD',
-                            })
+                            formatCurrency(
+                                summary.net_savings,
+                                summary.currency_code,
+                            )
                         "
                         :subtitle="formattedPeriodRange"
                     />

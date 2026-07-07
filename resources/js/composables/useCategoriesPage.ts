@@ -132,6 +132,13 @@ export function useCategoriesPage(initialCategories: Category[]) {
                 return;
             }
 
+            if (
+                categoryForm.value.type !== 'expense' &&
+                categoryForm.value.type !== 'income'
+            ) {
+                return;
+            }
+
             const payload = {
                 name: categoryForm.value.name,
                 type: categoryForm.value.type,

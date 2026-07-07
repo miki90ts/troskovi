@@ -20,6 +20,8 @@ const props = defineProps<{
     dateFrom: string;
     dateTo: string;
     perPage: string;
+    defaultCurrencyCode: string;
+    latestExchangeRates: Record<string, number>;
     allCategoriesValue: string;
     allPaymentMethodsValue: string;
     exportingPdf: boolean;
@@ -92,6 +94,8 @@ const emit = defineEmits<{
                 :pagination="pagination"
                 :accounts-count="accountsCount"
                 :per-page="perPage"
+                :default-currency-code="defaultCurrencyCode"
+                :latest-exchange-rates="latestExchangeRates"
                 @create="emit('create')"
                 @edit="emit('edit', $event)"
                 @delete="emit('delete', $event)"

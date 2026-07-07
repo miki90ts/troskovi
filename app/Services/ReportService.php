@@ -4,10 +4,13 @@ namespace App\Services;
 
 use App\Models\User;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class ReportService
 {
+    public function __construct(private MoneyService $moneyService) {}
+
     public function getSummary(User $user, string $period = 'monthly'): array
     {
         [$start, $end] = $this->getDateRange($period);
@@ -28,29 +31,50 @@ class ReportService
     {
         [$start, $end] = $this->getDateRange($period);
         $groupFormat = $this->getGroupFormat($period);
+        $targetCurrency = $this->moneyService->resolveUserCurrency($user);
 
-        $income = $user->transactions()
-            ->income()
-            ->whereBetween('date', [$start, $end])
-            ->select(DB::raw("DATE_FORMAT(date, '{$groupFormat}') as period"), DB::raw('SUM(amount) as total'))
-            ->groupBy('period')
-            ->orderBy('period')
-            ->pluck('total', 'period');
+        $income = $this->moneyService->convertBaseSeriesToCurrency(
+            $user->transactions()
+                ->income()
+                ->whereBetween('date', [$start, $end])
+                ->select(
+                    DB::raw("DATE_FORMAT(date, '{$groupFormat}') as bucket"),
+                    DB::raw('date as rate_date'),
+                    DB::raw('SUM(COALESCE(base_amount, amount)) as base_total')
+                )
+                ->groupBy('bucket', 'rate_date')
+                ->orderBy('bucket')
+                ->get(),
+            $targetCurrency,
+        );
 
-        $expenses = $user->transactions()
-            ->expense()
-            ->whereBetween('date', [$start, $end])
-            ->select(DB::raw("DATE_FORMAT(date, '{$groupFormat}') as period"), DB::raw('SUM(amount) as total'))
-            ->groupBy('period')
-            ->orderBy('period')
-            ->pluck('total', 'period');
+        $expenses = $this->moneyService->convertBaseSeriesToCurrency(
+            $user->transactions()
+                ->expense()
+                ->whereBetween('date', [$start, $end])
+                ->select(
+                    DB::raw("DATE_FORMAT(date, '{$groupFormat}') as bucket"),
+                    DB::raw('date as rate_date'),
+                    DB::raw('SUM(COALESCE(base_amount, amount)) as base_total')
+                )
+                ->groupBy('bucket', 'rate_date')
+                ->orderBy('bucket')
+                ->get(),
+            $targetCurrency,
+        );
 
-        $periods = $income->keys()->merge($expenses->keys())->unique()->sort()->values();
+        $periods = collect(array_keys($income))
+            ->merge(array_keys($expenses))
+            ->unique()
+            ->sort()
+            ->values();
 
         return [
             'labels' => $periods->toArray(),
-            'income' => $periods->map(fn($p) => round($income->get($p, 0), 2))->toArray(),
-            'expenses' => $periods->map(fn($p) => round($expenses->get($p, 0), 2))->toArray(),
+            'income' => $periods->map(fn($p) => round($income[$p] ?? 0, 2))->toArray(),
+            'expenses' => $periods->map(fn($p) => round($expenses[$p] ?? 0, 2))->toArray(),
+            'currency_code' => $targetCurrency->iso_code,
+            'currency_symbol' => $targetCurrency->symbol,
         ];
     }
 
@@ -58,15 +82,17 @@ class ReportService
     {
         [$start, $end] = $this->getDateRange($period);
         $groupFormat = $this->getGroupFormat($period);
+        $targetCurrency = $this->moneyService->resolveUserCurrency($user);
 
         $transactions = $user->transactions()
             ->whereBetween('date', [$start, $end])
             ->select(
                 DB::raw("DATE_FORMAT(date, '{$groupFormat}') as period"),
+                DB::raw('date as rate_date'),
                 'type',
-                DB::raw('SUM(amount) as total')
+                DB::raw('SUM(COALESCE(base_amount, amount)) as total')
             )
-            ->groupBy('period', 'type')
+            ->groupBy('period', 'rate_date', 'type')
             ->orderBy('period')
             ->get();
 
@@ -76,7 +102,11 @@ class ReportService
             if (! isset($grouped[$p])) {
                 $grouped[$p] = ['income' => 0, 'expense' => 0];
             }
-            $grouped[$p][$t->getRawOriginal('type')] = $t->total;
+            $grouped[$p][$t->getRawOriginal('type')] += $this->moneyService->convertFromBase(
+                (float) $t->total,
+                $targetCurrency,
+                $t->rate_date,
+            );
         }
 
         ksort($grouped);
@@ -94,68 +124,100 @@ class ReportService
         return [
             'labels' => $labels,
             'values' => $values,
+            'currency_code' => $targetCurrency->iso_code,
+            'currency_symbol' => $targetCurrency->symbol,
         ];
     }
 
     public function getExpenseBreakdown(User $user, string $period = 'monthly'): array
     {
         [$start, $end] = $this->getDateRange($period);
+        $targetCurrency = $this->moneyService->resolveUserCurrency($user);
 
         $breakdown = $user->transactions()
             ->expense()
             ->whereBetween('date', [$start, $end])
             ->whereNotNull('category_id')
-            ->select('category_id', DB::raw('SUM(amount) as total'))
-            ->groupBy('category_id')
+            ->select('category_id', DB::raw('date as rate_date'), DB::raw('SUM(COALESCE(base_amount, amount)) as total'))
+            ->groupBy('category_id', 'rate_date')
             ->with('category')
-            ->orderByDesc('total')
             ->get();
 
+        $totals = $this->aggregateBreakdown($breakdown, $targetCurrency);
+        $sorted = collect($totals)->sortByDesc('total')->values();
+
         return [
-            'labels' => $breakdown->map(fn($b) => $b->category?->name ?? 'Uncategorized')->toArray(),
-            'values' => $breakdown->map(fn($b) => round($b->total, 2))->toArray(),
-            'colors' => $breakdown->map(fn($b) => $b->category?->color ?? '#6b7280')->toArray(),
+            'labels' => $sorted->pluck('name')->toArray(),
+            'values' => $sorted->pluck('total')->map(fn($value) => round($value, 2))->toArray(),
+            'colors' => $sorted->pluck('color')->toArray(),
+            'currency_code' => $targetCurrency->iso_code,
+            'currency_symbol' => $targetCurrency->symbol,
         ];
     }
 
     public function getIncomeBreakdown(User $user, string $period = 'monthly'): array
     {
         [$start, $end] = $this->getDateRange($period);
+        $targetCurrency = $this->moneyService->resolveUserCurrency($user);
 
         $breakdown = $user->transactions()
             ->income()
             ->whereBetween('date', [$start, $end])
             ->whereNotNull('category_id')
-            ->select('category_id', DB::raw('SUM(amount) as total'))
-            ->groupBy('category_id')
+            ->select('category_id', DB::raw('date as rate_date'), DB::raw('SUM(COALESCE(base_amount, amount)) as total'))
+            ->groupBy('category_id', 'rate_date')
             ->with('category')
-            ->orderByDesc('total')
             ->get();
 
+        $totals = $this->aggregateBreakdown($breakdown, $targetCurrency);
+        $sorted = collect($totals)->sortByDesc('total')->values();
+
         return [
-            'labels' => $breakdown->map(fn($b) => $b->category?->name ?? 'Uncategorized')->toArray(),
-            'values' => $breakdown->map(fn($b) => round($b->total, 2))->toArray(),
-            'colors' => $breakdown->map(fn($b) => $b->category?->color ?? '#6b7280')->toArray(),
+            'labels' => $sorted->pluck('name')->toArray(),
+            'values' => $sorted->pluck('total')->map(fn($value) => round($value, 2))->toArray(),
+            'colors' => $sorted->pluck('color')->toArray(),
+            'currency_code' => $targetCurrency->iso_code,
+            'currency_symbol' => $targetCurrency->symbol,
         ];
     }
 
     public function getCashVsBank(User $user, string $period = 'monthly'): array
     {
         [$start, $end] = $this->getDateRange($period);
+        $targetCurrency = $this->moneyService->resolveUserCurrency($user);
 
         $split = $user->transactions()
             ->expense()
             ->whereBetween('date', [$start, $end])
-            ->select('payment_method', DB::raw('SUM(amount) as total'))
-            ->groupBy('payment_method')
-            ->pluck('total', 'payment_method');
+            ->select('payment_method', DB::raw('date as rate_date'), DB::raw('SUM(COALESCE(base_amount, amount)) as total'))
+            ->groupBy('payment_method', 'rate_date')
+            ->get();
+
+        $cash = 0;
+        $bank = 0;
+
+        foreach ($split as $row) {
+            $converted = $this->moneyService->convertFromBase(
+                (float) $row->total,
+                $targetCurrency,
+                $row->rate_date,
+            );
+
+            if ($row->payment_method === 'cash') {
+                $cash += $converted;
+            } else {
+                $bank += $converted;
+            }
+        }
 
         return [
             'labels' => ['Keš', 'Bankovni račun'],
             'values' => [
-                round($split->get('cash', 0), 2),
-                round($split->get('bank_account', 0), 2),
+                round($cash, 2),
+                round($bank, 2),
             ],
+            'currency_code' => $targetCurrency->iso_code,
+            'currency_symbol' => $targetCurrency->symbol,
         ];
     }
 
@@ -166,25 +228,12 @@ class ReportService
         CarbonImmutable $prevStart,
         CarbonImmutable $prevEnd,
     ): array {
-        $totalIncome = $user->transactions()
-            ->income()
-            ->whereBetween('date', [$start, $end])
-            ->sum('amount');
+        $targetCurrency = $this->moneyService->resolveUserCurrency($user);
 
-        $totalExpenses = $user->transactions()
-            ->expense()
-            ->whereBetween('date', [$start, $end])
-            ->sum('amount');
-
-        $prevIncome = $user->transactions()
-            ->income()
-            ->whereBetween('date', [$prevStart, $prevEnd])
-            ->sum('amount');
-
-        $prevExpenses = $user->transactions()
-            ->expense()
-            ->whereBetween('date', [$prevStart, $prevEnd])
-            ->sum('amount');
+        $totalIncome = $this->sumConvertedTransactions($user, $start, $end, 'income', $targetCurrency);
+        $totalExpenses = $this->sumConvertedTransactions($user, $start, $end, 'expense', $targetCurrency);
+        $prevIncome = $this->sumConvertedTransactions($user, $prevStart, $prevEnd, 'income', $targetCurrency);
+        $prevExpenses = $this->sumConvertedTransactions($user, $prevStart, $prevEnd, 'expense', $targetCurrency);
 
         $incomeChange = $prevIncome != 0
             ? round((($totalIncome - $prevIncome) / abs($prevIncome)) * 100, 1)
@@ -193,15 +242,18 @@ class ReportService
         $netSavings = $totalIncome - $totalExpenses;
         $savingsRate = $totalIncome > 0 ? round(($netSavings / $totalIncome) * 100, 1) : 0;
 
-        $biggestExpenseCategory = $user->transactions()
+        $expenseBreakdownRows = $user->transactions()
             ->expense()
             ->whereBetween('date', [$start, $end])
             ->whereNotNull('category_id')
-            ->select('category_id', DB::raw('SUM(amount) as total'))
-            ->groupBy('category_id')
-            ->orderByDesc('total')
+            ->select('category_id', DB::raw('date as rate_date'), DB::raw('SUM(COALESCE(base_amount, amount)) as total'))
+            ->groupBy('category_id', 'rate_date')
             ->with('category')
-            ->first();
+            ->get();
+
+        $expenseBreakdown = collect($this->aggregateBreakdown($expenseBreakdownRows, $targetCurrency))
+            ->sortByDesc('total')
+            ->values();
 
         $prevNet = $prevIncome - $prevExpenses;
         $momChange = $prevNet != 0
@@ -214,13 +266,61 @@ class ReportService
             'income_change' => $incomeChange,
             'net_savings' => round($netSavings, 2),
             'savings_rate' => $savingsRate,
-            'biggest_expense_category' => $biggestExpenseCategory?->category?->name ?? 'N/A',
-            'biggest_expense_amount' => round($biggestExpenseCategory?->total ?? 0, 2),
+            'biggest_expense_category' => $expenseBreakdown->first()['name'] ?? 'N/A',
+            'biggest_expense_amount' => round($expenseBreakdown->first()['total'] ?? 0, 2),
             'mom_change' => $momChange,
             'period_start' => $start->toDateString(),
             'period_end' => $end->toDateString(),
+            'currency_code' => $targetCurrency->iso_code,
+            'currency_symbol' => $targetCurrency->symbol,
         ];
     }
+
+    private function sumConvertedTransactions(
+        User $user,
+        CarbonImmutable $start,
+        CarbonImmutable $end,
+        string $type,
+        $targetCurrency,
+    ): float {
+        return round($user->transactions()
+            ->where('type', $type)
+            ->whereBetween('date', [$start, $end])
+            ->select(DB::raw('date as rate_date'), DB::raw('SUM(COALESCE(base_amount, amount)) as base_total'))
+            ->groupBy('rate_date')
+            ->get()
+            ->sum(fn($row) => $this->moneyService->convertFromBase(
+                (float) $row->base_total,
+                $targetCurrency,
+                $row->rate_date,
+            )), 2);
+    }
+
+    private function aggregateBreakdown(Collection $rows, $targetCurrency): array
+    {
+        $totals = [];
+
+        foreach ($rows as $row) {
+            $categoryId = (string) $row->category_id;
+
+            if (! isset($totals[$categoryId])) {
+                $totals[$categoryId] = [
+                    'name' => $row->category?->name ?? 'Uncategorized',
+                    'color' => $row->category?->color ?? '#6b7280',
+                    'total' => 0.0,
+                ];
+            }
+
+            $totals[$categoryId]['total'] += $this->moneyService->convertFromBase(
+                (float) $row->total,
+                $targetCurrency,
+                $row->rate_date,
+            );
+        }
+
+        return $totals;
+    }
+
 
     private function getDateRange(string $period): array
     {

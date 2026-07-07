@@ -17,6 +17,7 @@ trait ProfileValidationRules
         return [
             'name' => $this->nameRules(),
             'email' => $this->emailRules($userId),
+            'default_currency_id' => ['sometimes', 'integer', Rule::exists('currencies', 'id')],
         ];
     }
 

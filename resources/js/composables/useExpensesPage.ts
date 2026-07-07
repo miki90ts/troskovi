@@ -1,11 +1,10 @@
-import { computed  } from 'vue';
-import type {Ref} from 'vue';
-import {
-    useTransactionListingPage
-    
-    
+import { computed } from 'vue';
+import type { Ref } from 'vue';
+import { useTransactionListingPage } from '@/composables/useTransactionListingPage';
+import type {
+    TransactionListingFilters,
+    TransactionsPage,
 } from '@/composables/useTransactionListingPage';
-import type {TransactionListingFilters, TransactionsPage} from '@/composables/useTransactionListingPage';
 import { t } from '@/lib/i18n';
 
 export type ExpenseFilters = TransactionListingFilters;
@@ -18,13 +17,23 @@ export {
 export function useExpensesPage(options: {
     transactionsPage: Ref<TransactionsPage>;
     filters: Ref<ExpenseFilters>;
+    defaultCurrencyCode: string;
+    latestExchangeRates: Record<string, number>;
     routePath?: string;
 }) {
-    const { transactionsPage, filters, routePath = '/expenses' } = options;
+    const {
+        transactionsPage,
+        filters,
+        defaultCurrencyCode,
+        latestExchangeRates,
+        routePath = '/expenses',
+    } = options;
     const page = useTransactionListingPage({
         transactionsPage,
         filters,
         routePath,
+        defaultCurrencyCode,
+        latestExchangeRates,
         exportType: 'expense',
         exportFilenamePrefix: 'troskovi',
         deleteSuccessMessage: t('finance.expenses.deleted'),

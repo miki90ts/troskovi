@@ -9,6 +9,7 @@ export const spendingTargetValidationMessages = {
     targetAmountRequired: 'Ciljni iznos je obavezan.',
     targetAmountNumeric: 'Ciljni iznos mora biti broj.',
     targetAmountGt: 'Ciljni iznos mora biti veći od 0.',
+    currencyInteger: 'Valuta mora biti broj.',
     categoryInteger: 'Kategorija mora biti broj.',
     categoryExists: 'Izabrana kategorija nije ispravna.',
     duplicateScopePeriod: 'Budžet za izabrani opseg i period već postoji.',
@@ -17,7 +18,10 @@ export const spendingTargetValidationMessages = {
 const allowedPeriods = new Set(['daily', 'weekly', 'monthly']);
 
 function isBlank(value: string): boolean {
-    return value == null || (typeof value === 'string' && value.trim().length === 0);
+    return (
+        value == null ||
+        (typeof value === 'string' && value.trim().length === 0)
+    );
 }
 
 export function validateSpendingTargetForm(
@@ -45,6 +49,10 @@ export function validateSpendingTargetForm(
             errors.targetAmount =
                 spendingTargetValidationMessages.targetAmountGt;
         }
+    }
+
+    if (!isBlank(values.currency_id) && !/^\d+$/.test(values.currency_id)) {
+        errors.currency_id = spendingTargetValidationMessages.currencyInteger;
     }
 
     if (values.categoryValue !== OVERALL_SENTINEL) {

@@ -77,7 +77,8 @@ const filteredTransfers = computed(() => {
             (transfer.description ?? '')
                 .toLocaleLowerCase('sr')
                 .includes(query) ||
-            String(transfer.amount).includes(query);
+            String(transfer.amount).includes(query) ||
+            String(transfer.to_amount).includes(query);
 
         const matchesFromAccount =
             fromAccountFilter.value === allAccountsValue ||
@@ -437,11 +438,45 @@ function formatDate(dateStr: string): string {
                                     }}
                                 </TableCell>
                                 <TableCell class="text-right">
-                                    <CurrencyDisplay
-                                        :amount="transfer.amount"
-                                        colored
-                                        class="font-semibold"
-                                    />
+                                    <div class="space-y-1 text-right">
+                                        <CurrencyDisplay
+                                            :amount="transfer.amount"
+                                            :currency="
+                                                transfer.from_currency
+                                                    ?.iso_code ??
+                                                transfer.from_account.currency
+                                            "
+                                            colored
+                                            class="font-semibold"
+                                        />
+                                        <p
+                                            v-if="
+                                                (transfer.from_currency
+                                                    ?.iso_code ??
+                                                    transfer.from_account
+                                                        .currency) !==
+                                                (transfer.to_currency
+                                                    ?.iso_code ??
+                                                    transfer.to_account
+                                                        .currency)
+                                            "
+                                            class="text-xs text-muted-foreground"
+                                        >
+                                            {{
+                                                transfer.to_amount.toLocaleString(
+                                                    'sr-RS',
+                                                    {
+                                                        style: 'currency',
+                                                        currency:
+                                                            transfer.to_currency
+                                                                ?.iso_code ??
+                                                            transfer.to_account
+                                                                .currency,
+                                                    },
+                                                )
+                                            }}
+                                        </p>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         </TableBody>

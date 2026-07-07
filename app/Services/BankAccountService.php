@@ -7,12 +7,15 @@ use App\Models\AccountTransfer;
 use App\Models\BankAccount;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Validation\ValidationException;
 
 class BankAccountService
 {
+    public function __construct(private MoneyService $moneyService) {}
+
     public function list(User $user, bool $includeArchived = false): Collection
     {
-        $query = $user->bankAccounts();
+        $query = $user->bankAccounts()->with('currencyRef');
 
         if (! $includeArchived) {
             $query->active();
@@ -25,8 +28,10 @@ class BankAccountService
     {
         return $user->accountTransfers()
             ->with([
-                'fromAccount:id,name',
-                'toAccount:id,name',
+                'fromAccount:id,name,currency,currency_id',
+                'toAccount:id,name,currency,currency_id',
+                'fromCurrency:id,iso_code,name,symbol',
+                'toCurrency:id,iso_code,name,symbol',
             ])
             ->orderByDesc('date')
             ->orderByDesc('id')
@@ -35,14 +40,16 @@ class BankAccountService
 
     public function create(User $user, array $data): BankAccount
     {
-        return $user->bankAccounts()->create($data);
+        return $user->bankAccounts()
+            ->create($this->normalizeCurrencyPayload($data))
+            ->load('currencyRef');
     }
 
     public function update(BankAccount $account, array $data): BankAccount
     {
-        $account->update($data);
+        $account->update($this->normalizeCurrencyPayload($data, $account));
 
-        return $account->fresh();
+        return $account->fresh('currencyRef');
     }
 
     public function archive(BankAccount $account): BankAccount
@@ -56,7 +63,7 @@ class BankAccountService
     {
         $account->update(['is_archived' => false]);
 
-        return $account;
+        return $account->fresh('currencyRef');
     }
 
     public function getOverview(BankAccount $account): array
@@ -83,13 +90,74 @@ class BankAccountService
 
     public function transfer(User $user, array $data): AccountTransfer
     {
+        $fromAccount = $user->bankAccounts()
+            ->with('currencyRef')
+            ->findOrFail($data['from_account_id']);
+        $toAccount = $user->bankAccounts()
+            ->with('currencyRef')
+            ->findOrFail($data['to_account_id']);
+
+        $fromCurrency = $this->moneyService->resolveBankAccountCurrency($fromAccount);
+        $toCurrency = $this->moneyService->resolveBankAccountCurrency($toAccount);
+        $amount = (float) $data['amount'];
+        $date = (string) $data['date'];
+
+        if ($fromCurrency->is($toCurrency)) {
+            $exchangeRate = '1.000000';
+            $baseAmount = $this->moneyService->convertToBase(
+                $amount,
+                $this->moneyService->resolveRate($fromCurrency, $date),
+            );
+            $toAmount = number_format($amount, 2, '.', '');
+        } else {
+            $sourceRate = $this->moneyService->resolveRate($fromCurrency, $date);
+            $baseAmount = $this->moneyService->convertToBase($amount, $sourceRate);
+            $toAmount = number_format(
+                $this->moneyService->convertFromBase((float) $baseAmount, $toCurrency, $date),
+                2,
+                '.',
+                '',
+            );
+            $exchangeRate = $sourceRate;
+        }
+
         return AccountTransfer::create([
             'user_id' => $user->id,
-            'from_account_id' => $data['from_account_id'],
-            'to_account_id' => $data['to_account_id'],
-            'amount' => $data['amount'],
+            'from_account_id' => $fromAccount->id,
+            'to_account_id' => $toAccount->id,
+            'amount' => $amount,
+            'from_currency_id' => $fromCurrency->id,
+            'to_currency_id' => $toCurrency->id,
+            'to_amount' => $toAmount,
+            'exchange_rate' => $exchangeRate,
+            'base_amount' => $baseAmount,
             'description' => $data['description'] ?? null,
-            'date' => $data['date'],
+            'date' => $date,
+        ])->load([
+            'fromAccount:id,name,currency,currency_id',
+            'toAccount:id,name,currency,currency_id',
+            'fromCurrency:id,iso_code,name,symbol',
+            'toCurrency:id,iso_code,name,symbol',
         ]);
+    }
+
+    private function normalizeCurrencyPayload(array $data, ?BankAccount $account = null): array
+    {
+        if ($account && ! array_key_exists('currency', $data) && ! array_key_exists('currency_id', $data)) {
+            return $data;
+        }
+
+        $currency = $this->moneyService->resolveExplicitCurrencyForInput($data);
+
+        if (! $currency) {
+            throw ValidationException::withMessages([
+                'currency_id' => 'Izabrana valuta nije ispravna.',
+            ]);
+        }
+
+        $data['currency_id'] = $currency->id;
+        $data['currency'] = $currency->iso_code;
+
+        return $data;
     }
 }

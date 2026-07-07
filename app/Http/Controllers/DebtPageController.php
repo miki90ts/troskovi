@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\DebtResource;
+use App\Models\Currency;
 use App\Services\DebtService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -20,6 +21,11 @@ class DebtPageController extends Controller
         return Inertia::render('debts/Index', [
             'debts' => DebtResource::collection($debts),
             'summary' => $summary,
+            'currencies' => Currency::query()
+                ->where('active', true)
+                ->orderBy('iso_code')
+                ->get(['id', 'iso_code', 'name', 'symbol']),
+            'defaultCurrencyId' => $request->user()->default_currency_id,
         ]);
     }
 }

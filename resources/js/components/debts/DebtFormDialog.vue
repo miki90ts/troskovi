@@ -11,17 +11,25 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { t } from '@/lib/i18n';
 import type {
     DebtFormErrors,
     DebtFormValues,
 } from '@/lib/validation/debtValidation';
-import type { Debt } from '@/types/models';
+import type { CurrencySummary, Debt } from '@/types/models';
 
 const props = defineProps<{
     open: boolean;
     editingDebt: Debt | null;
     formSubmitting: boolean;
+    currencies: CurrencySummary[];
     form: DebtFormValues;
     errors: DebtFormErrors;
 }>();
@@ -57,6 +65,10 @@ const descriptionModel = computed({
 const amountModel = computed({
     get: () => props.form.amount,
     set: (value: string) => updateForm({ amount: value }),
+});
+const currencyModel = computed({
+    get: () => props.form.currency_id,
+    set: (value: string) => updateForm({ currency_id: value }),
 });
 const dateModel = computed({
     get: () => props.form.date,
@@ -193,6 +205,39 @@ const notesModel = computed({
                                     fieldErrorClass('amount'),
                                 ]"
                             />
+                        </template>
+                    </FormField>
+                    <FormField
+                        :label="t('common.labels.currency')"
+                        field-id="debt_currency"
+                        :error="props.errors.currency_id"
+                    >
+                        <template #default>
+                            <Select v-model="currencyModel">
+                                <SelectTrigger
+                                    id="debt_currency"
+                                    :class="[
+                                        'h-11 rounded-2xl border-border/60 bg-background',
+                                        fieldErrorClass('currency_id'),
+                                    ]"
+                                >
+                                    <SelectValue
+                                        :placeholder="
+                                            t('common.labels.currency')
+                                        "
+                                    />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem
+                                        v-for="currency in props.currencies"
+                                        :key="currency.id"
+                                        :value="String(currency.id)"
+                                    >
+                                        {{ currency.iso_code }} -
+                                        {{ currency.name }}
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
                         </template>
                     </FormField>
                 </div>

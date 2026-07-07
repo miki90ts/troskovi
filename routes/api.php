@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\BankAccountController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\DebtController;
+use App\Http\Controllers\Api\V1\ExchangeRateController;
 use App\Http\Controllers\Api\V1\LoyaltyCardController;
 use App\Http\Controllers\Api\V1\PdfExportController;
 use App\Http\Controllers\Api\V1\RecurringTransactionController;
@@ -37,6 +38,11 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     // Debts
     Route::get('debts/summary', [DebtController::class, 'summary']);
     Route::apiResource('debts', DebtController::class);
+
+    // Exchange Rates
+    Route::get('exchange-rates', [ExchangeRateController::class, 'index']);
+    Route::post('exchange-rates', [ExchangeRateController::class, 'store']);
+    Route::delete('exchange-rates/{exchangeRate}', [ExchangeRateController::class, 'destroy']);
 
     // Reports
     Route::prefix('reports')->group(function () {

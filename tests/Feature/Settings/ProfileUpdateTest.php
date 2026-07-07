@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Currency;
 use App\Models\User;
 
 test('profile page is displayed', function () {
@@ -14,12 +15,14 @@ test('profile page is displayed', function () {
 
 test('profile information can be updated', function () {
     $user = User::factory()->create();
+    $eur = Currency::query()->where('iso_code', 'EUR')->firstOrFail();
 
     $response = $this
         ->actingAs($user)
         ->patch(route('profile.update'), [
             'name' => 'Test User',
             'email' => 'test@example.com',
+            'default_currency_id' => $eur->id,
         ]);
 
     $response
@@ -30,6 +33,7 @@ test('profile information can be updated', function () {
 
     expect($user->name)->toBe('Test User');
     expect($user->email)->toBe('test@example.com');
+    expect($user->default_currency_id)->toBe($eur->id);
     expect($user->email_verified_at)->toBeNull();
 });
 

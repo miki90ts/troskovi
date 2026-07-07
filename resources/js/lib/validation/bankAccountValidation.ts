@@ -2,7 +2,7 @@ export type BankAccountFormValues = {
     name: string;
     bank_name: string;
     account_number: string;
-    currency: string;
+    currency_id: string;
     color: string;
     initial_balance: string;
 };
@@ -31,7 +31,10 @@ export const bankAccountValidationMessages = {
 } as const;
 
 function isBlank(value: unknown): boolean {
-    return value == null || (typeof value === 'string' && value.trim().length === 0);
+    return (
+        value == null ||
+        (typeof value === 'string' && value.trim().length === 0)
+    );
 }
 
 export function validateBankAccountForm(
@@ -62,12 +65,12 @@ export function validateBankAccountForm(
         errors.account_number = bankAccountValidationMessages.accountNumberMax;
     }
 
-    if (isBlank(values.currency)) {
-        errors.currency = bankAccountValidationMessages.currencyRequired;
-    } else if (typeof values.currency !== 'string') {
-        errors.currency = bankAccountValidationMessages.currencyString;
-    } else if (values.currency.length > 10) {
-        errors.currency = bankAccountValidationMessages.currencyMax;
+    if (isBlank(values.currency_id)) {
+        errors.currency_id = bankAccountValidationMessages.currencyRequired;
+    } else if (typeof values.currency_id !== 'string') {
+        errors.currency_id = bankAccountValidationMessages.currencyString;
+    } else if (values.currency_id.length > 10) {
+        errors.currency_id = bankAccountValidationMessages.currencyMax;
     }
 
     if (typeof values.color !== 'string') {

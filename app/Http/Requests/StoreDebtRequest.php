@@ -23,6 +23,7 @@ class StoreDebtRequest extends FormRequest
             'person_name' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'gt:0'],
+            'currency_id' => ['nullable', 'integer', Rule::exists('currencies', 'id')->where('active', true)],
             'date' => ['required', 'date'],
             'due_date' => ['nullable', 'date', 'after_or_equal:date'],
             'notes' => ['nullable', 'string'],

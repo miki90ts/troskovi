@@ -1,7 +1,7 @@
 import { ref } from 'vue';
+import type { RecurringTransactionPayload } from '@/types/api';
 import type { RecurringTransaction } from '@/types/models';
 import api from './useApi';
-
 
 export function useRecurringTransactions() {
     const loading = ref(false);
@@ -19,7 +19,7 @@ export function useRecurringTransactions() {
     }
 
     async function createRecurring(
-        payload: Partial<RecurringTransaction>,
+        payload: RecurringTransactionPayload,
     ): Promise<RecurringTransaction> {
         const { data } = await api.post('/recurring-transactions', payload);
 
@@ -28,7 +28,7 @@ export function useRecurringTransactions() {
 
     async function updateRecurring(
         id: number,
-        payload: Partial<RecurringTransaction>,
+        payload: Partial<RecurringTransactionPayload>,
     ): Promise<RecurringTransaction> {
         const { data } = await api.put(
             `/recurring-transactions/${id}`,

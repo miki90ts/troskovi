@@ -18,6 +18,8 @@ trait DebtValidationMessages
             'amount.required' => 'Iznos je obavezan.',
             'amount.numeric' => 'Iznos mora biti broj.',
             'amount.gt' => 'Iznos mora biti veći od 0.',
+            'currency_id.integer' => 'Valuta mora biti broj.',
+            'currency_id.exists' => 'Izabrana valuta nije ispravna.',
             'date.required' => 'Datum je obavezan.',
             'date.date' => 'Datum nije ispravan.',
             'due_date.date' => 'Rok dospeća nije ispravan.',

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class BankAccount extends Model
 {
@@ -19,6 +20,7 @@ class BankAccount extends Model
         'bank_name',
         'account_number',
         'currency',
+        'currency_id',
         'color',
         'icon',
         'initial_balance',
@@ -28,6 +30,7 @@ class BankAccount extends Model
     protected function casts(): array
     {
         return [
+            'currency_id' => 'integer',
             'initial_balance' => 'decimal:2',
             'is_archived' => 'boolean',
         ];
@@ -43,6 +46,11 @@ class BankAccount extends Model
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    public function currencyRef(): BelongsTo
+    {
+        return $this->belongsTo(Currency::class, 'currency_id');
     }
 
     public function transfersFrom(): HasMany
@@ -80,7 +88,9 @@ class BankAccount extends Model
 
         $transferredOut = $this->transfersFrom()->sum('amount');
 
-        $transferredIn = $this->transfersTo()->sum('amount');
+        $transferredIn = (float) $this->transfersTo()
+            ->selectRaw('COALESCE(SUM(COALESCE(to_amount, amount)), 0) as total')
+            ->value('total');
 
         return number_format(
             (float) $this->initial_balance + $income - $expense - $transferredOut + $transferredIn,

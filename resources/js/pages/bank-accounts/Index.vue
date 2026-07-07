@@ -11,11 +11,18 @@ import { useBankAccountsPage } from '@/composables/useBankAccountsPage';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { t } from '@/lib/i18n';
 import type { BreadcrumbItem } from '@/types';
-import type { AccountTransfer, BankAccount } from '@/types/models';
+import type {
+    AccountTransfer,
+    BankAccount,
+    CurrencySummary,
+} from '@/types/models';
 
 const props = defineProps<{
     accounts: { data: BankAccount[] };
     transfers: { data: AccountTransfer[] };
+    currencies: CurrencySummary[];
+    latestExchangeRates: Record<string, number>;
+    defaultCurrencyId: number | null;
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -28,6 +35,7 @@ const {
     archivedAccounts,
     transfers,
     totalBalance,
+    defaultCurrency,
     connectedBanks,
     colorPresets,
     showForm,
@@ -40,6 +48,7 @@ const {
     transferSubmitting,
     transferForm,
     transferErrors,
+    transferPreview,
     openCreate,
     openEdit,
     setAccountForm,
@@ -52,7 +61,13 @@ const {
     handleArchive,
     handleRestore,
     submitTransfer,
-} = useBankAccountsPage(props.accounts.data, props.transfers.data);
+} = useBankAccountsPage(
+    props.accounts.data,
+    props.transfers.data,
+    props.currencies,
+    props.latestExchangeRates,
+    props.defaultCurrencyId,
+);
 </script>
 
 <template>
@@ -65,6 +80,7 @@ const {
                 :active-count="activeAccounts.length"
                 :archived-count="archivedAccounts.length"
                 :total-balance="totalBalance"
+                :display-currency-code="defaultCurrency?.iso_code ?? 'RSD'"
                 :connected-banks="connectedBanks"
                 @create="openCreate"
                 @transfer="openTransfer"
@@ -88,6 +104,7 @@ const {
             :editing-account="editingAccount"
             :form-submitting="formSubmitting"
             :color-presets="colorPresets"
+            :currencies="props.currencies"
             :form="accountForm"
             :errors="formErrors"
             @update:open="(value) => (showForm = value)"
@@ -101,6 +118,7 @@ const {
             :open="showTransfer"
             :submitting="transferSubmitting"
             :active-accounts="activeAccounts"
+            :transfer-preview="transferPreview"
             :form="transferForm"
             :errors="transferErrors"
             @update:open="(value) => (showTransfer = value)"

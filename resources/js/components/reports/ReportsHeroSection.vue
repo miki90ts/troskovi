@@ -25,6 +25,10 @@ const periodLabels: Record<ReportPeriod, string> = {
 
 const exportingPdf = ref(false);
 
+function summaryCurrency() {
+    return props.summary?.currency_code ?? 'RSD';
+}
+
 function exportPdf() {
     exportingPdf.value = true;
     const url = `/api/v1/export/report/pdf?period=${props.period}`;
@@ -32,8 +36,8 @@ function exportPdf() {
     fetch(url, { credentials: 'same-origin' })
         .then((res) => {
             if (!res.ok) {
-throw new Error('Export failed');
-}
+                throw new Error('Export failed');
+            }
 
             return res.blob();
         })
@@ -194,6 +198,7 @@ throw new Error('Export failed');
                                 summary
                                     ? formatCurrency(
                                           summary.biggest_expense_amount,
+                                          summaryCurrency(),
                                       )
                                     : t('common.states.waitingData')
                             }}

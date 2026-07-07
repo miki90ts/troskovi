@@ -12,6 +12,11 @@ class AccountTransfer extends Model
         'from_account_id',
         'to_account_id',
         'amount',
+        'from_currency_id',
+        'to_currency_id',
+        'to_amount',
+        'exchange_rate',
+        'base_amount',
         'description',
         'date',
     ];
@@ -20,6 +25,9 @@ class AccountTransfer extends Model
     {
         return [
             'amount' => 'decimal:2',
+            'to_amount' => 'decimal:2',
+            'exchange_rate' => 'decimal:6',
+            'base_amount' => 'decimal:2',
             'date' => 'date',
         ];
     }
@@ -39,5 +47,15 @@ class AccountTransfer extends Model
     public function toAccount(): BelongsTo
     {
         return $this->belongsTo(BankAccount::class, 'to_account_id');
+    }
+
+    public function fromCurrency(): BelongsTo
+    {
+        return $this->belongsTo(Currency::class, 'from_currency_id');
+    }
+
+    public function toCurrency(): BelongsTo
+    {
+        return $this->belongsTo(Currency::class, 'to_currency_id');
     }
 }

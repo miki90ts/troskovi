@@ -18,6 +18,10 @@ function chartTheme() {
 }
 
 export function useReportCharts() {
+    function currencyCode(data: ChartData | IncomeVsExpensesData | null) {
+        return data?.currency_code ?? 'RSD';
+    }
+
     function barChartOptions(
         data: IncomeVsExpensesData | null,
     ): ApexCharts.ApexOptions {
@@ -45,7 +49,7 @@ export function useReportCharts() {
                         typeof value === 'number'
                             ? value.toLocaleString('sr-RS', {
                                   style: 'currency',
-                                  currency: 'RSD',
+                                  currency: currencyCode(data),
                               })
                             : '',
                 },
@@ -96,6 +100,17 @@ export function useReportCharts() {
             colors: ['#14b8a6'],
             dataLabels: { enabled: false },
             stroke: { curve: 'smooth' as const, width: 2 },
+            tooltip: {
+                y: {
+                    formatter: (value: number | undefined) =>
+                        typeof value === 'number'
+                            ? value.toLocaleString('sr-RS', {
+                                  style: 'currency',
+                                  currency: currencyCode(data),
+                              })
+                            : '',
+                },
+            },
             fill: {
                 type: 'gradient',
                 gradient: { opacityFrom: 0.4, opacityTo: 0 },
@@ -137,6 +152,17 @@ export function useReportCharts() {
                 style: { fontSize: '14px' },
             },
             plotOptions: { pie: { donut: { size: '65%' } } },
+            tooltip: {
+                y: {
+                    formatter: (value: number | undefined) =>
+                        typeof value === 'number'
+                            ? value.toLocaleString('sr-RS', {
+                                  style: 'currency',
+                                  currency: currencyCode(data),
+                              })
+                            : '',
+                },
+            },
         };
     }
 
@@ -151,6 +177,17 @@ export function useReportCharts() {
             labels: data.labels,
             colors: ['#14b8a6', '#0f766e'],
             legend: { position: 'bottom' as const },
+            tooltip: {
+                y: {
+                    formatter: (value: number | undefined) =>
+                        typeof value === 'number'
+                            ? value.toLocaleString('sr-RS', {
+                                  style: 'currency',
+                                  currency: currencyCode(data),
+                              })
+                            : '',
+                },
+            },
         };
     }
 

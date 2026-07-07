@@ -9,11 +9,13 @@ import { useDebtsPage } from '@/composables/useDebtsPage';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { t } from '@/lib/i18n';
 import type { BreadcrumbItem } from '@/types';
-import type { Debt, DebtSummary } from '@/types/models';
+import type { CurrencySummary, Debt, DebtSummary } from '@/types/models';
 
 const props = defineProps<{
     debts: { data: Debt[] };
     summary: DebtSummary;
+    currencies: CurrencySummary[];
+    defaultCurrencyId: number | null;
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -43,7 +45,12 @@ const {
     submitForm,
     handleDelete,
     handleSettle,
-} = useDebtsPage(props.debts.data, props.summary);
+} = useDebtsPage(
+    props.debts.data,
+    props.summary,
+    props.currencies,
+    props.defaultCurrencyId,
+);
 </script>
 
 <template>
@@ -76,6 +83,7 @@ const {
             :open="showForm"
             :editing-debt="editingDebt"
             :form-submitting="formSubmitting"
+            :currencies="props.currencies"
             :form="debtForm"
             :errors="formErrors"
             @update:open="(value) => (showForm = value)"

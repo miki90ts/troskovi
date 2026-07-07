@@ -11,6 +11,12 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { t } from '@/lib/i18n';
 import type { BreadcrumbItem } from '@/types';
+import type { CurrencySummary } from '@/types/models';
+
+const props = defineProps<{
+    currencies: CurrencySummary[];
+    defaultCurrencyId: number | null;
+}>();
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -46,7 +52,7 @@ const {
     toggleTarget,
     confirmDelete,
     updateForm,
-} = useBudgetsPage();
+} = useBudgetsPage(props.currencies, props.defaultCurrencyId);
 </script>
 
 <template>
@@ -93,6 +99,7 @@ const {
             :form-submitting="formSubmitting"
             :editing-target="editingTarget"
             :categories="categories"
+            :currencies="props.currencies"
             :period-options="periodOptions"
             :form="form"
             :errors="formErrors"

@@ -30,5 +30,6 @@ export type BudgetFormState = {
     period: SpendingTargetPeriod;
     categoryValue: string;
     targetAmount: string;
+    currency_id: string;
     isActive: boolean;
 };

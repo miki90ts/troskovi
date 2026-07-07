@@ -1,11 +1,10 @@
-import { computed  } from 'vue';
-import type {Ref} from 'vue';
-import {
-    useTransactionListingPage
-    
-    
+import { computed } from 'vue';
+import type { Ref } from 'vue';
+import { useTransactionListingPage } from '@/composables/useTransactionListingPage';
+import type {
+    TransactionListingFilters,
+    TransactionsPage,
 } from '@/composables/useTransactionListingPage';
-import type {TransactionListingFilters, TransactionsPage} from '@/composables/useTransactionListingPage';
 import { t } from '@/lib/i18n';
 
 export type IncomeFilters = TransactionListingFilters;
@@ -18,13 +17,23 @@ export {
 export function useIncomesPage(options: {
     transactionsPage: Ref<TransactionsPage>;
     filters: Ref<IncomeFilters>;
+    defaultCurrencyCode: string;
+    latestExchangeRates: Record<string, number>;
     routePath?: string;
 }) {
-    const { transactionsPage, filters, routePath = '/incomes' } = options;
+    const {
+        transactionsPage,
+        filters,
+        defaultCurrencyCode,
+        latestExchangeRates,
+        routePath = '/incomes',
+    } = options;
     const page = useTransactionListingPage({
         transactionsPage,
         filters,
         routePath,
+        defaultCurrencyCode,
+        latestExchangeRates,
         exportType: 'income',
         exportFilenamePrefix: 'prihodi',
         deleteSuccessMessage: t('finance.incomes.deleted'),

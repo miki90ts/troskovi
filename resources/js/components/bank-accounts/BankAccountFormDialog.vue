@@ -11,18 +11,26 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { t } from '@/lib/i18n';
 import type {
     BankAccountFormErrors,
     BankAccountFormValues,
 } from '@/lib/validation/bankAccountValidation';
-import type { BankAccount } from '@/types/models';
+import type { BankAccount, CurrencySummary } from '@/types/models';
 
 const props = defineProps<{
     open: boolean;
     editingAccount: BankAccount | null;
     formSubmitting: boolean;
     colorPresets: string[];
+    currencies: CurrencySummary[];
     form: BankAccountFormValues;
     errors: BankAccountFormErrors;
 }>();
@@ -63,9 +71,9 @@ const accountNumberModel = computed({
     set: (value: string) => updateForm({ account_number: value }),
 });
 
-const currencyModel = computed({
-    get: () => props.form.currency,
-    set: (value: string) => updateForm({ currency: value }),
+const currencyIdModel = computed({
+    get: () => props.form.currency_id,
+    set: (value: string) => updateForm({ currency_id: value }),
 });
 
 const initialBalanceModel = computed({
@@ -186,18 +194,34 @@ const colorModel = computed({
                     <FormField
                         :label="t('finance.bankAccounts.currency')"
                         field-id="ba_currency"
-                        :error="props.errors.currency"
+                        :error="props.errors.currency_id"
                     >
                         <template #default>
-                            <Input
-                                id="ba_currency"
-                                v-model="currencyModel"
-                                placeholder="RSD"
-                                :class="[
-                                    'h-11 rounded-2xl border-border/60 bg-background',
-                                    fieldErrorClass('currency'),
-                                ]"
-                            />
+                            <Select v-model="currencyIdModel">
+                                <SelectTrigger
+                                    id="ba_currency"
+                                    :class="[
+                                        'h-11 rounded-2xl border-border/60 bg-background px-4',
+                                        fieldErrorClass('currency_id'),
+                                    ]"
+                                >
+                                    <SelectValue
+                                        :placeholder="
+                                            t('finance.bankAccounts.currency')
+                                        "
+                                    />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem
+                                        v-for="currency in props.currencies"
+                                        :key="currency.id"
+                                        :value="String(currency.id)"
+                                    >
+                                        {{ currency.iso_code }} -
+                                        {{ currency.name }}
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
                         </template>
                     </FormField>
                 </div>

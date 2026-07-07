@@ -15,11 +15,14 @@ class TransactionService
 {
     private const ALLOWED_PER_PAGE = [15, 30, 50, 100];
 
-    public function __construct(private DebtService $debtService) {}
+    public function __construct(
+        private DebtService $debtService,
+        private MoneyService $moneyService,
+    ) {}
 
     public function list(User $user, array $filters = []): LengthAwarePaginator
     {
-        $query = $user->transactions()->with(['category', 'bankAccount', 'debt']);
+        $query = $user->transactions()->with(['category', 'bankAccount', 'currency', 'debt']);
 
         if (! empty($filters['type'])) {
             $query->where('type', $filters['type']);
@@ -88,13 +91,15 @@ class TransactionService
             $data['warranty_expires_at'] = Carbon::parse($data['date'])->addYears(2)->toDateString();
         }
 
+        $data = $this->moneyService->applyTransactionSnapshot($user, $data);
+
         $transaction = $user->transactions()->create($data);
 
         if ($transaction->debt_id) {
             $this->debtService->recalculateRemaining($transaction->debt);
         }
 
-        return $transaction->load(['category', 'bankAccount']);
+        return $transaction->load(['category', 'bankAccount', 'currency']);
     }
 
     public function update(Transaction $transaction, array $data): Transaction
@@ -118,6 +123,8 @@ class TransactionService
             }
         }
 
+        $data = $this->moneyService->applyTransactionSnapshot($transaction->user, $data, $transaction);
+
         $transaction->update($data);
 
         $newDebtId = $transaction->debt_id;
@@ -133,7 +140,7 @@ class TransactionService
             $this->debtService->recalculateRemaining($transaction->debt);
         }
 
-        return $transaction->fresh(['category', 'bankAccount']);
+        return $transaction->fresh(['category', 'bankAccount', 'currency']);
     }
 
     public function delete(Transaction $transaction): void
@@ -156,7 +163,7 @@ class TransactionService
 
     public function listAll(User $user, array $filters = [], int $limit = 5000): Collection
     {
-        $query = $user->transactions()->with(['category', 'bankAccount', 'debt']);
+        $query = $user->transactions()->with(['category', 'bankAccount', 'currency', 'debt']);
 
         if (! empty($filters['type'])) {
             $query->where('type', $filters['type']);
@@ -201,7 +208,7 @@ class TransactionService
     public function getRecent(User $user, int $limit = 5): Collection
     {
         return $user->transactions()
-            ->with(['category', 'bankAccount'])
+            ->with(['category', 'bankAccount', 'currency'])
             ->orderBy('date', 'desc')
             ->orderBy('created_at', 'desc')
             ->limit($limit)

@@ -241,15 +241,19 @@ function debtImpactLabel(item: RecurringTransaction): string | null {
                                             "
                                         >
                                             {{ statusLabel(item) }}
-                                        </span>
-                                        <span
-                                            v-if="!item.can_delete"
-                                            class="rounded-full bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold tracking-[0.16em] text-amber-700 uppercase"
-                                        >
-                                            {{
-                                                t(
-                                                    'finance.recurring.hasHistory',
-                                                )
+                                            <CurrencyDisplay
+                                                :amount="
+                                                    item.type === 'income'
+                                                        ? item.amount
+                                                        : -item.amount
+                                                "
+                                                :currency="
+                                                    item.currency?.iso_code
+                                                "
+                                                colored
+                                                class="text-sm font-semibold"
+                                            />
+                                            t( 'finance.recurring.hasHistory', )
                                             }}
                                         </span>
                                     </div>

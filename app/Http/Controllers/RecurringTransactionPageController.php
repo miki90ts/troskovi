@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\CategoryResource;
 use App\Http\Resources\RecurringTransactionResource;
+use App\Models\Currency;
 use App\Models\Debt;
 use App\Services\CategoryService;
 use App\Services\RecurringTransactionService;
@@ -30,6 +31,8 @@ class RecurringTransactionPageController extends Controller
             ->map(fn($account) => [
                 'id' => $account->id,
                 'name' => $account->name,
+                'currency' => $account->currency,
+                'currency_id' => $account->currency_id,
             ]);
         $debts = Debt::where('user_id', $user->id)
             ->whereIn('status', ['active', 'overdue'])
@@ -41,6 +44,11 @@ class RecurringTransactionPageController extends Controller
             'categories' => CategoryResource::collection($categories),
             'accounts' => $accounts,
             'debts' => $debts,
+            'currencies' => Currency::query()
+                ->where('active', true)
+                ->orderBy('iso_code')
+                ->get(['id', 'iso_code', 'name', 'symbol']),
+            'defaultCurrencyId' => $user->default_currency_id,
         ]);
     }
 }

@@ -23,6 +23,7 @@ class UpdateDebtRequest extends FormRequest
             'person_name' => ['sometimes', 'string', 'max:255'],
             'description' => ['sometimes', 'string', 'max:255'],
             'amount' => ['sometimes', 'numeric', 'gt:0'],
+            'currency_id' => ['sometimes', 'nullable', 'integer', Rule::exists('currencies', 'id')->where('active', true)],
             'date' => ['sometimes', 'date'],
             'due_date' => ['nullable', 'date', 'after_or_equal:date'],
             'status' => ['sometimes', Rule::in(['active', 'settled'])],

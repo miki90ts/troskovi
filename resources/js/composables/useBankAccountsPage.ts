@@ -5,7 +5,11 @@ import { useValidationErrors } from '@/composables/useValidationErrors';
 import { t } from '@/lib/i18n';
 import { validateBankAccountForm } from '@/lib/validation/bankAccountValidation';
 import { validateTransferForm } from '@/lib/validation/transferValidation';
-import type { AccountTransfer, BankAccount } from '@/types/models';
+import type {
+    AccountTransfer,
+    BankAccount,
+    CurrencySummary,
+} from '@/types/models';
 import type { BankAccountFormValues } from '@/lib/validation/bankAccountValidation';
 
 export type BankAccountFormState = BankAccountFormValues;
@@ -17,12 +21,14 @@ export type TransferFormState = {
     description: string;
 };
 
-function createEmptyForm(): BankAccountFormState {
+function createEmptyForm(
+    defaultCurrencyId: number | null,
+): BankAccountFormState {
     return {
         name: '',
         bank_name: '',
         account_number: '',
-        currency: 'RSD',
+        currency_id: defaultCurrencyId ? String(defaultCurrencyId) : '',
         color: '#3b82f6',
         initial_balance: '0',
     };
@@ -40,6 +46,9 @@ function createEmptyTransferForm(): TransferFormState {
 export function useBankAccountsPage(
     initialAccounts: BankAccount[],
     initialTransfers: AccountTransfer[],
+    currencies: CurrencySummary[],
+    latestExchangeRates: Record<string, number>,
+    defaultCurrencyId: number | null,
 ) {
     const { success, error: showError } = useToast();
     const {
@@ -58,7 +67,9 @@ export function useBankAccountsPage(
     const archiveConfirm = ref<BankAccount | null>(null);
     const showTransfer = ref(false);
     const transferSubmitting = ref(false);
-    const accountForm = ref<BankAccountFormState>(createEmptyForm());
+    const accountForm = ref<BankAccountFormState>(
+        createEmptyForm(defaultCurrencyId),
+    );
     const transferForm = ref<TransferFormState>(createEmptyTransferForm());
     const {
         errors: formErrors,
@@ -79,15 +90,60 @@ export function useBankAccountsPage(
         accounts.value.filter((account) => !account.is_archived),
     );
 
+    const defaultCurrency = computed(
+        () =>
+            currencies.find((currency) => currency.id === defaultCurrencyId) ??
+            currencies.find((currency) => currency.iso_code === 'RSD') ??
+            null,
+    );
+
     const archivedAccounts = computed(() =>
         accounts.value.filter((account) => account.is_archived),
     );
 
+    function resolveRate(currencyCode: string): number | null {
+        if (currencyCode === 'RSD') {
+            return 1;
+        }
+
+        const rate = latestExchangeRates[currencyCode];
+
+        return typeof rate === 'number' && rate > 0 ? rate : null;
+    }
+
+    function convertCurrency(
+        amount: number,
+        fromCurrencyCode: string,
+        toCurrencyCode: string,
+    ): number {
+        if (fromCurrencyCode === toCurrencyCode) {
+            return amount;
+        }
+
+        const fromRate = resolveRate(fromCurrencyCode);
+        const toRate = resolveRate(toCurrencyCode);
+
+        if (!fromRate || !toRate) {
+            return amount;
+        }
+
+        return Number(((amount * fromRate) / toRate).toFixed(2));
+    }
+
     const totalBalance = computed(() =>
-        activeAccounts.value.reduce(
-            (sum, account) => sum + account.current_balance,
-            0,
-        ),
+        activeAccounts.value.reduce((sum, account) => {
+            const accountCurrency =
+                account.currency_details?.iso_code ?? account.currency;
+
+            return (
+                sum +
+                convertCurrency(
+                    account.current_balance,
+                    accountCurrency,
+                    defaultCurrency.value?.iso_code ?? 'RSD',
+                )
+            );
+        }, 0),
     );
 
     const connectedBanks = computed(
@@ -107,7 +163,7 @@ export function useBankAccountsPage(
 
     function openCreate() {
         editingAccount.value = null;
-        accountForm.value = createEmptyForm();
+        accountForm.value = createEmptyForm(defaultCurrencyId);
         clearAllErrors();
         showForm.value = true;
     }
@@ -118,7 +174,7 @@ export function useBankAccountsPage(
             name: account.name,
             bank_name: account.bank_name,
             account_number: '',
-            currency: account.currency,
+            currency_id: account.currency_id ? String(account.currency_id) : '',
             color: account.color ?? '#3b82f6',
             initial_balance: String(account.initial_balance),
         };
@@ -154,6 +210,54 @@ export function useBankAccountsPage(
         showTransfer.value = true;
     }
 
+    const selectedFromAccount = computed(
+        () =>
+            activeAccounts.value.find(
+                (account) =>
+                    String(account.id) === transferForm.value.from_account_id,
+            ) ?? null,
+    );
+
+    const selectedToAccount = computed(
+        () =>
+            activeAccounts.value.find(
+                (account) =>
+                    String(account.id) === transferForm.value.to_account_id,
+            ) ?? null,
+    );
+
+    const transferPreview = computed(() => {
+        const amount = Number(transferForm.value.amount);
+
+        if (
+            !selectedFromAccount.value ||
+            !selectedToAccount.value ||
+            Number.isNaN(amount) ||
+            amount <= 0
+        ) {
+            return null;
+        }
+
+        const fromCurrency =
+            selectedFromAccount.value.currency_details?.iso_code ??
+            selectedFromAccount.value.currency;
+        const toCurrency =
+            selectedToAccount.value.currency_details?.iso_code ??
+            selectedToAccount.value.currency;
+        const fromRate = resolveRate(fromCurrency);
+        const toRate = resolveRate(toCurrency);
+
+        return {
+            fromCurrency,
+            toCurrency,
+            sourceAmount: amount,
+            destinationAmount:
+                fromRate && toRate
+                    ? convertCurrency(amount, fromCurrency, toCurrency)
+                    : null,
+        };
+    });
+
     function setTransferForm(value: TransferFormState) {
         const previous = transferForm.value;
         transferForm.value = value;
@@ -188,6 +292,7 @@ export function useBankAccountsPage(
 
             const payload = {
                 ...accountForm.value,
+                currency_id: parseInt(accountForm.value.currency_id, 10),
                 initial_balance: parseFloat(accountForm.value.initial_balance),
             };
 
@@ -312,6 +417,7 @@ export function useBankAccountsPage(
         archivedAccounts,
         transfers,
         totalBalance,
+        defaultCurrency,
         connectedBanks,
         colorPresets,
         showForm,
@@ -324,6 +430,7 @@ export function useBankAccountsPage(
         transferSubmitting,
         transferForm,
         transferErrors,
+        transferPreview,
         openCreate,
         openEdit,
         setAccountForm,

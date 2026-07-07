@@ -26,6 +26,7 @@ class StoreRecurringTransactionRequest extends FormRequest
         return [
             'type' => [...$required, Rule::enum(TransactionType::class)],
             'amount' => [...$required, 'numeric', 'gt:0'],
+            'currency_id' => ['sometimes', 'nullable', 'integer', Rule::exists('currencies', 'id')->where('active', true)],
             'description' => [...$required, 'string', 'max:255'],
             'frequency' => [...$required, Rule::enum(RecurringFrequency::class)],
             'next_due_date' => [...$required, 'date'],

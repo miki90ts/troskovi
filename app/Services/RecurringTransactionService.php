@@ -11,12 +11,15 @@ use Illuminate\Validation\ValidationException;
 
 class RecurringTransactionService
 {
-    public function __construct(private TransactionService $transactionService) {}
+    public function __construct(
+        private TransactionService $transactionService,
+        private MoneyService $moneyService,
+    ) {}
 
     public function list(User $user): Collection
     {
         return $user->recurringTransactions()
-            ->with(['category', 'bankAccount', 'debt'])
+            ->with(['category', 'bankAccount', 'currency', 'debt'])
             ->withCount([
                 'transactions as linked_transactions_count' => fn($query) => $query->withTrashed(),
             ])
@@ -28,7 +31,10 @@ class RecurringTransactionService
     public function create(User $user, array $data): RecurringTransaction
     {
         $recurring = $user->recurringTransactions()->create(
-            $this->prepareScheduleData($data)
+            $this->moneyService->applyRecurringSnapshot(
+                $user,
+                $this->prepareScheduleData($data),
+            )
         );
 
         return $this->hydrate($recurring);
@@ -36,7 +42,13 @@ class RecurringTransactionService
 
     public function update(RecurringTransaction $recurring, array $data): RecurringTransaction
     {
-        $recurring->update($this->prepareScheduleData($data, $recurring));
+        $recurring->update(
+            $this->moneyService->applyRecurringSnapshot(
+                $recurring->user,
+                $this->prepareScheduleData($data, $recurring),
+                $recurring,
+            )
+        );
 
         return $this->hydrate($recurring);
     }
@@ -127,7 +139,7 @@ class RecurringTransactionService
     private function hydrate(RecurringTransaction $recurring): RecurringTransaction
     {
         return $recurring->refresh()
-            ->load(['category', 'bankAccount', 'debt'])
+            ->load(['category', 'bankAccount', 'currency', 'debt'])
             ->loadCount([
                 'transactions as linked_transactions_count' => fn($query) => $query->withTrashed(),
             ]);

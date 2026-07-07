@@ -10,6 +10,7 @@ import type {
     BudgetPeriodSection,
     BudgetStatusFilterOption,
     Category,
+    CurrencySummary,
     SpendingTarget,
     SpendingTargetPeriod,
     SpendingTargetProgress,
@@ -23,16 +24,21 @@ export const OVERALL_SENTINEL = '__overall__';
 
 function createEmptyForm(
     period: SpendingTargetPeriod = 'monthly',
+    defaultCurrencyId: number | null = null,
 ): BudgetFormState {
     return {
         period,
         categoryValue: OVERALL_SENTINEL,
         targetAmount: '',
+        currency_id: defaultCurrencyId ? String(defaultCurrencyId) : '',
         isActive: true,
     };
 }
 
-export function useBudgetsPage() {
+export function useBudgetsPage(
+    _currencies: CurrencySummary[] = [],
+    defaultCurrencyId: number | null = null,
+) {
     const periodOptions: SpendingTargetPeriod[] = [
         'daily',
         'weekly',
@@ -60,7 +66,9 @@ export function useBudgetsPage() {
     const deleteCandidate = ref<SpendingTarget | null>(null);
     const statusFilter = ref<StatusFilter>('all');
     const activePeriodTab = ref<SpendingTargetPeriod>('monthly');
-    const form = ref<BudgetFormState>(createEmptyForm());
+    const form = ref<BudgetFormState>(
+        createEmptyForm('monthly', defaultCurrencyId),
+    );
     const {
         errors: formErrors,
         clearAllErrors,
@@ -181,7 +189,7 @@ export function useBudgetsPage() {
 
     function openCreate(period: SpendingTargetPeriod = 'monthly') {
         editingTarget.value = null;
-        form.value = createEmptyForm(period);
+        form.value = createEmptyForm(period, defaultCurrencyId);
         clearAllErrors();
         showForm.value = true;
     }
@@ -194,6 +202,11 @@ export function useBudgetsPage() {
                 ? String(target.category.id)
                 : OVERALL_SENTINEL,
             targetAmount: String(target.target_amount),
+            currency_id: target.currency
+                ? String(target.currency.id)
+                : defaultCurrencyId
+                  ? String(defaultCurrencyId)
+                  : '',
             isActive: target.is_active,
         };
         clearAllErrors();
@@ -236,6 +249,8 @@ export function useBudgetsPage() {
                 mappedErrors.targetAmount = message;
             } else if (key === 'category_id') {
                 mappedErrors.categoryValue = message;
+            } else if (key === 'currency_id') {
+                mappedErrors.currency_id = message;
             } else if (key === 'period') {
                 mappedErrors.period = message;
             }
@@ -290,6 +305,9 @@ export function useBudgetsPage() {
             const payload = {
                 period: form.value.period,
                 target_amount: Number(form.value.targetAmount),
+                currency_id: form.value.currency_id
+                    ? Number(form.value.currency_id)
+                    : null,
                 category_id:
                     form.value.categoryValue === OVERALL_SENTINEL
                         ? null

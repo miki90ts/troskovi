@@ -5,19 +5,23 @@ import { t } from '@/lib/i18n';
 import { validateDebtForm } from '@/lib/validation/debtValidation';
 import { useValidationErrors } from '@/composables/useValidationErrors';
 import type { DebtPayload } from '@/types/api';
-import type { Debt, DebtSummary } from '@/types/models';
+import type { CurrencySummary, Debt, DebtSummary } from '@/types/models';
 import type { DebtFormValues } from '@/lib/validation/debtValidation';
 
 export type DebtTab = 'i_owe' | 'owed_to_me';
 
 export type DebtFormState = DebtFormValues;
 
-function createEmptyForm(type: DebtTab = 'i_owe'): DebtFormState {
+function createEmptyForm(
+    type: DebtTab = 'i_owe',
+    defaultCurrencyId: number | null = null,
+): DebtFormState {
     return {
         type,
         person_name: '',
         description: '',
         amount: '',
+        currency_id: defaultCurrencyId ? String(defaultCurrencyId) : '',
         date: new Date().toISOString().split('T')[0],
         due_date: '',
         notes: '',
@@ -27,6 +31,8 @@ function createEmptyForm(type: DebtTab = 'i_owe'): DebtFormState {
 export function useDebtsPage(
     initialDebts: Debt[],
     initialSummary: DebtSummary,
+    _currencies: CurrencySummary[],
+    defaultCurrencyId: number | null,
 ) {
     const { success, error: showError } = useToast();
     const { createDebt, updateDebt, deleteDebt } = useDebts();
@@ -40,7 +46,9 @@ export function useDebtsPage(
     const deleteTarget = ref<Debt | null>(null);
     const searchQuery = ref('');
     const statusFilter = ref<'all' | 'active' | 'settled' | 'overdue'>('all');
-    const debtForm = ref<DebtFormState>(createEmptyForm());
+    const debtForm = ref<DebtFormState>(
+        createEmptyForm('i_owe', defaultCurrencyId),
+    );
     const {
         errors: formErrors,
         clearAllErrors,
@@ -83,7 +91,7 @@ export function useDebtsPage(
 
     function openCreate() {
         editingDebt.value = null;
-        debtForm.value = createEmptyForm(activeTab.value);
+        debtForm.value = createEmptyForm(activeTab.value, defaultCurrencyId);
         clearAllErrors();
         showForm.value = true;
     }
@@ -95,6 +103,11 @@ export function useDebtsPage(
             person_name: debt.person_name,
             description: debt.description,
             amount: String(debt.amount),
+            currency_id: debt.currency
+                ? String(debt.currency.id)
+                : defaultCurrencyId
+                  ? String(defaultCurrencyId)
+                  : '',
             date: debt.date,
             due_date: debt.due_date ?? '',
             notes: debt.notes ?? '',
@@ -139,6 +152,8 @@ export function useDebtsPage(
             settled_count: debts.value.filter((d) => d.status === 'settled')
                 .length,
             total_count: debts.value.length,
+            currency_code: initialSummary.currency_code,
+            currency_symbol: initialSummary.currency_symbol,
         };
     }
 
@@ -156,11 +171,23 @@ export function useDebtsPage(
                 return;
             }
 
+            if (
+                debtForm.value.type !== 'i_owe' &&
+                debtForm.value.type !== 'owed_to_me'
+            ) {
+                setErrors({ type: t('debts.typeRequired') });
+
+                return;
+            }
+
             const payload: DebtPayload = {
                 type: debtForm.value.type,
                 person_name: debtForm.value.person_name,
                 description: debtForm.value.description,
                 amount: parseFloat(debtForm.value.amount),
+                currency_id: debtForm.value.currency_id
+                    ? parseInt(debtForm.value.currency_id, 10)
+                    : null,
                 date: debtForm.value.date,
                 due_date: debtForm.value.due_date || null,
                 notes: debtForm.value.notes || null,

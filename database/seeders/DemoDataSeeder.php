@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\BankAccount;
 use App\Models\Category;
+use App\Models\Currency;
 use App\Models\Transaction;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -19,13 +20,24 @@ class DemoDataSeeder extends Seeder
             return;
         }
 
+        $rsd = Currency::query()->where('iso_code', 'RSD')->first();
+
+        if (! $rsd) {
+            return;
+        }
+
+        $user->forceFill([
+            'default_currency_id' => $user->default_currency_id ?? $rsd->id,
+        ])->save();
+
         // Create bank accounts
         $checking = BankAccount::create([
             'user_id' => $user->id,
             'name' => 'Main Checking',
             'bank_name' => 'Chase',
             'account_number' => '4521789034',
-            'currency' => 'USD',
+            'currency' => 'RSD',
+            'currency_id' => $rsd->id,
             'color' => '#3b82f6',
             'icon' => 'landmark',
             'initial_balance' => 5000.00,
@@ -36,7 +48,8 @@ class DemoDataSeeder extends Seeder
             'name' => 'Savings Account',
             'bank_name' => 'Wells Fargo',
             'account_number' => '7891234567',
-            'currency' => 'USD',
+            'currency' => 'RSD',
+            'currency_id' => $rsd->id,
             'color' => '#22c55e',
             'icon' => 'piggy-bank',
             'initial_balance' => 15000.00,
@@ -47,7 +60,8 @@ class DemoDataSeeder extends Seeder
             'name' => 'Business Account',
             'bank_name' => 'Bank of America',
             'account_number' => '3456789012',
-            'currency' => 'USD',
+            'currency' => 'RSD',
+            'currency_id' => $rsd->id,
             'color' => '#f59e0b',
             'icon' => 'building',
             'initial_balance' => 8500.00,
@@ -65,12 +79,16 @@ class DemoDataSeeder extends Seeder
 
             // Income: Salary (1st of each month)
             $salaryCategory = $incomeCategories->where('name', 'Salary')->first();
+            $salaryAmount = fake()->randomFloat(2, 4500, 5500);
             Transaction::create([
                 'user_id' => $user->id,
                 'bank_account_id' => $checking->id,
                 'category_id' => $salaryCategory->id,
                 'type' => 'income',
-                'amount' => fake()->randomFloat(2, 4500, 5500),
+                'amount' => $salaryAmount,
+                'currency_id' => $rsd->id,
+                'exchange_rate' => 1,
+                'base_amount' => $salaryAmount,
                 'date' => $monthStart->addDay(),
                 'description' => 'Monthly Salary',
                 'payment_method' => 'bank_account',
@@ -79,12 +97,16 @@ class DemoDataSeeder extends Seeder
             // Income: Freelance (occasional)
             if (fake()->boolean(60)) {
                 $freelanceCategory = $incomeCategories->where('name', 'Freelance')->first();
+                $freelanceAmount = fake()->randomFloat(2, 500, 2000);
                 Transaction::create([
                     'user_id' => $user->id,
                     'bank_account_id' => $credit->id,
                     'category_id' => $freelanceCategory->id,
                     'type' => 'income',
-                    'amount' => fake()->randomFloat(2, 500, 2000),
+                    'amount' => $freelanceAmount,
+                    'currency_id' => $rsd->id,
+                    'exchange_rate' => 1,
+                    'base_amount' => $freelanceAmount,
                     'date' => $monthStart->addDays(fake()->numberBetween(5, 25)),
                     'description' => fake()->randomElement(['Web Design Project', 'Consulting Fee', 'Logo Design', 'App Development']),
                     'payment_method' => 'bank_account',
@@ -125,12 +147,17 @@ class DemoDataSeeder extends Seeder
                     default => ['Miscellaneous Purchase', 'General Expense'],
                 };
 
+                $expenseAmount = fake()->randomFloat(2, $amounts[0], $amounts[1]);
+
                 Transaction::create([
                     'user_id' => $user->id,
                     'bank_account_id' => $account?->id,
                     'category_id' => $category->id,
                     'type' => 'expense',
-                    'amount' => fake()->randomFloat(2, $amounts[0], $amounts[1]),
+                    'amount' => $expenseAmount,
+                    'currency_id' => $rsd->id,
+                    'exchange_rate' => 1,
+                    'base_amount' => $expenseAmount,
                     'date' => $monthStart->addDays(fake()->numberBetween(0, $monthStart->daysInMonth - 1)),
                     'description' => fake()->randomElement($descriptions),
                     'payment_method' => $useBank ? 'bank_account' : 'cash',

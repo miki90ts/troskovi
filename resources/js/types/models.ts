@@ -1,9 +1,18 @@
+export type CurrencySummary = {
+    id: number;
+    iso_code: string;
+    name: string;
+    symbol: string;
+};
+
 export type BankAccount = {
     id: number;
     name: string;
     bank_name: string;
     masked_account_number: string;
     currency: string;
+    currency_id: number | null;
+    currency_details: CurrencySummary | null;
     color: string | null;
     icon: string | null;
     initial_balance: number;
@@ -44,6 +53,9 @@ export type Transaction = {
     id: number;
     type: 'income' | 'expense';
     amount: number;
+    original_amount: number;
+    exchange_rate: number;
+    base_amount: number;
     date: string;
     description: string;
     notes: string | null;
@@ -52,6 +64,7 @@ export type Transaction = {
     is_warranty: boolean;
     warranty_expires_at: string | null;
     warranty_is_expired: boolean;
+    currency: CurrencySummary | null;
     category: CategoryCompact | null;
     bank_account: { id: number; name: string } | null;
     debt: {
@@ -64,9 +77,14 @@ export type Transaction = {
 
 export type AccountTransfer = {
     id: number;
-    from_account: { id: number; name: string };
-    to_account: { id: number; name: string };
+    from_account: { id: number; name: string; currency: string };
+    to_account: { id: number; name: string; currency: string };
     amount: number;
+    to_amount: number;
+    exchange_rate: number;
+    base_amount: number;
+    from_currency: CurrencySummary | null;
+    to_currency: CurrencySummary | null;
     description: string | null;
     date: string;
     created_at: string;
@@ -76,6 +94,7 @@ export type RecurringTransaction = {
     id: number;
     type: 'income' | 'expense';
     amount: number;
+    currency: CurrencySummary | null;
     description: string;
     frequency: 'daily' | 'weekly' | 'monthly';
     next_due_date: string;
@@ -107,6 +126,8 @@ export type ReportSummary = {
     mom_change: number;
     period_start: string;
     period_end: string;
+    currency_code: string;
+    currency_symbol: string;
 };
 
 export type SpendingTargetPeriod = 'daily' | 'weekly' | 'monthly';
@@ -117,6 +138,7 @@ export type SpendingTarget = {
     target_amount: number;
     is_active: boolean;
     scope: 'overall' | 'category';
+    currency: CurrencySummary | null;
     category: CategoryCompact | null;
     created_at: string;
     updated_at: string;
@@ -132,6 +154,7 @@ export type SpendingTargetProgress = {
     progress_percent: number;
     status: 'ok' | 'warning' | 'exceeded';
     is_active: boolean;
+    currency: CurrencySummary | null;
     category: CategoryCompact | null;
 };
 
@@ -154,8 +177,11 @@ export type DashboardTransaction = {
     id: number;
     type: 'income' | 'expense';
     amount: number;
+    original_amount?: number;
+    base_amount: number;
     date: string;
     description: string;
+    currency: CurrencySummary | null;
     category: CategoryCompact | null;
     bank_account: { name: string } | null;
     payment_method: 'cash' | 'bank_account';
@@ -180,7 +206,10 @@ export type Debt = {
     person_name: string;
     description: string;
     amount: number;
+    exchange_rate: number;
+    base_amount: number;
     remaining_amount: number;
+    remaining_base_amount: number;
     paid_amount: number;
     date: string;
     due_date: string | null;
@@ -188,6 +217,7 @@ export type Debt = {
     is_overdue: boolean;
     progress_percent: number;
     notes: string | null;
+    currency: CurrencySummary | null;
     linked_transactions_count: number;
     created_at: string;
 };
@@ -199,4 +229,15 @@ export type DebtSummary = {
     overdue_count: number;
     settled_count: number;
     total_count: number;
+    currency_code: string;
+    currency_symbol: string;
+};
+
+export type ExchangeRate = {
+    id: number;
+    date: string;
+    rate: number;
+    currency: CurrencySummary | null;
+    created_at: string | null;
+    updated_at: string | null;
 };

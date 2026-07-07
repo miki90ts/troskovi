@@ -21,6 +21,7 @@ class RecurringTransaction extends Model
         'debt_id',
         'type',
         'amount',
+        'currency_id',
         'description',
         'frequency',
         'next_due_date',
@@ -52,6 +53,11 @@ class RecurringTransaction extends Model
     public function bankAccount(): BelongsTo
     {
         return $this->belongsTo(BankAccount::class);
+    }
+
+    public function currency(): BelongsTo
+    {
+        return $this->belongsTo(Currency::class);
     }
 
     public function category(): BelongsTo

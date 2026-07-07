@@ -5,6 +5,7 @@ defineProps<{
     visibleAmountTotal: number;
     averageIncome: number;
     accountLinkedCount: number;
+    defaultCurrencyCode: string;
 }>();
 </script>
 
@@ -47,7 +48,12 @@ defineProps<{
                             {{ t('common.labels.totalShown') }}
                         </p>
                         <p class="mt-2 text-xl font-semibold text-foreground">
-                            {{ formatCurrency(visibleAmountTotal) }}
+                            {{
+                                formatCurrency(
+                                    visibleAmountTotal,
+                                    defaultCurrencyCode,
+                                )
+                            }}
                         </p>
                     </div>
                     <div
@@ -59,7 +65,12 @@ defineProps<{
                             {{ t('finance.incomes.averageIncome') }}
                         </p>
                         <p class="mt-2 text-xl font-semibold text-foreground">
-                            {{ formatCurrency(averageIncome) }}
+                            {{
+                                formatCurrency(
+                                    averageIncome,
+                                    defaultCurrencyCode,
+                                )
+                            }}
                         </p>
                     </div>
                     <div

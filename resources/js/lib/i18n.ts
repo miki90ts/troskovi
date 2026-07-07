@@ -262,6 +262,7 @@ const messages = {
         labels: {
             overview: 'Pregled',
             amount: 'Iznos',
+            currency: 'Valuta',
             date: 'Datum',
             description: 'Opis',
             category: 'Kategorija',
@@ -594,6 +595,12 @@ const messages = {
             selectAccount: 'Izaberi račun',
             transferDescriptionLabel: 'Opis',
             transferDescriptionPlaceholder: 'Razlog prenosa',
+            sourceAmount: 'Iznos za skidanje',
+            destinationAmount: 'Iznos za prijem',
+            destinationPreview:
+                'Odredišni iznos se automatski obračunava po važećem kursu.',
+            destinationUnavailable:
+                'Nedostaje kurs za obračun odredišnog iznosa.',
             transfering: 'Prenos u toku...',
             transferSuccess: 'Prenos je završen',
             transferError: 'Prenos nije uspeo',
@@ -812,6 +819,7 @@ const messages = {
             profile: 'Profil',
             security: 'Bezbednost',
             budgets: 'Budžeti',
+            exchangeRates: 'Kursna lista',
             appearance: 'Izgled',
             description:
                 'Upravljaj profilom, bezbednošću, budžetima i izgledom interfejsa iz jednog mesta.',
@@ -822,6 +830,9 @@ const messages = {
             description: 'Azuriraj ime i email adresu',
             name: 'Ime i prezime',
             email: 'Email adresa',
+            defaultCurrency: 'Podrazumevana valuta',
+            defaultCurrencyHelp:
+                'Ova valuta ce biti glavna za zbirne prikaze i kes transakcije.',
             fullName: 'Puno ime',
             emailPlaceholder: 'Email adresa',
             emailUnverified: 'Tvoja email adresa nije verifikovana.',
@@ -933,6 +944,25 @@ const messages = {
             pause: 'Pauziraj',
             statusNote:
                 'Warning se prikazuje od 80% i prelazi u kritično nakon 100%.',
+        },
+        exchangeRates: {
+            head: 'Kursna lista',
+            title: 'Dnevni kursevi valuta',
+            description:
+                'Dodaj ili izmeni dnevne kurseve koje aplikacija koristi za istorijske konverzije.',
+            currency: 'Valuta',
+            date: 'Datum',
+            rate: 'Kurs prema RSD',
+            add: 'Sačuvaj kurs',
+            edit: 'Izmeni',
+            emptyTitle: 'Još nema unetih kurseva',
+            emptyDescription:
+                'Dodaj prvi kurs da bi konverzije za tu valutu bile dostupne.',
+            saved: 'Kurs je sačuvan.',
+            deleted: 'Kurs je obrisan.',
+            saveError: 'Čuvanje kursa nije uspelo.',
+            deleteError: 'Brisanje kursa nije uspelo.',
+            hint: 'Za isti datum i valutu novi unos zamenjuje postojeći kurs.',
         },
         deleteAccount: {
             title: 'Brisanje naloga',

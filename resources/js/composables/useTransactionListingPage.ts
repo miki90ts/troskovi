@@ -22,6 +22,8 @@ export function useTransactionListingPage(options: {
     transactionsPage: Ref<TransactionsPage>;
     filters: Ref<TransactionListingFilters>;
     routePath: string;
+    defaultCurrencyCode: string;
+    latestExchangeRates: Record<string, number>;
     exportType: Transaction['type'];
     exportFilenamePrefix: string;
     deleteSuccessMessage: string;
@@ -32,6 +34,8 @@ export function useTransactionListingPage(options: {
         transactionsPage,
         filters,
         routePath,
+        defaultCurrencyCode,
+        latestExchangeRates,
         exportType,
         exportFilenamePrefix,
         deleteSuccessMessage,
@@ -58,8 +62,32 @@ export function useTransactionListingPage(options: {
 
     const transactions = computed(() => transactionsPage.value.data);
     const pagination = computed(() => transactionsPage.value.meta);
+
+    function resolveRate(currencyCode: string): number | null {
+        if (currencyCode === 'RSD') {
+            return 1;
+        }
+
+        const rate = latestExchangeRates[currencyCode];
+
+        return typeof rate === 'number' && rate > 0 ? rate : null;
+    }
+
+    function convertFromBase(baseAmount: number): number {
+        const targetRate = resolveRate(defaultCurrencyCode);
+
+        if (!targetRate) {
+            return baseAmount;
+        }
+
+        return Number((baseAmount / targetRate).toFixed(2));
+    }
+
     const visibleAmountTotal = computed(() =>
-        transactions.value.reduce((sum, tx) => sum + tx.amount, 0),
+        transactions.value.reduce(
+            (sum, tx) => sum + convertFromBase(tx.base_amount ?? tx.amount),
+            0,
+        ),
     );
     const activeFiltersCount = computed(
         () =>
@@ -274,6 +302,7 @@ export function useTransactionListingPage(options: {
         transactions,
         pagination,
         visibleAmountTotal,
+        convertFromBase,
         search,
         showFilters,
         activeFiltersCount,

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, useAttrs } from 'vue';
+import { computed, useAttrs, useTemplateRef } from 'vue';
 import type { Component, HTMLAttributes } from 'vue';
 import FormField from '@/components/forms/FormField.vue';
 import { Input } from '@/components/ui/input';
@@ -50,6 +50,19 @@ const forwardedAttrs = computed(() => {
 const attrClass = computed<HTMLAttributes['class']>(
     () => attrs.class as HTMLAttributes['class'],
 );
+
+const controlRef = useTemplateRef('controlRef');
+
+defineExpose({
+    focus: () => {
+        const control = controlRef.value as
+            | { focus?: () => void; $el?: { focus?: () => void } }
+            | undefined;
+
+        control?.focus?.();
+        control?.$el?.focus?.();
+    },
+});
 </script>
 
 <template>
@@ -66,6 +79,7 @@ const attrClass = computed<HTMLAttributes['class']>(
         <template #default="{ errorClass }">
             <component
                 :is="component"
+                ref="controlRef"
                 :id="controlId"
                 :class="[inputClass, attrClass, errorClass]"
                 v-bind="forwardedAttrs"

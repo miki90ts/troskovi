@@ -20,7 +20,11 @@ class Debt extends Model
         'person_name',
         'description',
         'amount',
+        'currency_id',
+        'exchange_rate',
+        'base_amount',
         'remaining_amount',
+        'remaining_base_amount',
         'date',
         'due_date',
         'status',
@@ -32,7 +36,10 @@ class Debt extends Model
         return [
             'type' => DebtType::class,
             'amount' => 'decimal:2',
+            'exchange_rate' => 'decimal:6',
+            'base_amount' => 'decimal:2',
             'remaining_amount' => 'decimal:2',
+            'remaining_base_amount' => 'decimal:2',
             'date' => 'date',
             'due_date' => 'date',
             'status' => DebtStatus::class,
@@ -49,6 +56,11 @@ class Debt extends Model
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    public function currency(): BelongsTo
+    {
+        return $this->belongsTo(Currency::class);
     }
 
     // ── Scopes ──

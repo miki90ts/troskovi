@@ -82,7 +82,7 @@ class BankAccountController extends Controller
     {
         $transfer = $this->service->transfer($request->user(), $request->validated());
 
-        return (new AccountTransferResource($transfer->load(['fromAccount', 'toAccount'])))
+        return (new AccountTransferResource($transfer->load(['fromAccount', 'toAccount', 'fromCurrency', 'toCurrency'])))
             ->response()
             ->setStatusCode(201);
     }

@@ -29,6 +29,12 @@ const props = defineProps<{
     open: boolean;
     submitting: boolean;
     activeAccounts: BankAccount[];
+    transferPreview: {
+        fromCurrency: string;
+        toCurrency: string;
+        sourceAmount: number;
+        destinationAmount: number | null;
+    } | null;
     form: TransferFormValues;
     errors: TransferFormErrors;
 }>();
@@ -178,7 +184,7 @@ const availableToAccounts = computed(() =>
                 </FormField>
 
                 <FormField
-                    :label="t('common.labels.amount')"
+                    :label="t('finance.bankAccounts.sourceAmount')"
                     field-id="transfer_amount"
                     :error="props.errors.amount"
                 >
@@ -196,6 +202,43 @@ const availableToAccounts = computed(() =>
                         />
                     </template>
                 </FormField>
+
+                <div
+                    v-if="props.transferPreview"
+                    class="rounded-2xl border border-border/60 bg-muted/20 px-4 py-3"
+                >
+                    <p
+                        class="text-xs font-medium tracking-[0.2em] text-muted-foreground uppercase"
+                    >
+                        {{ t('finance.bankAccounts.destinationAmount') }}
+                    </p>
+                    <p class="mt-2 text-lg font-semibold">
+                        <template
+                            v-if="
+                                props.transferPreview.destinationAmount !== null
+                            "
+                        >
+                            {{
+                                props.transferPreview.destinationAmount.toLocaleString(
+                                    'sr-RS',
+                                    {
+                                        style: 'currency',
+                                        currency:
+                                            props.transferPreview.toCurrency,
+                                    },
+                                )
+                            }}
+                        </template>
+                        <template v-else>
+                            {{
+                                t('finance.bankAccounts.destinationUnavailable')
+                            }}
+                        </template>
+                    </p>
+                    <p class="mt-1 text-sm text-muted-foreground">
+                        {{ t('finance.bankAccounts.destinationPreview') }}
+                    </p>
+                </div>
 
                 <FormField
                     :label="t('finance.bankAccounts.transferDescriptionLabel')"

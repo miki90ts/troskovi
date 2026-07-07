@@ -15,7 +15,12 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { t } from '@/lib/i18n';
 import type { BreadcrumbItem } from '@/types';
 import type { PaginationMeta } from '@/types/api';
-import type { Category, Debt, Transaction } from '@/types/models';
+import type {
+    Category,
+    CurrencySummary,
+    Debt,
+    Transaction,
+} from '@/types/models';
 
 const props = defineProps<{
     transactions: { data: Transaction[]; meta: PaginationMeta };
@@ -23,6 +28,8 @@ const props = defineProps<{
     accounts: { id: number; name: string }[];
     debts: Debt[];
     filters: Record<string, string | undefined>;
+    defaultCurrency: CurrencySummary;
+    latestExchangeRates: Record<string, number>;
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -60,6 +67,8 @@ const {
 } = useIncomesPage({
     transactionsPage: toRef(props, 'transactions'),
     filters: toRef(props, 'filters'),
+    defaultCurrencyCode: props.defaultCurrency.iso_code,
+    latestExchangeRates: props.latestExchangeRates,
 });
 </script>
 
@@ -73,6 +82,7 @@ const {
                 :visible-amount-total="visibleAmountTotal"
                 :average-income="averageIncome"
                 :account-linked-count="accountLinkedCount"
+                :default-currency-code="props.defaultCurrency.iso_code"
             />
 
             <IncomesManagementSection
@@ -88,6 +98,8 @@ const {
                 :date-from="dateFrom"
                 :date-to="dateTo"
                 :per-page="perPage"
+                :default-currency-code="props.defaultCurrency.iso_code"
+                :latest-exchange-rates="props.latestExchangeRates"
                 :all-categories-value="ALL_CATEGORIES_VALUE"
                 :all-payment-methods-value="ALL_PAYMENT_METHODS_VALUE"
                 :exporting-pdf="exportingPdf"

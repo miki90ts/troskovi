@@ -23,6 +23,7 @@ class StoreSpendingTargetRequest extends FormRequest
         return [
             'period' => ['required', Rule::enum(RecurringFrequency::class)],
             'target_amount' => ['required', 'numeric', 'gt:0'],
+            'currency_id' => ['nullable', 'integer', Rule::exists('currencies', 'id')->where('active', true)],
             'category_id' => [
                 'nullable',
                 'integer',

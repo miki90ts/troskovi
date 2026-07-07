@@ -63,7 +63,12 @@ const emit = defineEmits<{
                             <TrendingDown class="h-4 w-4 text-orange-500" />
                         </div>
                         <p class="mt-2 text-2xl font-semibold text-orange-600">
-                            {{ formatCurrency(summary.total_i_owe) }}
+                            {{
+                                formatCurrency(
+                                    summary.total_i_owe,
+                                    summary.currency_code,
+                                )
+                            }}
                         </p>
                     </div>
                     <div
@@ -78,7 +83,12 @@ const emit = defineEmits<{
                             <TrendingUp class="h-4 w-4 text-emerald-500" />
                         </div>
                         <p class="mt-2 text-2xl font-semibold text-emerald-600">
-                            {{ formatCurrency(summary.total_owed_to_me) }}
+                            {{
+                                formatCurrency(
+                                    summary.total_owed_to_me,
+                                    summary.currency_code,
+                                )
+                            }}
                         </p>
                     </div>
                     <div

@@ -16,6 +16,7 @@ class SpendingTarget extends Model
         'category_id',
         'period',
         'target_amount',
+        'currency_id',
         'is_active',
     ];
 
@@ -36,6 +37,11 @@ class SpendingTarget extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function currency(): BelongsTo
+    {
+        return $this->belongsTo(Currency::class);
     }
 
     public function scopeActive($query)

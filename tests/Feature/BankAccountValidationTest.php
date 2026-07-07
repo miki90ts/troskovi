@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Currency;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -51,5 +52,30 @@ class BankAccountValidationTest extends TestCase
                 'errors.account_number.0',
                 'Broj računa ne sme biti duži od 50 karaktera.',
             );
+    }
+
+    public function test_store_accepts_currency_id_and_persists_iso_currency_code(): void
+    {
+        $user = User::factory()->create();
+        $eur = Currency::query()->where('iso_code', 'EUR')->firstOrFail();
+
+        Sanctum::actingAs($user);
+
+        $this->postJson('/api/v1/bank-accounts', [
+            'name' => 'Devizni racun',
+            'bank_name' => 'Test banka',
+            'currency_id' => $eur->id,
+            'initial_balance' => 100,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.currency', 'EUR')
+            ->assertJsonPath('data.currency_id', $eur->id);
+
+        $this->assertDatabaseHas('bank_accounts', [
+            'user_id' => $user->id,
+            'name' => 'Devizni racun',
+            'currency' => 'EUR',
+            'currency_id' => $eur->id,
+        ]);
     }
 }

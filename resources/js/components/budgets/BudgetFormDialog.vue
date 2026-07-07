@@ -25,6 +25,7 @@ import type { BudgetFormErrors } from '@/lib/validation/spendingTargetValidation
 import type {
     BudgetFormState,
     Category,
+    CurrencySummary,
     SpendingTarget,
     SpendingTargetPeriod,
 } from '@/types';
@@ -34,6 +35,7 @@ const props = defineProps<{
     formSubmitting: boolean;
     editingTarget: SpendingTarget | null;
     categories: Category[];
+    currencies: CurrencySummary[];
     periodOptions: SpendingTargetPeriod[];
     form: BudgetFormState;
     errors: BudgetFormErrors;
@@ -194,6 +196,44 @@ function fieldErrorClass(field: keyof BudgetFormState): string {
                                 updateForm({ targetAmount: String($event) })
                             "
                         />
+                    </template>
+                </FormField>
+
+                <FormField
+                    :label="t('common.labels.currency')"
+                    field-id="budget-currency"
+                    :error="props.errors.currency_id"
+                    label-class="text-sm font-medium"
+                >
+                    <template #default>
+                        <Select
+                            :model-value="form.currency_id"
+                            @update:model-value="
+                                updateForm({ currency_id: String($event) })
+                            "
+                        >
+                            <SelectTrigger
+                                id="budget-currency"
+                                :class="[
+                                    'h-11 rounded-2xl',
+                                    fieldErrorClass('currency_id'),
+                                ]"
+                            >
+                                <SelectValue
+                                    :placeholder="t('common.labels.currency')"
+                                />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem
+                                    v-for="currency in props.currencies"
+                                    :key="currency.id"
+                                    :value="String(currency.id)"
+                                >
+                                    {{ currency.iso_code }} -
+                                    {{ currency.name }}
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
                     </template>
                 </FormField>
 

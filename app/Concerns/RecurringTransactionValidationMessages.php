@@ -12,6 +12,8 @@ trait RecurringTransactionValidationMessages
             'amount.required' => 'Iznos je obavezan.',
             'amount.numeric' => 'Iznos mora biti broj.',
             'amount.gt' => 'Iznos mora biti veći od 0.',
+            'currency_id.integer' => 'Valuta mora biti broj.',
+            'currency_id.exists' => 'Izabrana valuta nije ispravna.',
             'description.required' => 'Opis je obavezan.',
             'description.string' => 'Opis mora biti tekst.',
             'description.max' => 'Opis ne sme biti duži od 255 karaktera.',

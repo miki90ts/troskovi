@@ -3,6 +3,7 @@ export type DebtFormValues = {
     person_name: string;
     description: string;
     amount: string;
+    currency_id: string;
     date: string;
     due_date: string;
     notes: string;
@@ -22,6 +23,7 @@ export const debtValidationMessages = {
     amountRequired: 'Iznos je obavezan.',
     amountNumeric: 'Iznos mora biti broj.',
     amountGt: 'Iznos mora biti veći od 0.',
+    currencyInteger: 'Valuta mora biti broj.',
     dateRequired: 'Datum je obavezan.',
     dateInvalid: 'Datum nije ispravan.',
     dueDateInvalid: 'Rok dospeća nije ispravan.',
@@ -33,7 +35,10 @@ export const debtValidationMessages = {
 const allowedDebtTypes = new Set(['i_owe', 'owed_to_me']);
 
 function isBlank(value: string): boolean {
-    return value == null || (typeof value === 'string' && value.trim().length === 0);
+    return (
+        value == null ||
+        (typeof value === 'string' && value.trim().length === 0)
+    );
 }
 
 export function validateDebtForm(values: DebtFormValues): DebtFormErrors {
@@ -71,6 +76,13 @@ export function validateDebtForm(values: DebtFormValues): DebtFormErrors {
         } else if (amount <= 0) {
             errors.amount = debtValidationMessages.amountGt;
         }
+    }
+
+    if (
+        !isBlank(values.currency_id) &&
+        !/^\d+$/.test(values.currency_id.trim())
+    ) {
+        errors.currency_id = debtValidationMessages.currencyInteger;
     }
 
     if (isBlank(values.date)) {
