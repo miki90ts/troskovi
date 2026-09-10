@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Enums\PaymentMethod;
 use App\Enums\TransactionType;
 use App\Models\Currency;
 use App\Models\User;
@@ -64,6 +63,45 @@ class MultiCurrencyFormsTest extends TestCase
             'description' => 'Pretplata',
             'currency_id' => $eur->id,
         ]);
+    }
+
+    public function test_recurring_currency_follows_bank_account_or_user_default_without_explicit_input(): void
+    {
+        $eur = Currency::query()->where('iso_code', 'EUR')->firstOrFail();
+        $usd = Currency::query()->where('iso_code', 'USD')->firstOrFail();
+        $user = User::factory()->create(['default_currency_id' => $eur->id]);
+        $account = $user->bankAccounts()->create([
+            'name' => 'USD račun',
+            'bank_name' => 'Test banka',
+            'account_number' => '1111222233334444',
+            'currency' => 'USD',
+            'currency_id' => $usd->id,
+            'initial_balance' => 0,
+            'is_archived' => false,
+        ]);
+
+        Sanctum::actingAs($user);
+
+        $response = $this->postJson('/api/v1/recurring-transactions', [
+            'type' => 'expense',
+            'amount' => 25,
+            'description' => 'Pretplata sa računa',
+            'frequency' => 'monthly',
+            'next_due_date' => '2026-07-10',
+            'payment_method' => 'bank_account',
+            'bank_account_id' => $account->id,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.currency.iso_code', 'USD');
+
+        $recurringId = $response->json('data.id');
+
+        $this->putJson("/api/v1/recurring-transactions/{$recurringId}", [
+            'payment_method' => 'cash',
+            'bank_account_id' => null,
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.currency.iso_code', 'EUR');
     }
 
     public function test_spending_target_creation_accepts_explicit_currency_id(): void

@@ -8,7 +8,6 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import ToastContainer from '@/components/ToastContainer.vue';
 import { OVERALL_SENTINEL, useBudgetsPage } from '@/composables/useBudgetsPage';
 import AppLayout from '@/layouts/AppLayout.vue';
-import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { t } from '@/lib/i18n';
 import type { BreadcrumbItem } from '@/types';
 import type { CurrencySummary } from '@/types/models';
@@ -60,7 +59,7 @@ const {
         <Head :title="t('settings.budgets.head')" />
         <ToastContainer />
 
-        <SettingsLayout>
+        <div class="flex flex-col gap-6 p-4 md:p-6">
             <BudgetsHeroSection
                 :total-count="totalCount"
                 :active-count="activeCount"
@@ -92,7 +91,7 @@ const {
                     @delete="deleteCandidate = $event"
                 />
             </section>
-        </SettingsLayout>
+        </div>
 
         <BudgetFormDialog
             :open="showForm"

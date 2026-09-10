@@ -220,6 +220,7 @@ const messages = {
             documentation: 'Dokumentacija',
             navigationMenu: 'Meni navigacije',
             overview: 'Јасан преглед вашег новчаног тока',
+            budgets: 'Budžeti',
         },
     },
     common: {
@@ -719,6 +720,9 @@ const messages = {
             managementDescription:
                 'Pregledaj, izmeni i deaktiviraj ponavljajuća pravila na jednom mestu.',
             add: 'Dodaj ponavljanje',
+            searchPlaceholder: 'Pretraži ponavljanja...',
+            filterAll: 'Sve',
+            allFrequencies: 'Sve učestalosti',
             expenseTitle: 'Trošak',
             incomeTitle: 'Prihod',
             expenseLabel: 'Ponavljajući troškovi',

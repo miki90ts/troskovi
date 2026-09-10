@@ -3,7 +3,6 @@ import type { Debt } from '@/types/models';
 export type RecurringTransactionFormValues = {
     type: 'income' | 'expense' | '';
     amount: string;
-    currency_id: string;
     description: string;
     frequency: 'daily' | 'weekly' | 'monthly' | '';
     next_due_date: string;
@@ -29,7 +28,6 @@ export const recurringTransactionValidationMessages = {
     amountRequired: 'Iznos je obavezan.',
     amountNumeric: 'Iznos mora biti broj.',
     amountGt: 'Iznos mora biti veći od 0.',
-    currencyInteger: 'Valuta mora biti broj.',
     descriptionRequired: 'Opis je obavezan.',
     descriptionString: 'Opis mora biti tekst.',
     descriptionMax: 'Opis ne sme biti duži od 255 karaktera.',
@@ -96,13 +94,6 @@ export function validateRecurringTransactionForm(
         } else if (amount <= 0) {
             errors.amount = recurringTransactionValidationMessages.amountGt;
         }
-    }
-
-    const currencyId = parseOptionalInteger(values.currency_id);
-
-    if (Number.isNaN(currencyId)) {
-        errors.currency_id =
-            recurringTransactionValidationMessages.currencyInteger;
     }
 
     if (isBlank(values.description)) {

@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Settings\BudgetPageController;
 use App\Http\Controllers\Settings\ExchangeRatePageController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
@@ -22,7 +21,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('throttle:6,1')
         ->name('user-password.update');
 
-    Route::get('settings/budgets', [BudgetPageController::class, 'edit'])->name('budgets.edit');
     Route::get('settings/exchange-rates', [ExchangeRatePageController::class, 'index'])->name('exchange-rates.edit');
     Route::inertia('settings/appearance', 'settings/Appearance')->name('appearance.edit');
 });

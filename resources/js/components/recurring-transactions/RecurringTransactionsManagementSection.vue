@@ -1,22 +1,51 @@
 <script setup lang="ts">
-import { Plus } from 'lucide-vue-next';
 import { computed } from 'vue';
-import { Button } from '@/components/ui/button';
+import TransactionManagementToolbar from '@/components/transactions/TransactionManagementToolbar.vue';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { RecurringTransactionTab } from '@/composables/useRecurringTransactionsPage';
 import { t } from '@/lib/i18n';
-import type { RecurringTransaction } from '@/types/models';
+import type { PaginationMeta } from '@/types/api';
+import type { Category, RecurringTransaction } from '@/types/models';
+import RecurringTransactionsFiltersPanel from './RecurringTransactionsFiltersPanel.vue';
 import RecurringTransactionsTable from './RecurringTransactionsTable.vue';
 
 const props = defineProps<{
     activeTab: RecurringTransactionTab;
-    expenseTransactions: RecurringTransaction[];
-    incomeTransactions: RecurringTransaction[];
+    transactions: RecurringTransaction[];
+    pagination: PaginationMeta;
+    categories: Category[];
     accountsCount: number;
+    search: string;
+    showFilters: boolean;
+    activeFiltersCount: number;
+    categoryFilterValue: string;
+    paymentMethodFilterValue: string;
+    frequencyFilterValue: string;
+    statusFilterValue: string;
+    dateFrom: string;
+    dateTo: string;
+    perPage: string;
+    defaultCurrencyCode: string;
+    latestExchangeRates: Record<string, number>;
+    allPaymentMethodsValue: string;
+    allFrequenciesValue: string;
+    allStatusesValue: string;
 }>();
 
 const emit = defineEmits<{
     'update:activeTab': [value: RecurringTransactionTab];
+    'update:search': [value: string];
+    'update:showFilters': [value: boolean];
+    'update:categoryFilterValue': [value: string];
+    'update:paymentMethodFilterValue': [value: string];
+    'update:frequencyFilterValue': [value: string];
+    'update:statusFilterValue': [value: string];
+    'update:dateFrom': [value: string];
+    'update:dateTo': [value: string];
+    applyFilters: [];
+    clearFilters: [];
+    pageChange: [page: number];
+    perPageChange: [value: string];
     create: [];
     edit: [transaction: RecurringTransaction];
     activate: [transaction: RecurringTransaction];
@@ -47,10 +76,21 @@ const activeTabModel = computed({
                     {{ t('finance.recurring.managementDescription') }}
                 </h2>
             </div>
-            <Button class="h-11 rounded-2xl px-5" @click="emit('create')">
-                <Plus class="mr-2 h-4 w-4" />
-                {{ t('finance.recurring.add') }}
-            </Button>
+            <div class="flex flex-1 flex-wrap justify-end gap-3">
+                <TransactionManagementToolbar
+                    :search="search"
+                    :search-placeholder="
+                        t('finance.recurring.searchPlaceholder')
+                    "
+                    :show-filters="showFilters"
+                    :active-filters-count="activeFiltersCount"
+                    :create-label="t('finance.recurring.add')"
+                    :show-export="false"
+                    @update:search="emit('update:search', $event)"
+                    @toggle-filters="emit('update:showFilters', !showFilters)"
+                    @create="emit('create')"
+                />
+            </div>
         </div>
 
         <Tabs v-model="activeTabModel" class="mt-5 space-y-5">
@@ -66,28 +106,112 @@ const activeTabModel = computed({
             </TabsList>
 
             <TabsContent value="expense" class="mt-0">
+                <RecurringTransactionsFiltersPanel
+                    v-if="showFilters"
+                    class="mb-5"
+                    :categories="
+                        categories.filter(
+                            (category) => category.type === 'expense',
+                        )
+                    "
+                    :category-filter-value="categoryFilterValue"
+                    :payment-method-filter-value="paymentMethodFilterValue"
+                    :frequency-filter-value="frequencyFilterValue"
+                    :status-filter-value="statusFilterValue"
+                    :date-from="dateFrom"
+                    :date-to="dateTo"
+                    :all-payment-methods-value="allPaymentMethodsValue"
+                    :all-frequencies-value="allFrequenciesValue"
+                    :all-statuses-value="allStatusesValue"
+                    @update:category-filter-value="
+                        emit('update:categoryFilterValue', $event)
+                    "
+                    @update:payment-method-filter-value="
+                        emit('update:paymentMethodFilterValue', $event)
+                    "
+                    @update:frequency-filter-value="
+                        emit('update:frequencyFilterValue', $event)
+                    "
+                    @update:status-filter-value="
+                        emit('update:statusFilterValue', $event)
+                    "
+                    @update:date-from="emit('update:dateFrom', $event)"
+                    @update:date-to="emit('update:dateTo', $event)"
+                    @apply-filters="emit('applyFilters')"
+                    @clear-filters="emit('clearFilters')"
+                />
                 <RecurringTransactionsTable
                     type="expense"
-                    :transactions="expenseTransactions"
+                    :transactions="
+                        transactions.filter((item) => item.type === 'expense')
+                    "
+                    :pagination="pagination"
                     :accounts-count="accountsCount"
+                    :per-page="perPage"
+                    :default-currency-code="defaultCurrencyCode"
+                    :latest-exchange-rates="latestExchangeRates"
                     @create="emit('create')"
                     @edit="emit('edit', $event)"
                     @activate="emit('activate', $event)"
                     @deactivate="emit('deactivate', $event)"
                     @delete="emit('delete', $event)"
+                    @page-change="emit('pageChange', $event)"
+                    @per-page-change="emit('perPageChange', $event)"
                 />
             </TabsContent>
 
             <TabsContent value="income" class="mt-0">
+                <RecurringTransactionsFiltersPanel
+                    v-if="showFilters"
+                    class="mb-5"
+                    :categories="
+                        categories.filter(
+                            (category) => category.type === 'income',
+                        )
+                    "
+                    :category-filter-value="categoryFilterValue"
+                    :payment-method-filter-value="paymentMethodFilterValue"
+                    :frequency-filter-value="frequencyFilterValue"
+                    :status-filter-value="statusFilterValue"
+                    :date-from="dateFrom"
+                    :date-to="dateTo"
+                    :all-payment-methods-value="allPaymentMethodsValue"
+                    :all-frequencies-value="allFrequenciesValue"
+                    :all-statuses-value="allStatusesValue"
+                    @update:category-filter-value="
+                        emit('update:categoryFilterValue', $event)
+                    "
+                    @update:payment-method-filter-value="
+                        emit('update:paymentMethodFilterValue', $event)
+                    "
+                    @update:frequency-filter-value="
+                        emit('update:frequencyFilterValue', $event)
+                    "
+                    @update:status-filter-value="
+                        emit('update:statusFilterValue', $event)
+                    "
+                    @update:date-from="emit('update:dateFrom', $event)"
+                    @update:date-to="emit('update:dateTo', $event)"
+                    @apply-filters="emit('applyFilters')"
+                    @clear-filters="emit('clearFilters')"
+                />
                 <RecurringTransactionsTable
                     type="income"
-                    :transactions="incomeTransactions"
+                    :transactions="
+                        transactions.filter((item) => item.type === 'income')
+                    "
+                    :pagination="pagination"
                     :accounts-count="accountsCount"
+                    :per-page="perPage"
+                    :default-currency-code="defaultCurrencyCode"
+                    :latest-exchange-rates="latestExchangeRates"
                     @create="emit('create')"
                     @edit="emit('edit', $event)"
                     @activate="emit('activate', $event)"
                     @deactivate="emit('deactivate', $event)"
                     @delete="emit('delete', $event)"
+                    @page-change="emit('pageChange', $event)"
+                    @per-page-change="emit('perPageChange', $event)"
                 />
             </TabsContent>
         </Tabs>

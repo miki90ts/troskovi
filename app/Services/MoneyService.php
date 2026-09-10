@@ -72,7 +72,7 @@ class MoneyService
         $rate = Cache::remember(
             "exchange-rate:{$currency->id}:{$cacheVersion}:{$dateString}",
             now()->addMinutes(10),
-            fn() => $currency->exchangeRates()
+            fn () => $currency->exchangeRates()
                 ->where('date', '<=', $dateString)
                 ->orderByDesc('date')
                 ->value('rate')
@@ -120,6 +120,10 @@ class MoneyService
             ? $data['bank_account_id']
             : $existing?->bank_account_id;
         $existingCurrency = $existing?->relationLoaded('currency') ? $existing->currency : null;
+
+        if (array_key_exists('bank_account_id', $data) || array_key_exists('payment_method', $data)) {
+            $existingCurrency = null;
+        }
 
         $currency = $this->resolveTransactionCurrency($user, $bankAccountId, $data, $existingCurrency);
         $data['currency_id'] = $currency->id;

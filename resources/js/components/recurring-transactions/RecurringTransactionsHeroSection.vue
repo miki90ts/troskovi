@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { CalendarClock, Clock3, Power } from 'lucide-vue-next';
-import { formatCurrency, t } from '@/lib/i18n';
+import CurrencyDisplay from '@/components/CurrencyDisplay.vue';
+import { t } from '@/lib/i18n';
 
 defineProps<{
     expenseCount: number;
     incomeCount: number;
     visibleAmountTotal: number;
     activeTabDisplay: string;
+    defaultCurrencyCode: string;
 }>();
 </script>
 
@@ -73,7 +75,10 @@ defineProps<{
                             {{ t('common.labels.totalShown') }}
                         </p>
                         <p class="mt-2 text-2xl font-semibold text-foreground">
-                            {{ formatCurrency(visibleAmountTotal) }}
+                            <CurrencyDisplay
+                                :amount="visibleAmountTotal"
+                                :currency="defaultCurrencyCode"
+                            />
                         </p>
                     </div>
                 </div>

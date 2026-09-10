@@ -9,12 +9,27 @@ import {
     RotateCcw,
     Trash2,
 } from 'lucide-vue-next';
+import type { AcceptableValue } from 'reka-ui';
 import { computed } from 'vue';
 import CategoryBadge from '@/components/categories/CategoryBadge.vue';
 import CurrencyDisplay from '@/components/CurrencyDisplay.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import PaymentMethodBadge from '@/components/transactions/PaymentMethodBadge.vue';
 import { Button } from '@/components/ui/button';
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationNext,
+    PaginationPrevious,
+} from '@/components/ui/pagination';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import {
     Table,
     TableBody,
@@ -24,13 +39,20 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { t } from '@/lib/i18n';
+import type { PaginationMeta } from '@/types/api';
 import type { RecurringTransaction } from '@/types/models';
 
 const props = defineProps<{
     type: 'expense' | 'income';
     transactions: RecurringTransaction[];
+    pagination: PaginationMeta;
     accountsCount: number;
+    perPage: string;
+    defaultCurrencyCode: string;
+    latestExchangeRates: Record<string, number>;
 }>();
+
+const perPageOptions = ['15', '30', '50', '100'] as const;
 
 const emit = defineEmits<{
     create: [];
@@ -38,6 +60,8 @@ const emit = defineEmits<{
     activate: [transaction: RecurringTransaction];
     deactivate: [transaction: RecurringTransaction];
     delete: [transaction: RecurringTransaction];
+    pageChange: [page: number];
+    perPageChange: [value: string];
 }>();
 
 const isExpense = computed(() => props.type === 'expense');
@@ -124,6 +148,34 @@ function debtImpactLabel(item: RecurringTransaction): string | null {
         ? 'Smanjuje potraživanje'
         : 'Povećava potraživanje';
 }
+
+function handlePerPageChange(value: AcceptableValue) {
+    if (value !== null && value !== undefined) {
+        emit('perPageChange', String(value));
+    }
+}
+
+function resolveRate(currencyCode: string): number | null {
+    if (currencyCode === 'RSD') {
+        return 1;
+    }
+
+    const rate = props.latestExchangeRates[currencyCode];
+
+    return typeof rate === 'number' && rate > 0 ? rate : null;
+}
+
+function displayAmount(item: RecurringTransaction): number {
+    const sourceCode = item.currency?.iso_code ?? props.defaultCurrencyCode;
+    const sourceRate = resolveRate(sourceCode);
+    const targetRate = resolveRate(props.defaultCurrencyCode);
+
+    if (!sourceRate || !targetRate) {
+        return item.amount;
+    }
+
+    return Number(((item.amount * sourceRate) / targetRate).toFixed(2));
+}
 </script>
 
 <template>
@@ -131,7 +183,7 @@ function debtImpactLabel(item: RecurringTransaction): string | null {
         <div
             class="mb-4 flex flex-col gap-3 rounded-3xl border border-border/60 bg-background/70 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
         >
-            <div>
+            <div class="space-y-3">
                 <p
                     class="text-xs font-medium tracking-[0.2em] text-muted-foreground uppercase"
                 >
@@ -140,12 +192,34 @@ function debtImpactLabel(item: RecurringTransaction): string | null {
                 <h3 class="mt-1 text-lg font-semibold tracking-tight">
                     {{ sectionDescription }}
                 </h3>
+                <div class="flex items-center gap-3">
+                    <span class="text-sm text-muted-foreground">{{
+                        t('common.labels.rowsPerPage')
+                    }}</span>
+                    <Select
+                        :model-value="perPage"
+                        @update:model-value="handlePerPageChange"
+                    >
+                        <SelectTrigger
+                            class="h-10 w-23 rounded-2xl border-border/60 bg-background"
+                            ><SelectValue
+                        /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem
+                                v-for="option in perPageOptions"
+                                :key="option"
+                                :value="option"
+                                >{{ option }}</SelectItem
+                            >
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
             <div class="flex items-center gap-3 text-sm text-muted-foreground">
                 <span>
                     {{
                         t('finance.categories.totalCount', {
-                            count: props.transactions.length,
+                            count: props.pagination.total,
                         })
                     }}
                 </span>
@@ -241,19 +315,18 @@ function debtImpactLabel(item: RecurringTransaction): string | null {
                                             "
                                         >
                                             {{ statusLabel(item) }}
-                                            <CurrencyDisplay
-                                                :amount="
-                                                    item.type === 'income'
-                                                        ? item.amount
-                                                        : -item.amount
-                                                "
-                                                :currency="
-                                                    item.currency?.iso_code
-                                                "
-                                                colored
-                                                class="text-sm font-semibold"
-                                            />
-                                            t( 'finance.recurring.hasHistory', )
+                                        </span>
+                                        <span
+                                            v-if="
+                                                item.linked_transactions_count >
+                                                0
+                                            "
+                                            class="rounded-full bg-muted px-2.5 py-1 text-[11px] font-semibold text-muted-foreground"
+                                        >
+                                            {{
+                                                t(
+                                                    'finance.recurring.hasHistory',
+                                                )
                                             }}
                                         </span>
                                     </div>
@@ -327,12 +400,36 @@ function debtImpactLabel(item: RecurringTransaction): string | null {
                             </div>
                         </TableCell>
                         <TableCell class="text-right">
-                            <CurrencyDisplay
-                                :amount="isExpense ? -item.amount : item.amount"
-                                colored
-                                class="font-semibold"
-                                :class="!item.is_active ? 'opacity-60' : ''"
-                            />
+                            <div class="space-y-1">
+                                <CurrencyDisplay
+                                    :amount="
+                                        isExpense
+                                            ? -displayAmount(item)
+                                            : displayAmount(item)
+                                    "
+                                    :currency="defaultCurrencyCode"
+                                    colored
+                                    class="font-semibold"
+                                    :class="!item.is_active ? 'opacity-60' : ''"
+                                />
+                                <p
+                                    v-if="
+                                        item.currency?.iso_code &&
+                                        item.currency.iso_code !==
+                                            defaultCurrencyCode
+                                    "
+                                    class="text-xs text-muted-foreground"
+                                >
+                                    <CurrencyDisplay
+                                        :amount="
+                                            isExpense
+                                                ? -item.amount
+                                                : item.amount
+                                        "
+                                        :currency="item.currency.iso_code"
+                                    />
+                                </p>
+                            </div>
                         </TableCell>
                         <TableCell>
                             <div class="flex justify-end gap-1">
@@ -383,6 +480,54 @@ function debtImpactLabel(item: RecurringTransaction): string | null {
                     </TableRow>
                 </TableBody>
             </Table>
+            <div
+                v-if="props.transactions.length > 0"
+                class="flex flex-col gap-3 border-t border-border/60 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+            >
+                <p class="text-sm text-muted-foreground">
+                    {{
+                        t('common.labels.shownRange', {
+                            from: pagination.from ?? 0,
+                            to: pagination.to ?? 0,
+                            inTotal: pagination.total,
+                        })
+                    }}
+                </p>
+                <Pagination
+                    v-if="pagination.last_page > 1"
+                    :items-per-page="pagination.per_page"
+                    :total="pagination.total"
+                    :page="pagination.current_page"
+                >
+                    <PaginationContent>
+                        <PaginationItem :value="pagination.current_page - 1">
+                            <PaginationPrevious
+                                :disabled="pagination.current_page === 1"
+                                @click="
+                                    emit(
+                                        'pageChange',
+                                        pagination.current_page - 1,
+                                    )
+                                "
+                            />
+                        </PaginationItem>
+                        <PaginationItem :value="pagination.current_page + 1">
+                            <PaginationNext
+                                :disabled="
+                                    pagination.current_page ===
+                                    pagination.last_page
+                                "
+                                @click="
+                                    emit(
+                                        'pageChange',
+                                        pagination.current_page + 1,
+                                    )
+                                "
+                            />
+                        </PaginationItem>
+                    </PaginationContent>
+                </Pagination>
+            </div>
         </div>
     </div>
 </template>

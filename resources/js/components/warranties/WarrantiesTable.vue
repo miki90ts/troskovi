@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Download, Eye, ShieldCheck, ShieldX } from 'lucide-vue-next';
+import type { AcceptableValue } from 'reka-ui';
 import CategoryBadge from '@/components/categories/CategoryBadge.vue';
 import CurrencyDisplay from '@/components/CurrencyDisplay.vue';
 import EmptyState from '@/components/EmptyState.vue';
@@ -10,6 +11,13 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from '@/components/ui/pagination';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import {
     Table,
     TableBody,
@@ -29,14 +37,46 @@ import {
 import type { PaginationMeta } from '@/types/api';
 import type { Transaction } from '@/types/models';
 
-defineProps<{
+const props = defineProps<{
     transactions: Transaction[];
     pagination: PaginationMeta;
+    perPage: string;
+    defaultCurrencyCode: string;
+    latestExchangeRates: Record<string, number>;
 }>();
+
+const perPageOptions = ['15', '30', '50', '100'] as const;
 
 const emit = defineEmits<{
     pageChange: [page: number];
+    perPageChange: [value: string];
 }>();
+
+function handlePerPageChange(value: AcceptableValue) {
+    if (value !== null && value !== undefined) {
+        emit('perPageChange', String(value));
+    }
+}
+
+function resolveRate(currencyCode: string): number | null {
+    if (currencyCode === 'RSD') {
+        return 1;
+    }
+
+    const rate = props.latestExchangeRates[currencyCode];
+
+    return typeof rate === 'number' && rate > 0 ? rate : null;
+}
+
+function displayAmount(tx: Transaction): number {
+    const targetRate = resolveRate(props.defaultCurrencyCode);
+
+    if (!targetRate) {
+        return tx.amount;
+    }
+
+    return Number((tx.base_amount / targetRate).toFixed(2));
+}
 </script>
 
 <template>
@@ -59,6 +99,30 @@ const emit = defineEmits<{
                         })
                     }}
                 </h2>
+                <div class="mt-3 flex items-center gap-3">
+                    <span class="text-sm text-muted-foreground">{{
+                        t('common.labels.rowsPerPage')
+                    }}</span>
+                    <Select
+                        :model-value="perPage"
+                        @update:model-value="handlePerPageChange"
+                    >
+                        <SelectTrigger
+                            class="h-10 w-23 rounded-2xl border-border/60 bg-background"
+                        >
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem
+                                v-for="option in perPageOptions"
+                                :key="option"
+                                :value="option"
+                            >
+                                {{ option }}
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
         </div>
 
@@ -174,10 +238,26 @@ const emit = defineEmits<{
                         </span>
                     </TableCell>
                     <TableCell class="text-right">
-                        <CurrencyDisplay
-                            :amount="tx.amount"
-                            class="font-semibold"
-                        />
+                        <div class="space-y-1">
+                            <CurrencyDisplay
+                                :amount="-displayAmount(tx)"
+                                :currency="defaultCurrencyCode"
+                                colored
+                                class="font-semibold"
+                            />
+                            <p
+                                v-if="
+                                    tx.currency?.iso_code &&
+                                    tx.currency.iso_code !== defaultCurrencyCode
+                                "
+                                class="text-xs text-muted-foreground"
+                            >
+                                <CurrencyDisplay
+                                    :amount="-tx.amount"
+                                    :currency="tx.currency.iso_code"
+                                />
+                            </p>
+                        </div>
                     </TableCell>
                     <TableCell>
                         <div class="flex justify-end gap-1">

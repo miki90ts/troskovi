@@ -61,6 +61,11 @@ const mainNavItems: NavItem[] = [
         icon: ShieldCheck,
     },
     {
+        title: t('app.nav.budgets'),
+        href: '/budgets',
+        icon: CircleDollarSign,
+    },
+    {
         title: t('app.nav.reports'),
         href: '/reports',
         icon: BarChart3,

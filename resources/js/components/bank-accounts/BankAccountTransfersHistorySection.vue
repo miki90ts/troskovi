@@ -5,6 +5,7 @@ import {
     Search,
     SlidersHorizontal,
 } from 'lucide-vue-next';
+import type { AcceptableValue } from 'reka-ui';
 import { computed, ref, watch } from 'vue';
 import CurrencyDisplay from '@/components/CurrencyDisplay.vue';
 import EmptyState from '@/components/EmptyState.vue';
@@ -41,7 +42,7 @@ const props = defineProps<{
 }>();
 
 const allAccountsValue = '__all_accounts__';
-const itemsPerPage = 6;
+const perPageOptions = ['15', '30', '50', '100'] as const;
 
 const searchQuery = ref('');
 const showFilters = ref(false);
@@ -50,6 +51,8 @@ const toAccountFilter = ref(allAccountsValue);
 const dateFrom = ref('');
 const dateTo = ref('');
 const currentPage = ref(1);
+const perPage = ref('15');
+const itemsPerPage = computed(() => Number(perPage.value));
 
 const accountOptions = computed(() => {
     const seen = new Map<number, string>();
@@ -104,13 +107,13 @@ const filteredTransfers = computed(() => {
 });
 
 const totalPages = computed(() =>
-    Math.max(1, Math.ceil(filteredTransfers.value.length / itemsPerPage)),
+    Math.max(1, Math.ceil(filteredTransfers.value.length / itemsPerPage.value)),
 );
 
 const paginatedTransfers = computed(() => {
-    const start = (currentPage.value - 1) * itemsPerPage;
+    const start = (currentPage.value - 1) * itemsPerPage.value;
 
-    return filteredTransfers.value.slice(start, start + itemsPerPage);
+    return filteredTransfers.value.slice(start, start + itemsPerPage.value);
 });
 
 const shownFrom = computed(() => {
@@ -118,11 +121,14 @@ const shownFrom = computed(() => {
         return 0;
     }
 
-    return (currentPage.value - 1) * itemsPerPage + 1;
+    return (currentPage.value - 1) * itemsPerPage.value + 1;
 });
 
 const shownTo = computed(() =>
-    Math.min(currentPage.value * itemsPerPage, filteredTransfers.value.length),
+    Math.min(
+        currentPage.value * itemsPerPage.value,
+        filteredTransfers.value.length,
+    ),
 );
 
 const hasActiveFilters = computed(
@@ -164,11 +170,24 @@ function toggleFilters() {
 }
 
 watch(
-    [searchQuery, fromAccountFilter, toAccountFilter, dateFrom, dateTo],
+    [
+        searchQuery,
+        fromAccountFilter,
+        toAccountFilter,
+        dateFrom,
+        dateTo,
+        perPage,
+    ],
     () => {
         currentPage.value = 1;
     },
 );
+
+function handlePerPageChange(value: AcceptableValue) {
+    if (value !== null && value !== undefined) {
+        perPage.value = String(value);
+    }
+}
 
 watch(filteredTransfers, (nextTransfers) => {
     if (currentPage.value > totalPages.value) {
@@ -356,13 +375,40 @@ function formatDate(dateStr: string): string {
                     <div
                         class="flex flex-col gap-3 border-b border-border/60 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
                     >
-                        <p class="text-sm text-muted-foreground">
-                            {{
-                                t('finance.bankAccounts.displayedTransfers', {
-                                    count: filteredTransfers.length,
-                                })
-                            }}
-                        </p>
+                        <div class="flex flex-wrap items-center gap-4">
+                            <p class="text-sm text-muted-foreground">
+                                {{
+                                    t(
+                                        'finance.bankAccounts.displayedTransfers',
+                                        {
+                                            count: filteredTransfers.length,
+                                        },
+                                    )
+                                }}
+                            </p>
+                            <div class="flex items-center gap-3">
+                                <span class="text-sm text-muted-foreground">{{
+                                    t('common.labels.rowsPerPage')
+                                }}</span>
+                                <Select
+                                    :model-value="perPage"
+                                    @update:model-value="handlePerPageChange"
+                                >
+                                    <SelectTrigger
+                                        class="h-10 w-23 rounded-2xl border-border/60 bg-background"
+                                        ><SelectValue
+                                    /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem
+                                            v-for="option in perPageOptions"
+                                            :key="option"
+                                            :value="option"
+                                            >{{ option }}</SelectItem
+                                        >
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
                         <p
                             v-if="hasActiveFilters"
                             class="text-sm text-muted-foreground"

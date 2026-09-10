@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BankAccountPageController;
+use App\Http\Controllers\Settings\BudgetPageController;
 use App\Http\Controllers\CategoryPageController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DebtPageController;
@@ -39,6 +40,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('categories', [CategoryPageController::class, 'index'])->name('categories.index');
     Route::get('loyalty-cards', [LoyaltyCardPageController::class, 'index'])->name('loyalty-cards.index');
     Route::get('debts', [DebtPageController::class, 'index'])->name('debts.index');
+    Route::get('budgets', [BudgetPageController::class, 'edit'])->name('budgets.edit');
 });
 
 require __DIR__ . '/settings.php';
