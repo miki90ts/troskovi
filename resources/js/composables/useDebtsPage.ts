@@ -1,12 +1,12 @@
 import { computed, ref } from 'vue';
 import { useDebts } from '@/composables/useDebts';
 import { useToast } from '@/composables/useToast';
+import { useValidationErrors } from '@/composables/useValidationErrors';
 import { t } from '@/lib/i18n';
 import { validateDebtForm } from '@/lib/validation/debtValidation';
-import { useValidationErrors } from '@/composables/useValidationErrors';
+import type { DebtFormValues } from '@/lib/validation/debtValidation';
 import type { DebtPayload } from '@/types/api';
 import type { CurrencySummary, Debt, DebtSummary } from '@/types/models';
-import type { DebtFormValues } from '@/lib/validation/debtValidation';
 
 export type DebtTab = 'i_owe' | 'owed_to_me';
 

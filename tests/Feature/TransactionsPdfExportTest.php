@@ -45,7 +45,7 @@ test('transactions pdf export accepts multiple category filters', function () {
     Sanctum::actingAs($user);
 
     $response = $this->get(
-        '/api/v1/export/transactions/pdf?' . http_build_query([
+        '/api/v1/export/transactions/pdf?'.http_build_query([
             'type' => 'expense',
             'category_ids' => implode(',', [$fuelCategory->id, $groceriesCategory->id]),
         ]),

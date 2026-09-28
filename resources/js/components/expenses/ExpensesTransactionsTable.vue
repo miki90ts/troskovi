@@ -1,24 +1,18 @@
 <script setup lang="ts">
-import type { AcceptableValue } from 'reka-ui';
 import {
     ArrowDownCircle,
+    ExternalLink,
     Pencil,
     Plus,
     ShieldCheck,
     Trash2,
 } from 'lucide-vue-next';
+import type { AcceptableValue } from 'reka-ui';
 import CategoryBadge from '@/components/categories/CategoryBadge.vue';
 import CurrencyDisplay from '@/components/CurrencyDisplay.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import PaymentMethodBadge from '@/components/transactions/PaymentMethodBadge.vue';
 import { Button } from '@/components/ui/button';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import {
     Pagination,
     PaginationContent,
@@ -26,6 +20,13 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from '@/components/ui/pagination';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import {
     Table,
     TableBody,
@@ -272,6 +273,18 @@ function displayAmount(tx: Transaction): number {
                     </TableCell>
                     <TableCell>
                         <div class="flex justify-end gap-1">
+                            <a
+                                v-if="tx.receipt_verification_url"
+                                :href="tx.receipt_verification_url"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="inline-flex h-9 w-9 items-center justify-center rounded-2xl text-primary transition-colors hover:bg-primary/10"
+                                :title="
+                                    t('components.transactionForm.qrOpenTax')
+                                "
+                            >
+                                <ExternalLink class="h-3.5 w-3.5" />
+                            </a>
                             <Button
                                 variant="ghost"
                                 size="icon"

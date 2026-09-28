@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Maximize2, Pencil, StickyNote, Trash2 } from 'lucide-vue-next';
+import { computed } from 'vue';
 import BarcodeDisplay from '@/components/loyalty-cards/BarcodeDisplay.vue';
 import { Button } from '@/components/ui/button';
 import { t } from '@/lib/i18n';
@@ -16,10 +17,6 @@ const emit = defineEmits<{
 }>();
 
 const cardColor = computed(() => props.card.color ?? '#14b8a6');
-</script>
-
-<script lang="ts">
-import { computed } from 'vue';
 </script>
 
 <template>

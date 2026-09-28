@@ -43,14 +43,14 @@ class StoreRecurringTransactionRequest extends FormRequest
             'debt_id' => [
                 'nullable',
                 Rule::exists('debts', 'id')->where(
-                    fn($query) => $query->where('user_id', $this->user()?->id)
+                    fn ($query) => $query->where('user_id', $this->user()?->id)
                 ),
             ],
             'bank_account_id' => [
                 'nullable',
                 'integer',
                 Rule::exists('bank_accounts', 'id')->where(
-                    fn($query) => $query->where('user_id', $this->user()?->id)
+                    fn ($query) => $query->where('user_id', $this->user()?->id)
                 ),
             ],
             'payment_method' => ['required_if:type,expense', Rule::enum(PaymentMethod::class)],

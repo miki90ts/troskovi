@@ -15,13 +15,13 @@ class SpendingTargetResource extends JsonResource
             'target_amount' => (float) $this->target_amount,
             'is_active' => $this->is_active,
             'scope' => $this->category_id ? 'category' : 'overall',
-            'currency' => $this->whenLoaded('currency', fn() => $this->currency ? [
+            'currency' => $this->whenLoaded('currency', fn () => $this->currency ? [
                 'id' => $this->currency->id,
                 'iso_code' => $this->currency->iso_code,
                 'name' => $this->currency->name,
                 'symbol' => $this->currency->symbol,
             ] : null),
-            'category' => $this->whenLoaded('category', fn() => $this->category ? [
+            'category' => $this->whenLoaded('category', fn () => $this->category ? [
                 'id' => $this->category->id,
                 'name' => $this->category->name,
                 'icon' => $this->category->icon,

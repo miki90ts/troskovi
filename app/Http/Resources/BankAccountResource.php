@@ -16,7 +16,7 @@ class BankAccountResource extends JsonResource
             'masked_account_number' => $this->masked_account_number,
             'currency' => $this->currency,
             'currency_id' => $this->currency_id,
-            'currency_details' => $this->whenLoaded('currencyRef', fn() => $this->currencyRef ? [
+            'currency_details' => $this->whenLoaded('currencyRef', fn () => $this->currencyRef ? [
                 'id' => $this->currencyRef->id,
                 'iso_code' => $this->currencyRef->iso_code,
                 'name' => $this->currencyRef->name,

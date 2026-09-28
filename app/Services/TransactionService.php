@@ -10,6 +10,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class TransactionService
 {
@@ -218,8 +219,17 @@ class TransactionService
     private function storeReceipt(User $user, UploadedFile $file): string
     {
         $path = $file->store("receipts/{$user->id}", 'local');
+        $directory = "receipts/{$user->id}";
+        $normalizedPath = $directory.'/'.Str::uuid().'.jpg';
 
-        $this->compressImage(Storage::disk('local')->path($path));
+        if ($this->normalizeImage(
+            Storage::disk('local')->path($path),
+            Storage::disk('local')->path($normalizedPath),
+        )) {
+            Storage::disk('local')->delete($path);
+
+            return $normalizedPath;
+        }
 
         return $path;
     }
@@ -235,39 +245,51 @@ class TransactionService
         return $value;
     }
 
-    private function compressImage(string $absolutePath): void
+    private function normalizeImage(string $sourcePath, string $destinationPath): bool
     {
         if (! extension_loaded('gd')) {
-            return;
+            return false;
         }
 
-        $mime = mime_content_type($absolutePath);
+        $mime = mime_content_type($sourcePath);
 
         $image = match ($mime) {
-            'image/jpeg' => @imagecreatefromjpeg($absolutePath),
-            'image/png' => @imagecreatefrompng($absolutePath),
-            'image/webp' => @imagecreatefromwebp($absolutePath),
+            'image/jpeg' => function_exists('imagecreatefromjpeg') ? @imagecreatefromjpeg($sourcePath) : false,
+            'image/png' => function_exists('imagecreatefrompng') ? @imagecreatefrompng($sourcePath) : false,
+            'image/webp' => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($sourcePath) : false,
             default => false,
         };
 
         if (! $image) {
-            return;
+            return false;
         }
 
         $width = imagesx($image);
         $height = imagesy($image);
-        $maxWidth = 1200;
-
-        if ($width > $maxWidth) {
-            $newHeight = (int) round($height * ($maxWidth / $width));
-            $resized = imagecreatetruecolor($maxWidth, $newHeight);
-            imagecopyresampled($resized, $image, 0, 0, 0, 0, $maxWidth, $newHeight, $width, $height);
-            imagedestroy($image);
-            $image = $resized;
-        }
-
-        imagejpeg($image, $absolutePath, 70);
+        $scale = min(1, 2400 / max($width, $height));
+        $targetWidth = max(1, (int) round($width * $scale));
+        $targetHeight = max(1, (int) round($height * $scale));
+        $normalized = imagecreatetruecolor($targetWidth, $targetHeight);
+        $white = imagecolorallocate($normalized, 255, 255, 255);
+        imagefill($normalized, 0, 0, $white);
+        imagecopyresampled(
+            $normalized,
+            $image,
+            0,
+            0,
+            0,
+            0,
+            $targetWidth,
+            $targetHeight,
+            $width,
+            $height,
+        );
         imagedestroy($image);
+
+        $saved = imagejpeg($normalized, $destinationPath, 82);
+        imagedestroy($normalized);
+
+        return $saved;
     }
 
     private function extractCategoryIds(array $filters): array
@@ -281,8 +303,8 @@ class TransactionService
         }
 
         return array_values(array_filter(
-            array_map(static fn($value) => trim((string) $value), $categoryIds),
-            static fn($value) => $value !== '',
+            array_map(static fn ($value) => trim((string) $value), $categoryIds),
+            static fn ($value) => $value !== '',
         ));
     }
 }

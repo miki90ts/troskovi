@@ -25,7 +25,7 @@ trait TransactionValidationMessages
             'payment_method.enum' => 'Izabrani način plaćanja nije ispravan.',
             'notes.string' => 'Napomena mora biti tekst.',
             'receipt.image' => 'Potvrda mora biti slika.',
-            'receipt.max' => 'Potvrda ne sme biti veća od 1 MB.',
+            'receipt.max' => 'Potvrda ne sme biti veća od 5 MB.',
             'is_warranty.boolean' => 'Polje garancije mora biti tačno ili netačno.',
             'debt_id.exists' => 'Izabrani dug nije ispravan.',
         ];

@@ -1,5 +1,3 @@
-import { netBalance } from '@/actions/App/Http/Controllers/Api/V1/ReportController';
-
 interface MessageDictionary {
     [key: string]: string | MessageDictionary;
 }
@@ -223,6 +221,15 @@ const messages = {
             budgets: 'Budžeti',
         },
     },
+    pwa: {
+        install: 'Instaliraj aplikaciju',
+        iosTitle: 'Dodaj Troškovi na početni ekran',
+        iosDescription:
+            'Safari na iPhone-u i iPad-u instalira aplikaciju preko menija za deljenje.',
+        iosStepShare: 'Dodirni Share (Deli) dugme u Safari-ju.',
+        iosStepAdd: 'Izaberi Add to Home Screen (Dodaj na početni ekran).',
+        iosStepConfirm: 'Potvrdi izbor dugmetom Add (Dodaj).',
+    },
     common: {
         actions: {
             add: 'Dodaj',
@@ -366,12 +373,36 @@ const messages = {
             warrantyCheckbox: 'Ovo je garancijski račun',
             warrantyReceipt: 'Slika računa (garancija)',
             warrantyReceiptHint:
-                'Maksimalna veličina fajla: 1 MB. Prihvata JPG, PNG ili WebP.',
+                'Početna slika može imati do 12 MB. Smanjujemo je pre slanja; server prihvata JPG, PNG ili WebP do 5 MB.',
             warrantyExpires: 'Garancija ističe',
             warrantyFileTooLarge:
-                'Fajl je prevelik. Maksimalna veličina je 1 MB.',
+                'Fajl je prevelik. Početna slika može imati najviše 12 MB.',
             removeReceipt: 'Ukloni sliku',
             replaceReceipt: 'Izaberi novu sliku',
+            photographReceipt: 'Fotografiši račun',
+            chooseReceipt: 'Izaberi sliku',
+            processingReceipt: 'Pripremamo sliku za bezbedno slanje…',
+            photographAgain: 'Fotografiši ponovo',
+            qrLabel: 'QR provera fiskalnog računa (opciono)',
+            scanQr: 'Skeniraj QR',
+            qrTitle: 'Skeniraj fiskalni QR kod',
+            qrDescription:
+                'Skeniraj kamerom, izaberi fotografiju QR koda ili nalepi zvanični link Poreske uprave.',
+            qrInvalid:
+                'QR nije važeći verifikacioni link Poreske uprave Srbije.',
+            qrRecognized: 'QR link je uspešno prepoznat.',
+            qrCameraUnavailable:
+                'Kamera nije dostupna ili dozvola nije odobrena. Možeš izabrati sliku ili nalepiti link.',
+            qrRetryCamera: 'Pokreni kameru',
+            qrChooseImage: 'Izaberi QR sliku',
+            qrNotFound: 'Na izabranoj slici nije pronađen čitljiv QR kod.',
+            qrManual: 'Ručno nalepi verifikacioni URL',
+            qrPlaceholder: 'https://suf.purs.gov.rs/v/?vl=…',
+            qrOpenTax: 'Proveri na Poreskoj upravi',
+            qrSaved: 'QR link je dodat uz trošak',
+            qrRemove: 'Ukloni QR link',
+            qrManualEntryHint:
+                'Zvanični račun se otvara u novom tabu. Ukupan iznos unesi u Iznos, prodavnicu u Opis, a stavke, količine i cene u Napomene.',
         },
         recurringForm: {
             badge: 'Pravilo automatizacije',

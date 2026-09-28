@@ -1,12 +1,10 @@
 import { computed, ref } from 'vue';
 import { useCategories } from '@/composables/useCategories';
 import { useToast } from '@/composables/useToast';
-import { t } from '@/lib/i18n';
-import {
-    validateCategoryForm,
-    type CategoryFormValues,
-} from '@/lib/validation/categoryValidation';
 import { useValidationErrors } from '@/composables/useValidationErrors';
+import { t } from '@/lib/i18n';
+import { validateCategoryForm } from '@/lib/validation/categoryValidation';
+import type { CategoryFormValues } from '@/lib/validation/categoryValidation';
 import type { Category } from '@/types';
 
 type CategoryTab = 'expense' | 'income';

@@ -4,13 +4,13 @@ import { useToast } from '@/composables/useToast';
 import { useValidationErrors } from '@/composables/useValidationErrors';
 import { t } from '@/lib/i18n';
 import { validateBankAccountForm } from '@/lib/validation/bankAccountValidation';
+import type { BankAccountFormValues } from '@/lib/validation/bankAccountValidation';
 import { validateTransferForm } from '@/lib/validation/transferValidation';
 import type {
     AccountTransfer,
     BankAccount,
     CurrencySummary,
 } from '@/types/models';
-import type { BankAccountFormValues } from '@/lib/validation/bankAccountValidation';
 
 export type BankAccountFormState = BankAccountFormValues;
 

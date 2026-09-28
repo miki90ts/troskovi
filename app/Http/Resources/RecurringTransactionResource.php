@@ -13,7 +13,7 @@ class RecurringTransactionResource extends JsonResource
             'id' => $this->id,
             'type' => $this->type->value,
             'amount' => (float) $this->amount,
-            'currency' => $this->whenLoaded('currency', fn() => $this->currency ? [
+            'currency' => $this->whenLoaded('currency', fn () => $this->currency ? [
                 'id' => $this->currency->id,
                 'iso_code' => $this->currency->iso_code,
                 'name' => $this->currency->name,
@@ -27,17 +27,17 @@ class RecurringTransactionResource extends JsonResource
             'is_active' => $this->is_active,
             'linked_transactions_count' => (int) ($this->linked_transactions_count ?? 0),
             'can_delete' => (int) ($this->linked_transactions_count ?? 0) === 0,
-            'category' => $this->whenLoaded('category', fn() => $this->category ? [
+            'category' => $this->whenLoaded('category', fn () => $this->category ? [
                 'id' => $this->category->id,
                 'name' => $this->category->name,
                 'icon' => $this->category->icon,
                 'color' => $this->category->color,
             ] : null),
-            'bank_account' => $this->whenLoaded('bankAccount', fn() => $this->bankAccount ? [
+            'bank_account' => $this->whenLoaded('bankAccount', fn () => $this->bankAccount ? [
                 'id' => $this->bankAccount->id,
                 'name' => $this->bankAccount->name,
             ] : null),
-            'debt' => $this->whenLoaded('debt', fn() => $this->debt ? [
+            'debt' => $this->whenLoaded('debt', fn () => $this->debt ? [
                 'id' => $this->debt->id,
                 'person_name' => $this->debt->person_name,
                 'type' => $this->debt->type->value,

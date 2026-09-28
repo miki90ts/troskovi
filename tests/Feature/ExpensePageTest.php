@@ -66,7 +66,7 @@ test('expense page preserves multiple category filters and narrows results', fun
         ->get(route('expenses.index', ['category_ids' => $categoryIds]))
         ->assertOk()
         ->assertInertia(
-            fn(Assert $page) => $page
+            fn (Assert $page) => $page
                 ->component('expenses/Index')
                 ->where('filters.category_ids', $categoryIds)
                 ->where('transactions.meta.total', 2),
@@ -99,7 +99,7 @@ test('expense page applies selected per page value and preserves it in inertia p
         ->get(route('expenses.index', ['per_page' => '30']))
         ->assertOk()
         ->assertInertia(
-            fn(Assert $page) => $page
+            fn (Assert $page) => $page
                 ->component('expenses/Index')
                 ->where('filters.per_page', '30')
                 ->where('transactions.meta.per_page', 30)
@@ -134,7 +134,7 @@ test('expense page falls back to default per page when an unsupported value is r
         ->get(route('expenses.index', ['per_page' => '17']))
         ->assertOk()
         ->assertInertia(
-            fn(Assert $page) => $page
+            fn (Assert $page) => $page
                 ->component('expenses/Index')
                 ->where('filters.per_page', '15')
                 ->where('transactions.meta.per_page', 15)
@@ -187,7 +187,7 @@ test('expense page returns display amounts in the user default currency', functi
         ->get(route('expenses.index'))
         ->assertOk()
         ->assertInertia(
-            fn(Assert $page) => $page
+            fn (Assert $page) => $page
                 ->component('expenses/Index')
                 ->where('defaultCurrency.iso_code', 'EUR')
                 ->where('latestExchangeRates.EUR', 117)

@@ -21,7 +21,7 @@ class PdfExportController extends Controller
 
         $pdf = $this->pdfExportService->exportTransactions($request->user(), $filters, $type);
 
-        $filename = ($type === 'expense' ? 'troskovi' : 'prihodi') . '_' . now()->format('Y-m-d') . '.pdf';
+        $filename = ($type === 'expense' ? 'troskovi' : 'prihodi').'_'.now()->format('Y-m-d').'.pdf';
 
         return $pdf->download($filename);
     }
@@ -42,7 +42,7 @@ class PdfExportController extends Controller
             default => 'mesecni',
         };
 
-        $filename = 'izvestaj_' . $periodSuffix . '_' . now()->format('Y-m-d') . '.pdf';
+        $filename = 'izvestaj_'.$periodSuffix.'_'.now()->format('Y-m-d').'.pdf';
 
         return $pdf->download($filename);
     }

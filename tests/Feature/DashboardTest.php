@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\User;
 use App\Enums\PaymentMethod;
 use App\Enums\TransactionType;
+use App\Models\User;
 use Carbon\CarbonImmutable;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -52,7 +52,7 @@ test('dashboard summary uses only the current month totals', function () {
         ->get(route('dashboard'))
         ->assertOk()
         ->assertInertia(
-            fn(Assert $page) => $page
+            fn (Assert $page) => $page
                 ->component('Dashboard')
                 ->where('summary.total_income', 25000)
                 ->where('summary.total_expenses', 7000)

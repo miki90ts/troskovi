@@ -24,7 +24,10 @@ export const categoryValidationMessages = {
 const allowedTypes = new Set(['expense', 'income']);
 
 function isBlank(value: string): boolean {
-    return value == null || (typeof value === 'string' && value.trim().length === 0);
+    return (
+        value == null ||
+        (typeof value === 'string' && value.trim().length === 0)
+    );
 }
 
 export function validateCategoryForm(

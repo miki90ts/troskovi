@@ -71,8 +71,8 @@ class ReportService
 
         return [
             'labels' => $periods->toArray(),
-            'income' => $periods->map(fn($p) => round($income[$p] ?? 0, 2))->toArray(),
-            'expenses' => $periods->map(fn($p) => round($expenses[$p] ?? 0, 2))->toArray(),
+            'income' => $periods->map(fn ($p) => round($income[$p] ?? 0, 2))->toArray(),
+            'expenses' => $periods->map(fn ($p) => round($expenses[$p] ?? 0, 2))->toArray(),
             'currency_code' => $targetCurrency->iso_code,
             'currency_symbol' => $targetCurrency->symbol,
         ];
@@ -148,7 +148,7 @@ class ReportService
 
         return [
             'labels' => $sorted->pluck('name')->toArray(),
-            'values' => $sorted->pluck('total')->map(fn($value) => round($value, 2))->toArray(),
+            'values' => $sorted->pluck('total')->map(fn ($value) => round($value, 2))->toArray(),
             'colors' => $sorted->pluck('color')->toArray(),
             'currency_code' => $targetCurrency->iso_code,
             'currency_symbol' => $targetCurrency->symbol,
@@ -174,7 +174,7 @@ class ReportService
 
         return [
             'labels' => $sorted->pluck('name')->toArray(),
-            'values' => $sorted->pluck('total')->map(fn($value) => round($value, 2))->toArray(),
+            'values' => $sorted->pluck('total')->map(fn ($value) => round($value, 2))->toArray(),
             'colors' => $sorted->pluck('color')->toArray(),
             'currency_code' => $targetCurrency->iso_code,
             'currency_symbol' => $targetCurrency->symbol,
@@ -289,7 +289,7 @@ class ReportService
             ->select(DB::raw('date as rate_date'), DB::raw('SUM(COALESCE(base_amount, amount)) as base_total'))
             ->groupBy('rate_date')
             ->get()
-            ->sum(fn($row) => $this->moneyService->convertFromBase(
+            ->sum(fn ($row) => $this->moneyService->convertFromBase(
                 (float) $row->base_total,
                 $targetCurrency,
                 $row->rate_date,
@@ -320,7 +320,6 @@ class ReportService
 
         return $totals;
     }
-
 
     private function getDateRange(string $period): array
     {

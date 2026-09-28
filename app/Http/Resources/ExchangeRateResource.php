@@ -13,7 +13,7 @@ class ExchangeRateResource extends JsonResource
             'id' => $this->id,
             'date' => $this->date->toDateString(),
             'rate' => (float) $this->rate,
-            'currency' => $this->whenLoaded('currency', fn() => $this->currency ? [
+            'currency' => $this->whenLoaded('currency', fn () => $this->currency ? [
                 'id' => $this->currency->id,
                 'iso_code' => $this->currency->iso_code,
                 'name' => $this->currency->name,

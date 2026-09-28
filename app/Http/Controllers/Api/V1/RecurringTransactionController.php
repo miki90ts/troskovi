@@ -39,7 +39,7 @@ class RecurringTransactionController extends Controller
         return new RecurringTransactionResource(
             $recurringTransaction->load(['category', 'bankAccount', 'debt'])
                 ->loadCount([
-                    'transactions as linked_transactions_count' => fn($query) => $query->withTrashed(),
+                    'transactions as linked_transactions_count' => fn ($query) => $query->withTrashed(),
                 ])
         );
     }

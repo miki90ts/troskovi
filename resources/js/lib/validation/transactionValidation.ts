@@ -1,3 +1,4 @@
+import { normalizeFiscalVerificationUrl } from '@/lib/receiptQr';
 import type { Debt } from '@/types/models';
 
 export type TransactionFormValues = {
@@ -12,6 +13,7 @@ export type TransactionFormValues = {
     notes: string;
     is_warranty: boolean;
     receipt: File | null;
+    receipt_verification_url: string;
 };
 
 export type TransactionFormErrors = Partial<
@@ -43,7 +45,9 @@ export const transactionValidationMessages = {
     paymentMethodInvalid: 'Izabrani način plaćanja nije ispravan.',
     notesString: 'Napomena mora biti tekst.',
     receiptImage: 'Potvrda mora biti slika.',
-    receiptMax: 'Potvrda ne sme biti veća od 1 MB.',
+    receiptMax: 'Potvrda ne sme biti veća od 5 MB.',
+    receiptVerificationUrl:
+        'Link mora biti važeći HTTPS verifikacioni link Poreske uprave.',
     warrantyBoolean: 'Polje garancije mora biti tačno ili netačno.',
     debtExists: 'Izabrani dug nije ispravan.',
     bankAccountRequired:
@@ -54,10 +58,13 @@ export const transactionValidationMessages = {
 
 const allowedTypes = new Set(['income', 'expense']);
 const allowedPaymentMethods = new Set(['cash', 'bank_account']);
-const maxReceiptSizeInBytes = 1024 * 1024;
+const maxReceiptSizeInBytes = 5 * 1024 * 1024;
 
 function isBlank(value: string): boolean {
-    return value == null || (typeof value === 'string' && value.trim().length === 0);
+    return (
+        value == null ||
+        (typeof value === 'string' && value.trim().length === 0)
+    );
 }
 
 function parseOptionalInteger(value: string): number | null {
@@ -183,6 +190,14 @@ export function validateTransactionForm(
         } else if (values.receipt.size > maxReceiptSizeInBytes) {
             errors.receipt = transactionValidationMessages.receiptMax;
         }
+    }
+
+    if (
+        !isBlank(values.receipt_verification_url) &&
+        !normalizeFiscalVerificationUrl(values.receipt_verification_url)
+    ) {
+        errors.receipt_verification_url =
+            transactionValidationMessages.receiptVerificationUrl;
     }
 
     return errors;

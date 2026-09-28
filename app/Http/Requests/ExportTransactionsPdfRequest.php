@@ -31,7 +31,7 @@ class ExportTransactionsPdfRequest extends FormRequest
 
                     $categoryIds = array_values(array_filter(
                         array_map('trim', explode(',', $value)),
-                        static fn($item) => $item !== '',
+                        static fn ($item) => $item !== '',
                     ));
 
                     if ($categoryIds === [] || count(array_filter($categoryIds, 'ctype_digit')) !== count($categoryIds)) {

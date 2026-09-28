@@ -4,6 +4,7 @@ import type { DefineComponent } from 'vue';
 import { createApp, h } from 'vue';
 import '../css/app.css';
 import { initializeTheme } from '@/composables/useAppearance';
+import { initializePwa } from '@/composables/usePwaInstall';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Troskovi';
 
@@ -15,6 +16,16 @@ createInertiaApp({
             import.meta.glob<DefineComponent>('./pages/**/*.vue'),
         ),
     setup({ el, App, props, plugin }) {
+        initializePwa(
+            Boolean(
+                (
+                    props.initialPage.props.features as
+                        | { pwaInstall?: boolean }
+                        | undefined
+                )?.pwaInstall,
+            ),
+        );
+
         createApp({ render: () => h(App, props) })
             .use(plugin)
             .mount(el);

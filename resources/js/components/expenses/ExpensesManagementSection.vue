@@ -7,7 +7,7 @@ import type { Category, Transaction } from '@/types/models';
 import ExpenseFiltersPanel from './ExpenseFiltersPanel.vue';
 import ExpensesTransactionsTable from './ExpensesTransactionsTable.vue';
 
-const props = defineProps<{
+defineProps<{
     categories: Category[];
     transactions: Transaction[];
     pagination: PaginationMeta;

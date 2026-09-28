@@ -29,6 +29,7 @@ class Transaction extends Model
         'notes',
         'payment_method',
         'receipt_path',
+        'receipt_verification_url',
         'is_warranty',
         'warranty_expires_at',
     ];

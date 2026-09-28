@@ -19,7 +19,7 @@ class StoreExchangeRateRequest extends FormRequest
                 'required',
                 'integer',
                 Rule::exists('currencies', 'id')->where(
-                    fn($query) => $query->where('active', true)->where('iso_code', '!=', 'RSD')
+                    fn ($query) => $query->where('active', true)->where('iso_code', '!=', 'RSD')
                 ),
             ],
             'date' => ['required', 'date'],

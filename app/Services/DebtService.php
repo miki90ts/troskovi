@@ -102,7 +102,7 @@ class DebtService
         $reducingSum = (float) $debt->transactions()
             ->where('type', $reducingType)
             ->get()
-            ->sum(fn($transaction) => $this->moneyService->convertFromBase(
+            ->sum(fn ($transaction) => $this->moneyService->convertFromBase(
                 (float) ($transaction->base_amount ?? $transaction->amount),
                 $debtCurrency,
                 $transaction->date,
@@ -111,7 +111,7 @@ class DebtService
         $increasingSum = (float) $debt->transactions()
             ->where('type', $increasingType)
             ->get()
-            ->sum(fn($transaction) => $this->moneyService->convertFromBase(
+            ->sum(fn ($transaction) => $this->moneyService->convertFromBase(
                 (float) ($transaction->base_amount ?? $transaction->amount),
                 $debtCurrency,
                 $transaction->date,
@@ -120,12 +120,12 @@ class DebtService
         $reducingBase = (float) $debt->transactions()
             ->where('type', $reducingType)
             ->get()
-            ->sum(fn($transaction) => (float) ($transaction->base_amount ?? $transaction->amount));
+            ->sum(fn ($transaction) => (float) ($transaction->base_amount ?? $transaction->amount));
 
         $increasingBase = (float) $debt->transactions()
             ->where('type', $increasingType)
             ->get()
-            ->sum(fn($transaction) => (float) ($transaction->base_amount ?? $transaction->amount));
+            ->sum(fn ($transaction) => (float) ($transaction->base_amount ?? $transaction->amount));
 
         $remaining = max(0, round((float) $debt->amount + $increasingSum - $reducingSum, 2));
         $remainingBase = max(0, round((float) $debt->base_amount + $increasingBase - $reducingBase, 2));
@@ -156,14 +156,14 @@ class DebtService
         return [
             'total_i_owe' => round($activeAndOverdue
                 ->where('type', DebtType::IOwe)
-                ->sum(fn(Debt $debt) => $this->moneyService->convertFromBase(
+                ->sum(fn (Debt $debt) => $this->moneyService->convertFromBase(
                     (float) ($debt->remaining_base_amount ?? $debt->base_amount ?? $debt->remaining_amount),
                     $targetCurrency,
                     $conversionDate,
                 )), 2),
             'total_owed_to_me' => round($activeAndOverdue
                 ->where('type', DebtType::OwedToMe)
-                ->sum(fn(Debt $debt) => $this->moneyService->convertFromBase(
+                ->sum(fn (Debt $debt) => $this->moneyService->convertFromBase(
                     (float) ($debt->remaining_base_amount ?? $debt->base_amount ?? $debt->remaining_amount),
                     $targetCurrency,
                     $conversionDate,

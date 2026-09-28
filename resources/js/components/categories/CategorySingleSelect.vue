@@ -49,6 +49,7 @@ const filteredCategories = computed(() => {
 watch(isOpen, (open) => {
     if (!open) {
         search.value = '';
+
         return;
     }
 

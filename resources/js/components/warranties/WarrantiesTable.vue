@@ -1,5 +1,11 @@
 <script setup lang="ts">
-import { Download, Eye, ShieldCheck, ShieldX } from 'lucide-vue-next';
+import {
+    Download,
+    ExternalLink,
+    Eye,
+    ShieldCheck,
+    ShieldX,
+} from 'lucide-vue-next';
 import type { AcceptableValue } from 'reka-ui';
 import CategoryBadge from '@/components/categories/CategoryBadge.vue';
 import CurrencyDisplay from '@/components/CurrencyDisplay.vue';
@@ -262,9 +268,22 @@ function displayAmount(tx: Transaction): number {
                     <TableCell>
                         <div class="flex justify-end gap-1">
                             <a
+                                v-if="tx.receipt_verification_url"
+                                :href="tx.receipt_verification_url"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="inline-flex h-9 w-9 items-center justify-center rounded-2xl text-primary transition-colors hover:bg-primary/10"
+                                :title="
+                                    t('components.transactionForm.qrOpenTax')
+                                "
+                            >
+                                <ExternalLink class="h-3.5 w-3.5" />
+                            </a>
+                            <a
                                 v-if="tx.receipt_url"
                                 :href="getReceiptPreviewUrl(tx.receipt_url)"
                                 target="_blank"
+                                rel="noopener noreferrer"
                                 class="inline-flex h-9 w-9 items-center justify-center rounded-2xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                                 :title="t('finance.warranties.viewReceipt')"
                             >
@@ -274,12 +293,19 @@ function displayAmount(tx: Transaction): number {
                                 v-if="tx.receipt_url"
                                 :href="tx.receipt_url"
                                 target="_blank"
+                                rel="noopener noreferrer"
                                 class="inline-flex h-9 w-9 items-center justify-center rounded-2xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                                 :title="t('finance.warranties.downloadReceipt')"
                             >
                                 <Download class="h-3.5 w-3.5" />
                             </a>
-                            <span v-else class="text-xs text-muted-foreground">
+                            <span
+                                v-if="
+                                    !tx.receipt_url &&
+                                    !tx.receipt_verification_url
+                                "
+                                class="text-xs text-muted-foreground"
+                            >
                                 {{ t('finance.warranties.noReceipt') }}
                             </span>
                         </div>

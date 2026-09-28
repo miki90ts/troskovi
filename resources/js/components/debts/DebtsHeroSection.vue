@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import {
     AlertTriangle,
-    HandCoins,
     Plus,
     TrendingDown,
     TrendingUp,

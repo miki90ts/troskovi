@@ -1,7 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\V1\TransactionController;
 use App\Http\Controllers\BankAccountPageController;
-use App\Http\Controllers\Settings\BudgetPageController;
 use App\Http\Controllers\CategoryPageController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DebtPageController;
@@ -10,6 +10,7 @@ use App\Http\Controllers\IncomePageController;
 use App\Http\Controllers\LoyaltyCardPageController;
 use App\Http\Controllers\RecurringTransactionPageController;
 use App\Http\Controllers\ReportPageController;
+use App\Http\Controllers\Settings\BudgetPageController;
 use App\Http\Controllers\WarrantyPageController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -34,6 +35,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('expenses', [ExpensePageController::class, 'index'])->name('expenses.index');
     Route::get('incomes', [IncomePageController::class, 'index'])->name('incomes.index');
     Route::get('warranties', [WarrantyPageController::class, 'index'])->name('warranties.index');
+    Route::get('transactions/{transaction}/receipt', [TransactionController::class, 'receipt'])
+        ->name('transactions.receipt');
     Route::get('recurring-transactions', [RecurringTransactionPageController::class, 'index'])->name('recurring-transactions.index');
 
     Route::get('reports', [ReportPageController::class, 'index'])->name('reports.index');
@@ -43,4 +46,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('budgets', [BudgetPageController::class, 'edit'])->name('budgets.edit');
 });
 
-require __DIR__ . '/settings.php';
+require __DIR__.'/settings.php';

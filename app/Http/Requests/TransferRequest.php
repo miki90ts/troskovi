@@ -25,7 +25,7 @@ class TransferRequest extends FormRequest
             'from_account_id' => [
                 'required',
                 Rule::exists('bank_accounts', 'id')->where(
-                    fn(Builder $query) => $query
+                    fn (Builder $query) => $query
                         ->where('user_id', $userId)
                         ->where('is_archived', false)
                         ->whereNull('deleted_at'),
@@ -34,7 +34,7 @@ class TransferRequest extends FormRequest
             'to_account_id' => [
                 'required',
                 Rule::exists('bank_accounts', 'id')->where(
-                    fn(Builder $query) => $query
+                    fn (Builder $query) => $query
                         ->where('user_id', $userId)
                         ->where('is_archived', false)
                         ->whereNull('deleted_at'),

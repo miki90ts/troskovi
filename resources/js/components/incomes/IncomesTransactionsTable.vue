@@ -1,18 +1,11 @@
 <script setup lang="ts">
-import type { AcceptableValue } from 'reka-ui';
 import { ArrowUpCircle, Pencil, Plus, Trash2 } from 'lucide-vue-next';
+import type { AcceptableValue } from 'reka-ui';
 import CategoryBadge from '@/components/categories/CategoryBadge.vue';
 import CurrencyDisplay from '@/components/CurrencyDisplay.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import PaymentMethodBadge from '@/components/transactions/PaymentMethodBadge.vue';
 import { Button } from '@/components/ui/button';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import {
     Pagination,
     PaginationContent,
@@ -20,6 +13,13 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from '@/components/ui/pagination';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import {
     Table,
     TableBody,

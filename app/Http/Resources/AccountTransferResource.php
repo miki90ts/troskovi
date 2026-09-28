@@ -25,13 +25,13 @@ class AccountTransferResource extends JsonResource
             'to_amount' => (float) ($this->to_amount ?? $this->amount),
             'exchange_rate' => (float) ($this->exchange_rate ?? 1),
             'base_amount' => (float) ($this->base_amount ?? $this->amount),
-            'from_currency' => $this->whenLoaded('fromCurrency', fn() => $this->fromCurrency ? [
+            'from_currency' => $this->whenLoaded('fromCurrency', fn () => $this->fromCurrency ? [
                 'id' => $this->fromCurrency->id,
                 'iso_code' => $this->fromCurrency->iso_code,
                 'name' => $this->fromCurrency->name,
                 'symbol' => $this->fromCurrency->symbol,
             ] : null),
-            'to_currency' => $this->whenLoaded('toCurrency', fn() => $this->toCurrency ? [
+            'to_currency' => $this->whenLoaded('toCurrency', fn () => $this->toCurrency ? [
                 'id' => $this->toCurrency->id,
                 'iso_code' => $this->toCurrency->iso_code,
                 'name' => $this->toCurrency->name,

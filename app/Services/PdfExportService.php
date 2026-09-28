@@ -75,15 +75,15 @@ class PdfExportService
         $summary = [];
 
         if (! empty($filters['date_from'])) {
-            $summary[] = 'Od: ' . date('d.m.Y', strtotime($filters['date_from']));
+            $summary[] = 'Od: '.date('d.m.Y', strtotime($filters['date_from']));
         }
 
         if (! empty($filters['date_to'])) {
-            $summary[] = 'Do: ' . date('d.m.Y', strtotime($filters['date_to']));
+            $summary[] = 'Do: '.date('d.m.Y', strtotime($filters['date_to']));
         }
 
         if (! empty($filters['payment_method'])) {
-            $summary[] = 'Način plaćanja: ' . ($filters['payment_method'] === 'cash' ? 'Keš' : 'Bankovni račun');
+            $summary[] = 'Način plaćanja: '.($filters['payment_method'] === 'cash' ? 'Keš' : 'Bankovni račun');
         }
 
         $categoryIds = $this->extractCategoryIds($filters);
@@ -97,12 +97,12 @@ class PdfExportService
                 ->all();
 
             if ($categoryNames !== []) {
-                $summary[] = 'Kategorije: ' . implode(', ', $categoryNames);
+                $summary[] = 'Kategorije: '.implode(', ', $categoryNames);
             }
         }
 
         if (! empty($filters['search'])) {
-            $summary[] = 'Pretraga: "' . $filters['search'] . '"';
+            $summary[] = 'Pretraga: "'.$filters['search'].'"';
         }
 
         return $summary;
@@ -119,8 +119,8 @@ class PdfExportService
         }
 
         return array_values(array_filter(
-            array_map(static fn($value) => trim((string) $value), $categoryIds),
-            static fn($value) => $value !== '',
+            array_map(static fn ($value) => trim((string) $value), $categoryIds),
+            static fn ($value) => $value !== '',
         ));
     }
 }

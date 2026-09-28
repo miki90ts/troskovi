@@ -27,7 +27,10 @@ export const transferValidationMessages = {
 } as const;
 
 function isBlank(value: string): boolean {
-    return value == null || (typeof value === 'string' && value.trim().length === 0);
+    return (
+        value == null ||
+        (typeof value === 'string' && value.trim().length === 0)
+    );
 }
 
 export function validateTransferForm(

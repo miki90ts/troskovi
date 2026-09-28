@@ -1,12 +1,21 @@
 <script setup lang="ts">
-import { Download, Eye, ShieldCheck, Upload, X } from 'lucide-vue-next';
+import { usePage } from '@inertiajs/vue3';
+import {
+    Camera,
+    Download,
+    ExternalLink,
+    Eye,
+    QrCode,
+    ShieldCheck,
+    Upload,
+    X,
+} from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
-import CategoryBadge from '@/components/categories/CategoryBadge.vue';
 import CategorySingleSelect from '@/components/categories/CategorySingleSelect.vue';
 import FormField from '@/components/forms/FormField.vue';
+import ReceiptQrScannerDialog from '@/components/receipts/ReceiptQrScannerDialog.vue';
 import PaymentMethodBadge from '@/components/transactions/PaymentMethodBadge.vue';
 import { Button } from '@/components/ui/button';
-import { useValidationErrors } from '@/composables/useValidationErrors';
 import {
     Dialog,
     DialogContent,
@@ -26,13 +35,14 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/composables/useToast';
 import { useTransactions } from '@/composables/useTransactions';
+import { useValidationErrors } from '@/composables/useValidationErrors';
 import { t } from '@/lib/i18n';
+import { prepareReceiptImage } from '@/lib/receiptImage';
 import {
     transactionValidationMessages,
     validateTransactionForm,
-    type TransactionFormValues,
 } from '@/lib/validation/transactionValidation';
-
+import type { TransactionFormValues } from '@/lib/validation/transactionValidation';
 import type { Category, Debt, Transaction } from '@/types/models';
 
 const props = defineProps<{
@@ -51,6 +61,7 @@ const emit = defineEmits<{
 
 const { createTransaction, updateTransaction } = useTransactions();
 const { success, error: showError } = useToast();
+const page = usePage();
 
 const NO_BANK_ACCOUNT_VALUE = '__none__';
 const NO_DEBT_VALUE = '__none__';
@@ -66,10 +77,13 @@ const form = ref({
     payment_method: 'cash' as 'cash' | 'bank_account',
     notes: '',
     is_warranty: false,
+    receipt_verification_url: '',
 });
 
 const receiptFile = ref<File | null>(null);
 const receiptPreview = ref<string | null>(null);
+const processingReceipt = ref(false);
+const qrScannerOpen = ref(false);
 const submitting = ref(false);
 const {
     errors,
@@ -106,6 +120,7 @@ const debtSelectValue = computed({
 });
 
 const availableDebts = computed(() => props.debts ?? []);
+const qrEnabled = computed(() => page.props.features.receiptQrScan);
 
 const usesBankAccount = computed(() => {
     return form.value.payment_method === 'bank_account';
@@ -145,6 +160,8 @@ watch(
                     payment_method: props.transaction.payment_method,
                     notes: props.transaction.notes ?? '',
                     is_warranty: props.transaction.is_warranty ?? false,
+                    receipt_verification_url:
+                        props.transaction.receipt_verification_url ?? '',
                 };
             } else {
                 form.value = {
@@ -158,6 +175,7 @@ watch(
                     payment_method: 'bank_account',
                     notes: '',
                     is_warranty: false,
+                    receipt_verification_url: '',
                 };
             }
 
@@ -186,41 +204,35 @@ const warrantyExpiresDate = computed(() => {
     });
 });
 
-const MAX_FILE_SIZE = 1024 * 1024; // 1 MB
-
-function onFileChange(event: Event) {
+async function onFileChange(event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
 
-    if (file && file.size > MAX_FILE_SIZE) {
-        errors.value.receipt = transactionValidationMessages.receiptMax;
-        receiptFile.value = null;
-        receiptPreview.value = null;
-        input.value = '';
-
+    if (!file) {
         return;
     }
 
-    if (file && !file.type.startsWith('image/')) {
-        errors.value.receipt = transactionValidationMessages.receiptImage;
-        receiptFile.value = null;
-        receiptPreview.value = null;
-        input.value = '';
+    processingReceipt.value = true;
 
-        return;
-    }
-
-    delete errors.value.receipt;
-    receiptFile.value = file;
-
-    if (file) {
+    try {
+        const preparedFile = await prepareReceiptImage(file);
+        delete errors.value.receipt;
+        receiptFile.value = preparedFile;
         const reader = new FileReader();
         reader.onload = (e) => {
             receiptPreview.value = e.target?.result as string;
         };
-        reader.readAsDataURL(file);
-    } else {
+        reader.readAsDataURL(preparedFile);
+    } catch (error) {
+        errors.value.receipt =
+            error instanceof Error
+                ? error.message
+                : transactionValidationMessages.receiptImage;
+        receiptFile.value = null;
         receiptPreview.value = null;
+    } finally {
+        processingReceipt.value = false;
+        input.value = '';
     }
 }
 
@@ -235,13 +247,35 @@ function handleWarrantyChange() {
     }
 }
 
+function handleQrScanned(url: string) {
+    form.value.receipt_verification_url = url;
+    qrScannerOpen.value = false;
+    success(t('components.transactionForm.qrSaved'));
+}
+
+function removeQrUrl() {
+    form.value.receipt_verification_url = '';
+}
+
 function getReceiptPreviewUrl(receiptUrl: string): string {
     return `${receiptUrl}${receiptUrl.includes('?') ? '&' : '?'}preview=1`;
 }
 
 watch(
     () => form.value.type,
-    () => clearErrors('type', 'payment_method', 'bank_account_id'),
+    (type) => {
+        clearErrors(
+            'type',
+            'payment_method',
+            'bank_account_id',
+            'receipt_verification_url',
+        );
+
+        if (type !== 'expense') {
+            form.value.receipt_verification_url = '';
+            qrScannerOpen.value = false;
+        }
+    },
 );
 
 watch(
@@ -281,6 +315,10 @@ watch(
     () => clearErrors('is_warranty', 'receipt'),
 );
 watch(receiptFile, () => clearErrors('receipt'));
+watch(
+    () => form.value.receipt_verification_url,
+    () => clearErrors('receipt_verification_url'),
+);
 
 async function onSubmit() {
     submitting.value = true;
@@ -322,6 +360,11 @@ async function onSubmit() {
             debt_id: form.value.debt_id ? parseInt(form.value.debt_id) : null,
             is_warranty:
                 form.value.type === 'expense' ? form.value.is_warranty : false,
+            receipt_verification_url:
+                form.value.type === 'expense' &&
+                form.value.receipt_verification_url
+                    ? form.value.receipt_verification_url
+                    : null,
         };
 
         let submitPayload: FormData | Record<string, unknown> = payload;
@@ -706,30 +749,62 @@ async function onSubmit() {
                                         !receiptPreview &&
                                         !props.transaction?.receipt_url
                                     "
-                                    class="relative"
+                                    class="space-y-3"
                                 >
-                                    <label
-                                        class="flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-border/60 bg-background p-6 transition-colors hover:border-primary/40 hover:bg-primary/5"
-                                    >
-                                        <Upload
-                                            class="h-6 w-6 text-muted-foreground"
-                                        />
-                                        <span
-                                            class="text-sm text-muted-foreground"
+                                    <div class="grid gap-3 sm:grid-cols-2">
+                                        <label
+                                            class="flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-primary/30 bg-primary/5 p-5 text-center transition-colors hover:border-primary/50 hover:bg-primary/10"
                                         >
-                                            {{
-                                                t(
-                                                    'components.transactionForm.warrantyReceiptHint',
-                                                )
-                                            }}
-                                        </span>
-                                        <input
-                                            type="file"
-                                            accept="image/jpeg,image/png,image/webp"
-                                            class="sr-only"
-                                            @change="onFileChange"
-                                        />
-                                    </label>
+                                            <Camera
+                                                class="h-6 w-6 text-primary"
+                                            />
+                                            <span class="text-sm font-medium">
+                                                {{
+                                                    t(
+                                                        'components.transactionForm.photographReceipt',
+                                                    )
+                                                }}
+                                            </span>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                capture="environment"
+                                                class="sr-only"
+                                                @change="onFileChange"
+                                            />
+                                        </label>
+                                        <label
+                                            class="flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-border/60 bg-background p-5 text-center transition-colors hover:border-primary/40 hover:bg-primary/5"
+                                        >
+                                            <Upload
+                                                class="h-6 w-6 text-muted-foreground"
+                                            />
+                                            <span class="text-sm font-medium">
+                                                {{
+                                                    t(
+                                                        'components.transactionForm.chooseReceipt',
+                                                    )
+                                                }}
+                                            </span>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                class="sr-only"
+                                                @change="onFileChange"
+                                            />
+                                        </label>
+                                    </div>
+                                    <p class="text-xs text-muted-foreground">
+                                        {{
+                                            processingReceipt
+                                                ? t(
+                                                      'components.transactionForm.processingReceipt',
+                                                  )
+                                                : t(
+                                                      'components.transactionForm.warrantyReceiptHint',
+                                                  )
+                                        }}
+                                    </p>
                                 </div>
                                 <div v-else class="relative">
                                     <img
@@ -809,7 +884,24 @@ async function onSubmit() {
                                                 }}
                                                 <input
                                                     type="file"
-                                                    accept="image/jpeg,image/png,image/webp"
+                                                    accept="image/*"
+                                                    class="sr-only"
+                                                    @change="onFileChange"
+                                                />
+                                            </label>
+                                            <label
+                                                class="inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-border/60 px-3 py-2 text-sm transition-colors hover:bg-muted"
+                                            >
+                                                <Camera class="h-4 w-4" />
+                                                {{
+                                                    t(
+                                                        'components.transactionForm.photographAgain',
+                                                    )
+                                                }}
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    capture="environment"
                                                     class="sr-only"
                                                     @change="onFileChange"
                                                 />
@@ -844,6 +936,69 @@ async function onSubmit() {
                             </span>
                         </div>
                     </template>
+
+                    <FormField
+                        v-if="qrEnabled"
+                        :label="t('components.transactionForm.qrLabel')"
+                        :error="errors.receipt_verification_url"
+                    >
+                        <template #default>
+                            <div class="space-y-3">
+                                <div class="flex flex-wrap gap-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        class="rounded-2xl"
+                                        @click="qrScannerOpen = true"
+                                    >
+                                        <QrCode class="mr-2 h-4 w-4" />
+                                        {{
+                                            t(
+                                                'components.transactionForm.scanQr',
+                                            )
+                                        }}
+                                    </Button>
+                                    <a
+                                        v-if="form.receipt_verification_url"
+                                        :href="form.receipt_verification_url"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="inline-flex items-center gap-2 rounded-2xl border border-border/60 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/5"
+                                    >
+                                        <ExternalLink class="h-4 w-4" />
+                                        {{
+                                            t(
+                                                'components.transactionForm.qrOpenTax',
+                                            )
+                                        }}
+                                    </a>
+                                    <Button
+                                        v-if="form.receipt_verification_url"
+                                        type="button"
+                                        variant="ghost"
+                                        class="rounded-2xl text-destructive hover:text-destructive"
+                                        @click="removeQrUrl"
+                                    >
+                                        <X class="mr-2 h-4 w-4" />
+                                        {{
+                                            t(
+                                                'components.transactionForm.qrRemove',
+                                            )
+                                        }}
+                                    </Button>
+                                </div>
+                                <p
+                                    class="text-xs leading-5 text-muted-foreground"
+                                >
+                                    {{
+                                        t(
+                                            'components.transactionForm.qrManualEntryHint',
+                                        )
+                                    }}
+                                </p>
+                            </div>
+                        </template>
+                    </FormField>
                 </div>
 
                 <div
@@ -884,7 +1039,7 @@ async function onSubmit() {
                     <Button
                         type="submit"
                         class="rounded-2xl px-5"
-                        :disabled="submitting"
+                        :disabled="submitting || processingReceipt"
                     >
                         {{
                             submitting
@@ -898,4 +1053,11 @@ async function onSubmit() {
             </form>
         </DialogContent>
     </Dialog>
+
+    <ReceiptQrScannerDialog
+        v-if="qrEnabled"
+        v-model:open="qrScannerOpen"
+        :current-url="form.receipt_verification_url"
+        @scanned="handleQrScanned"
+    />
 </template>

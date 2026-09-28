@@ -58,12 +58,12 @@ class SpendingTargetService
             ->with(['category', 'currency'])
             ->where('period', $frequency)
             ->get()
-            ->map(fn(SpendingTarget $target) => $this->buildProgressItem($user, $target, $start, $end));
+            ->map(fn (SpendingTarget $target) => $this->buildProgressItem($user, $target, $start, $end));
 
         $overallTarget = $targets->firstWhere('scope', 'overall');
 
         $topRiskTarget = $targets
-            ->sortByDesc(fn(array $target) => [$target['status_rank'], $target['progress_percent']])
+            ->sortByDesc(fn (array $target) => [$target['status_rank'], $target['progress_percent']])
             ->first();
 
         return [
@@ -95,10 +95,10 @@ class SpendingTargetService
             ->whereBetween('date', [$start, $end])
             ->when(
                 $target->category_id,
-                fn($query) => $query->where('category_id', $target->category_id)
+                fn ($query) => $query->where('category_id', $target->category_id)
             )
             ->get()
-            ->sum(fn($transaction) => $this->moneyService->convertFromBase(
+            ->sum(fn ($transaction) => $this->moneyService->convertFromBase(
                 (float) ($transaction->base_amount ?? $transaction->amount),
                 $targetCurrency,
                 $transaction->date,

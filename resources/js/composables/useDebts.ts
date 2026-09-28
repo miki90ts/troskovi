@@ -3,7 +3,6 @@ import type { DebtPayload } from '@/types/api';
 import type { Debt, DebtSummary } from '@/types/models';
 import api from './useApi';
 
-
 export function useDebts() {
     const loading = ref(false);
 

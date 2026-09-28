@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\DB;
 
 class BankAccount extends Model
 {
@@ -73,7 +72,7 @@ class BankAccount extends Model
 
         $last4 = substr($this->account_number, -4);
 
-        return '••••' . $last4;
+        return '••••'.$last4;
     }
 
     public function getCurrentBalanceAttribute(): string

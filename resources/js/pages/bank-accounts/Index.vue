@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import BankAccountFormDialog from '@/components/bank-accounts/BankAccountFormDialog.vue';
-import BankAccountTransfersHistorySection from '@/components/bank-accounts/BankAccountTransfersHistorySection.vue';
 import BankAccountsHeroSection from '@/components/bank-accounts/BankAccountsHeroSection.vue';
 import BankAccountsOverviewSection from '@/components/bank-accounts/BankAccountsOverviewSection.vue';
 import BankAccountTransferDialog from '@/components/bank-accounts/BankAccountTransferDialog.vue';
+import BankAccountTransfersHistorySection from '@/components/bank-accounts/BankAccountTransfersHistorySection.vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import ToastContainer from '@/components/ToastContainer.vue';
 import { useBankAccountsPage } from '@/composables/useBankAccountsPage';

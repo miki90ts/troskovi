@@ -29,7 +29,7 @@ class ExpensePageController extends Controller
         $categories = $this->categoryService->list($user, 'expense');
         $defaultCurrency = $this->moneyService->resolveUserCurrency($user);
 
-        $accounts = $user->bankAccounts()->active()->orderBy('name')->get()->map(fn($a) => [
+        $accounts = $user->bankAccounts()->active()->orderBy('name')->get()->map(fn ($a) => [
             'id' => $a->id,
             'name' => $a->name,
         ]);

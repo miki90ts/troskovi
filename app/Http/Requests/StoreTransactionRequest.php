@@ -6,6 +6,7 @@ use App\Concerns\TransactionValidationMessages;
 use App\Enums\PaymentMethod;
 use App\Enums\TransactionType;
 use App\Models\Transaction;
+use App\Rules\SerbianFiscalReceiptUrl;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -39,17 +40,18 @@ class StoreTransactionRequest extends FormRequest
                 'nullable',
                 'integer',
                 Rule::exists('bank_accounts', 'id')->where(
-                    fn($query) => $query->where('user_id', $this->user()?->id)
+                    fn ($query) => $query->where('user_id', $this->user()?->id)
                 ),
             ],
             'payment_method' => ['required_if:type,expense', Rule::enum(PaymentMethod::class)],
             'notes' => ['nullable', 'string'],
-            'receipt' => ['nullable', 'image', 'max:1024'],
+            'receipt' => ['nullable', 'image', 'mimes:jpeg,png,webp', 'max:5120'],
+            'receipt_verification_url' => ['nullable', 'string', 'max:8192', new SerbianFiscalReceiptUrl],
             'is_warranty' => ['nullable', 'boolean'],
             'debt_id' => [
                 'nullable',
                 Rule::exists('debts', 'id')->where(
-                    fn($query) => $query->where('user_id', $this->user()?->id)
+                    fn ($query) => $query->where('user_id', $this->user()?->id)
                 ),
             ],
         ];

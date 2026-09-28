@@ -26,7 +26,7 @@ class DebtResource extends JsonResource
             'is_overdue' => $this->is_overdue,
             'progress_percent' => $this->progress_percent,
             'notes' => $this->notes,
-            'currency' => $this->whenLoaded('currency', fn() => $this->currency ? [
+            'currency' => $this->whenLoaded('currency', fn () => $this->currency ? [
                 'id' => $this->currency->id,
                 'iso_code' => $this->currency->iso_code,
                 'name' => $this->currency->name,

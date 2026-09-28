@@ -21,28 +21,29 @@ class TransactionResource extends JsonResource
             'notes' => $this->notes,
             'payment_method' => $this->payment_method->value,
             'receipt_url' => $this->receipt_path
-                ? url("/api/v1/transactions/{$this->id}/receipt")
+                ? route('transactions.receipt', ['transaction' => $this->id], false)
                 : null,
+            'receipt_verification_url' => $this->receipt_verification_url,
             'is_warranty' => (bool) $this->is_warranty,
             'warranty_expires_at' => $this->warranty_expires_at?->toDateString(),
             'warranty_is_expired' => $this->warranty_is_expired,
-            'category' => $this->whenLoaded('category', fn() => $this->category ? [
+            'category' => $this->whenLoaded('category', fn () => $this->category ? [
                 'id' => $this->category->id,
                 'name' => $this->category->name,
                 'icon' => $this->category->icon,
                 'color' => $this->category->color,
             ] : null),
-            'bank_account' => $this->whenLoaded('bankAccount', fn() => $this->bankAccount ? [
+            'bank_account' => $this->whenLoaded('bankAccount', fn () => $this->bankAccount ? [
                 'id' => $this->bankAccount->id,
                 'name' => $this->bankAccount->name,
             ] : null),
-            'currency' => $this->whenLoaded('currency', fn() => $this->currency ? [
+            'currency' => $this->whenLoaded('currency', fn () => $this->currency ? [
                 'id' => $this->currency->id,
                 'iso_code' => $this->currency->iso_code,
                 'name' => $this->currency->name,
                 'symbol' => $this->currency->symbol,
             ] : null),
-            'debt' => $this->whenLoaded('debt', fn() => $this->debt ? [
+            'debt' => $this->whenLoaded('debt', fn () => $this->debt ? [
                 'id' => $this->debt->id,
                 'person_name' => $this->debt->person_name,
                 'type' => $this->debt->type->value,

@@ -13,7 +13,7 @@ test('income page preserves payment method filter in inertia props', function ()
         ->get(route('incomes.index', ['payment_method' => 'cash']))
         ->assertOk()
         ->assertInertia(
-            fn(Assert $page) => $page
+            fn (Assert $page) => $page
                 ->component('incomes/Index')
                 ->where('filters.payment_method', 'cash'),
         );
@@ -79,7 +79,7 @@ test('income page preserves multiple category filters and narrows results', func
         ->get(route('incomes.index', ['category_ids' => $categoryIds]))
         ->assertOk()
         ->assertInertia(
-            fn(Assert $page) => $page
+            fn (Assert $page) => $page
                 ->component('incomes/Index')
                 ->where('filters.category_ids', $categoryIds)
                 ->where('transactions.meta.total', 2),
@@ -112,7 +112,7 @@ test('income page applies selected per page value and preserves it in inertia pr
         ->get(route('incomes.index', ['per_page' => '30']))
         ->assertOk()
         ->assertInertia(
-            fn(Assert $page) => $page
+            fn (Assert $page) => $page
                 ->component('incomes/Index')
                 ->where('filters.per_page', '30')
                 ->where('transactions.meta.per_page', 30)
@@ -165,7 +165,7 @@ test('income page returns display amounts in the user default currency', functio
         ->get(route('incomes.index'))
         ->assertOk()
         ->assertInertia(
-            fn(Assert $page) => $page
+            fn (Assert $page) => $page
                 ->component('incomes/Index')
                 ->where('defaultCurrency.iso_code', 'EUR')
                 ->where('latestExchangeRates.EUR', 117)

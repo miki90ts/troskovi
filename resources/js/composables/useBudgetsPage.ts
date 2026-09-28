@@ -10,7 +10,6 @@ import type {
     BudgetPeriodSection,
     BudgetStatusFilterOption,
     Category,
-    CurrencySummary,
     SpendingTarget,
     SpendingTargetPeriod,
     SpendingTargetProgress,
@@ -35,10 +34,7 @@ function createEmptyForm(
     };
 }
 
-export function useBudgetsPage(
-    _currencies: CurrencySummary[] = [],
-    defaultCurrencyId: number | null = null,
-) {
+export function useBudgetsPage(defaultCurrencyId: number | null = null) {
     const periodOptions: SpendingTargetPeriod[] = [
         'daily',
         'weekly',

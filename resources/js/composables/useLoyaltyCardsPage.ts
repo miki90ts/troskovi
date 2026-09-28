@@ -1,12 +1,10 @@
 import { computed, ref } from 'vue';
 import { useLoyaltyCards } from '@/composables/useLoyaltyCards';
 import { useToast } from '@/composables/useToast';
-import { t } from '@/lib/i18n';
-import {
-    validateLoyaltyCardForm,
-    type LoyaltyCardFormValues,
-} from '@/lib/validation/loyaltyCardValidation';
 import { useValidationErrors } from '@/composables/useValidationErrors';
+import { t } from '@/lib/i18n';
+import { validateLoyaltyCardForm } from '@/lib/validation/loyaltyCardValidation';
+import type { LoyaltyCardFormValues } from '@/lib/validation/loyaltyCardValidation';
 import type { LoyaltyCard } from '@/types/models';
 
 export type LoyaltyCardFormState = LoyaltyCardFormValues;

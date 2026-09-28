@@ -51,7 +51,7 @@ const {
     toggleTarget,
     confirmDelete,
     updateForm,
-} = useBudgetsPage(props.currencies, props.defaultCurrencyId);
+} = useBudgetsPage(props.defaultCurrencyId);
 </script>
 
 <template>

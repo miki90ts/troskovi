@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Filter } from 'lucide-vue-next';
 import { computed } from 'vue';
-import CategoryBadge from '@/components/categories/CategoryBadge.vue';
 import CategoryMultiSelect from '@/components/categories/CategoryMultiSelect.vue';
 import PaymentMethodBadge from '@/components/transactions/PaymentMethodBadge.vue';
 import { Button } from '@/components/ui/button';

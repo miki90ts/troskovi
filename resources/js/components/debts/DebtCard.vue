@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { t, formatCurrency, formatShortDate } from '@/lib/i18n';
 import type { Debt } from '@/types/models';
 
-const props = defineProps<{
+defineProps<{
     debt: Debt;
 }>();
 
